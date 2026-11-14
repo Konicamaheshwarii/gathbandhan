@@ -107,6 +107,7 @@ export interface Wedding {
   families?: Families;
   gallery?: GalleryPhoto[];
   milestones?: Milestone[];
+  invite?: InviteDesign;
   createdAt: number;
   /** Seeded sample wedding (shown with a banner). */
   demo?: boolean;
@@ -203,3 +204,97 @@ export interface WeddingTotals {
   percent: number;
   goals: GoalProgress[];
 }
+
+// ---------- e-invite (digital kankotri) ----------
+
+export const INVITE_TEMPLATES = ['ganesh', 'rajasthani', 'gujarati', 'south', 'royal', 'minimal'] as const;
+export type InviteTemplate = (typeof INVITE_TEMPLATES)[number];
+
+export type InviteLanguage = 'english' | 'hindi' | 'gujarati' | 'hinglish';
+export const INVITE_LANGUAGES: { id: InviteLanguage; label: string }[] = [
+  { id: 'english', label: 'English' },
+  { id: 'hindi', label: 'हिन्दी' },
+  { id: 'gujarati', label: 'ગુજરાતી' },
+  { id: 'hinglish', label: 'Hinglish' },
+];
+
+export type InviteTone = 'traditional' | 'modern' | 'fun';
+export const INVITE_TONES: InviteTone[] = ['traditional', 'modern', 'fun'];
+
+export interface InvitePalette {
+  /** Main ink and borders. */
+  primary: string;
+  /** Gold / highlight. */
+  accent: string;
+  /** Page background. */
+  paper: string;
+}
+
+/** The words on the invite. AI drafts them; the couple can edit every line. */
+export interface InviteText {
+  /** "॥ श्री गणेशाय नमः ॥" or "Together with their families". */
+  invocation: string;
+  /** Optional shlok under the deity motif. */
+  shlok: string;
+  /** "Shubh Vivah" / "शुभ विवाह". */
+  title: string;
+  /** "With the blessings of… we cordially invite you and your family…". */
+  invitation: string;
+  /** Closing line on the last page. */
+  closing: string;
+}
+
+export interface InviteDesign {
+  template: InviteTemplate;
+  palette: InvitePalette;
+  language: InviteLanguage;
+  tone: InviteTone;
+  showShlok: boolean;
+  text: InviteText;
+  grandparents: { bride?: string; groom?: string };
+  /** Family names printed under "Swagatotsuk" (eager to welcome you), one per line. */
+  swagatotsuk: string;
+  /** Under "Darshanabhilashi" (longing to see you), one per line. */
+  darshanabhilashi: string;
+  /** Photo shown on the cover (from the gallery or the page cover); empty for the motif only. */
+  coverPhoto?: string;
+  /** Decorative background from the free Pollinations image service. Off by default. */
+  aiBackground: boolean;
+  updatedAt: number;
+}
+
+export interface Guest {
+  id: string;
+  weddingId: string;
+  name: string;
+  /** How the invite addresses them: "Sharma Parivar", "Sunita Mausi & family". */
+  greeting?: string;
+  phone?: string;
+  side?: Side;
+  /** "Mama's family", "Office", "College friends". */
+  group?: string;
+  /** Secret part of their personal invite link. */
+  token: string;
+  sentAt?: number;
+  openedAt?: number;
+  rsvpAt?: number;
+  gaveAt?: number;
+  createdAt: number;
+}
+
+export type GuestStatus = 'not-sent' | 'sent' | 'opened' | 'rsvp' | 'gave';
+export const GUEST_STATUS: { id: GuestStatus; label: string }[] = [
+  { id: 'not-sent', label: 'Not sent' },
+  { id: 'sent', label: 'Sent' },
+  { id: 'opened', label: 'Opened' },
+  { id: 'rsvp', label: "RSVP'd" },
+  { id: 'gave', label: 'Gave shagun' },
+];
+export type GuestMark = 'opened' | 'rsvp' | 'gave';
+
+/** What a personal invite link reveals: only that guest's own greeting. */
+export interface GuestInvite {
+  name: string;
+  greeting: string;
+}
+export const MAX_GUESTS = 1000;

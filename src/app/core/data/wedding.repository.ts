@@ -1,5 +1,5 @@
 import { Observable } from 'rxjs';
-import { Contribution, NewContribution, NewRsvp, PublicActivity, Rsvp, Wedding } from '../models';
+import { Contribution, Guest, GuestInvite, GuestMark, NewContribution, NewRsvp, PublicActivity, Rsvp, Wedding } from '../models';
 
 export interface RepositoryChange {
   /** The wedding whose data changed, or null when everything may have changed (reset). */
@@ -41,6 +41,16 @@ export abstract class WeddingRepository {
   abstract listRsvps(weddingId: string): Promise<Rsvp[]>;
   abstract addRsvp(input: NewRsvp): Promise<Rsvp>;
   abstract deleteRsvp(id: string): Promise<void>;
+
+  /** Owner only: the guest list for invites. */
+  abstract listGuests(weddingId: string): Promise<Guest[]>;
+  /** Owner only: creates or updates guests (import, edits, "sent" ticks). */
+  abstract saveGuests(guests: Guest[]): Promise<void>;
+  abstract deleteGuest(id: string): Promise<void>;
+  /** Anyone with the personal link: that one guest's greeting, nothing else. */
+  abstract getGuestInvite(weddingId: string, token: string): Promise<GuestInvite | null>;
+  /** Anyone with the personal link: records that the guest opened the invite, RSVP'd or gave shagun. */
+  abstract markGuest(weddingId: string, token: string, mark: GuestMark): Promise<void>;
 
   /** Co-owners by email (backend only; demo mode has no accounts). */
   abstract listOwners(weddingId: string): Promise<string[]>;

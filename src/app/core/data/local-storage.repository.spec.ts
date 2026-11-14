@@ -106,6 +106,24 @@ describe('LocalStorageWeddingRepository', () => {
     expect(JSON.stringify(pub)).not.toContain('9876543210');
   });
 
+  it('keeps a private guest list; a personal link reveals only that guest and ticks off their progress', async () => {
+    const demo = (await repo.getWeddingBySlug(DEMO_SLUG))!;
+    const guests = await repo.listGuests(demo.id);
+    expect(guests.length).toBe(25);
+    expect(demo.invite?.template).toBe('rajasthani');
+    const fresh = guests.find((g) => !g.sentAt)!;
+    expect(await repo.getGuestInvite(demo.id, fresh.token)).toEqual({ name: fresh.name, greeting: fresh.greeting ?? fresh.name });
+    expect(await repo.getGuestInvite(demo.id, 'nope12345')).toBeNull();
+    await repo.markGuest(demo.id, fresh.token, 'rsvp');
+    const after = (await repo.listGuests(demo.id)).find((g) => g.id === fresh.id)!;
+    expect(after.rsvpAt).toBeDefined();
+    expect(after.openedAt).toBeDefined();
+    await repo.saveGuests([{ ...after, sentAt: 5 }]);
+    expect((await repo.listGuests(demo.id)).find((g) => g.id === fresh.id)!.sentAt).toBe(5);
+    await repo.deleteGuest(fresh.id);
+    expect((await repo.listGuests(demo.id)).length).toBe(24);
+  });
+
   it('has no co-owners in demo mode', async () => {
     expect(await repo.listOwners()).toEqual([]);
     await expectAsync(repo.addOwner()).toBeRejectedWithError(/backend/);

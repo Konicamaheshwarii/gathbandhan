@@ -1,9 +1,11 @@
-export type LlmTask = 'story' | 'goals' | 'thanks' | 'milestones' | 'ping';
+export type LlmTask = 'story' | 'goals' | 'thanks' | 'milestones' | 'invite' | 'whatsapp' | 'design' | 'ping';
 
 export interface LlmRequest {
   task: LlmTask;
   system: string;
   prompt: string;
+  /** Output language, so tiers that write some languages badly can step aside. */
+  language?: string;
   /** Ask the model for a single JSON object. */
   json?: boolean;
   /** The structured data the prompt was built from (used by the offline demo provider). */

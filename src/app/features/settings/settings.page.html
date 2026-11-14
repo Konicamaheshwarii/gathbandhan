@@ -5,13 +5,26 @@
   @if (backend) {
     <p class="small"><span class="chip good">Online</span> Connected to Supabase. Pages, shagun and RSVPs are shared across every phone and laptop; only the couple can see the dashboard.</p>
   } @else {
-    <p class="small"><span class="chip gold">Demo mode</span> Data stays in this browser. To make pages work across devices, the site owner adds free Supabase keys to <code>public/config.json</code> (see <code>docs/SUPABASE_SETUP.md</code>).</p>
+    @if (backendStatus.configured) {
+      <p class="small"><span class="chip gold">Demo mode</span> Supabase keys are in <code>public/config.json</code>, but {{ backendStatus.reason }}, so Shagun is running in demo mode and data stays in this browser.
+        The site owner can fix this by following <code>docs/SUPABASE_SETUP.md</code> (step 3 creates the tables); the site switches to online mode on the next visit.</p>
+    } @else {
+      <p class="small"><span class="chip gold">Demo mode</span> Data stays in this browser. To make pages work across devices, the site owner adds free Supabase keys to <code>public/config.json</code> (see <code>docs/SUPABASE_SETUP.md</code>).</p>
+    }
   }
 </section>
 
 <section class="card stack">
   <h2>AI writer</h2>
-  <p class="muted small">Used to draft your page story, suggest dreams with target amounts, and write thank-you notes.</p>
+  <p class="muted small">Drafts your story and timeline, suggests dreams, writes invite text in English, हिन्दी, ગુજરાતી or Hinglish, picks an invite design, and writes WhatsApp messages and thank-you notes.</p>
+  <ol class="tiers small">
+    <li [class.on]="!!real()"><strong>1. Your own key</strong> (Gemini or Groq, optional)</li>
+    <li [class.on]="store.provider() !== 'demo'"><strong>2. Chrome's on-device AI</strong> (Gemini Nano, free, private):
+      {{ chrome() === 'checking' ? 'checking…' : chrome() === 'yes' ? 'ready in this browser' : 'not available in this browser' }}</li>
+    <li [class.on]="store.provider() !== 'demo' && store.settings().allowCloudAi"><strong>3. Pollinations.ai</strong> (free, no key; text is sent to that service)</li>
+    <li class="on"><strong>4. Offline templates</strong> (always works)</li>
+  </ol>
+  <p class="hint">Shagun uses the first one that answers. If one is slow or fails, the next one takes over.</p>
   <div class="providers" role="radiogroup" aria-label="AI provider">
     @for (p of providers; track p.id) {
       <button type="button" role="radio" class="provider" [class.on]="store.provider() === p.id"
@@ -19,7 +32,8 @@
         <strong>{{ p.label }}</strong>
         <span class="muted">
           @switch (p.id) {
-            @case ('demo') { Templates and keyword rules in English, Hindi and Hinglish. Works offline, no key. }
+            @case ('auto') { No key needed. On-device AI, then free cloud AI, then offline templates. }
+            @case ('demo') { Templates and keyword rules only. Nothing leaves this browser. }
             @case ('gemini') { Free tier. Best for natural Hindi and Hinglish. }
             @case ('groq') { Free tier. Very fast open models. }
           }
@@ -36,22 +50,35 @@
     </label>
     <p class="muted small">
       Get a free key at <a [href]="current().keyUrl" target="_blank" rel="noopener">{{ current().keyUrl }}</a>.
-      It is stored in this browser only and sent straight to {{ current().label }}. There is no backend.
+      It is stored in this browser only and sent straight to {{ current().label }}, never to Shagun's backend.
     </p>
     <label>
       Model
       <input type="text" [value]="store.settings().models[id]" (change)="setModel($any($event.target).value)" />
     </label>
     <div class="row">
-      <button class="btn" type="button" (click)="testConnection()" [disabled]="store.needsKey() || test().state === 'running'">
-        @if (test().state === 'running') { <span class="spinner" aria-hidden="true"></span> } Test connection
-      </button>
       <button class="btn danger" type="button" (click)="clearKey()" [disabled]="store.needsKey()">Remove key</button>
-      @if (test().message) {
-        <span [class]="test().state === 'ok' ? 'ok' : 'fail'" role="status">{{ test().message }}</span>
-      }
     </div>
   }
+
+  <label class="check">
+    <input type="checkbox" [checked]="store.settings().allowCloudAi" (change)="store.update({ allowCloudAi: $any($event.target).checked })" />
+    Use free cloud AI (Pollinations.ai) when nothing better is available
+  </label>
+  <p class="hint">Your names, family details and notes are sent to Pollinations.ai to write the text. Turn this off to keep everything on this device.</p>
+  <label class="check">
+    <input type="checkbox" [checked]="store.settings().aiImages" (change)="store.update({ aiImages: $any($event.target).checked })" />
+    Allow AI-made decorative backgrounds on invites (Pollinations.ai, off by default)
+  </label>
+
+  <div class="row">
+    <button class="btn" type="button" (click)="testConnection()" [disabled]="store.needsKey() || test().state === 'running'">
+      @if (test().state === 'running') { <span class="spinner" aria-hidden="true"></span> } Test AI
+    </button>
+    @if (test().message) {
+      <span [class]="test().state === 'ok' ? 'ok' : 'fail'" role="status">{{ test().message }}</span>
+    }
+  </div>
 </section>
 
 <section class="card stack">

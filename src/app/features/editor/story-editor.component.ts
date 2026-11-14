@@ -33,7 +33,7 @@ import { MilestoneForm, milestoneForm } from './wedding-form';
             @if (busy()) { <span class="spinner" aria-hidden="true"></span> } Draft our timeline
           </button>
         </div>
-        <span class="hint">{{ settings.isDemo() ? 'Demo mode: offline templates, no key needed.' : 'Uses your ' + settings.provider() + ' key.' }} Replaces the timeline below.</span>
+        <span class="hint">{{ settings.aiHint() }} Replaces the timeline below.</span>
         @if (error()) { <p class="alert small">{{ error() }}</p> }
       </div>
     }

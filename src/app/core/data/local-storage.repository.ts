@@ -1,16 +1,18 @@
 import { Injectable, OnDestroy } from '@angular/core';
 import { Observable, Subject } from 'rxjs';
-import { Contribution, NewContribution, NewRsvp, PublicActivity, Rsvp, Wedding } from '../models';
+import { Contribution, Guest, GuestInvite, GuestMark, NewContribution, NewRsvp, PublicActivity, Rsvp, Wedding } from '../models';
+import { guestGreeting } from '../guests';
 import { readJson, writeJson } from '../storage';
 import { publicActivity } from '../totals';
 import { uid } from '../util';
-import { DEMO_SEED_VERSION, demoContributions, demoRsvps, demoWedding } from './seed';
+import { DEMO_SEED_VERSION, demoContributions, demoGuests, demoRsvps, demoWedding } from './seed';
 import { RepositoryChange, WeddingRepository } from './wedding.repository';
 
 export const KEYS = {
   weddings: 'sg.weddings',
   contributions: 'sg.contributions',
   rsvps: 'sg.rsvps',
+  guests: 'sg.guests',
   seed: 'sg.seedVersion',
 } as const;
 
@@ -28,7 +30,7 @@ export class LocalStorageWeddingRepository extends WeddingRepository implements 
   private readonly changes$ = new Subject<RepositoryChange>();
   private readonly channel = typeof BroadcastChannel !== 'undefined' ? new BroadcastChannel('sg.changes') : null;
   private readonly onStorage = (e: StorageEvent) => {
-    if (e.key === KEYS.weddings || e.key === KEYS.contributions || e.key === KEYS.rsvps) this.changes$.next({ weddingId: null });
+    if (e.key === KEYS.weddings || e.key === KEYS.contributions || e.key === KEYS.rsvps || e.key === KEYS.guests) this.changes$.next({ weddingId: null });
   };
 
   constructor() {
@@ -71,6 +73,7 @@ export class LocalStorageWeddingRepository extends WeddingRepository implements 
   async deleteWedding(id: string): Promise<void> {
     writeJson(KEYS.contributions, this.contributions().filter((c) => c.weddingId !== id));
     writeJson(KEYS.rsvps, this.rsvps().filter((r) => r.weddingId !== id));
+    writeJson(KEYS.guests, this.guests().filter((g) => g.weddingId !== id));
     this.write(KEYS.weddings, this.weddings().filter((w) => w.id !== id), id);
   }
 
@@ -130,6 +133,41 @@ export class LocalStorageWeddingRepository extends WeddingRepository implements 
     this.write(KEYS.rsvps, all.filter((r) => r.id !== id), target?.weddingId ?? null);
   }
 
+  async listGuests(weddingId: string): Promise<Guest[]> {
+    return this.guests()
+      .filter((g) => g.weddingId === weddingId)
+      .sort((a, b) => a.createdAt - b.createdAt || a.name.localeCompare(b.name));
+  }
+
+  async saveGuests(guests: Guest[]): Promise<void> {
+    if (!guests.length) return;
+    const byId = new Map(this.guests().map((g) => [g.id, g]));
+    for (const g of guests) byId.set(g.id, g);
+    this.write(KEYS.guests, [...byId.values()], guests[0].weddingId);
+  }
+
+  async deleteGuest(id: string): Promise<void> {
+    const all = this.guests();
+    const target = all.find((g) => g.id === id);
+    this.write(KEYS.guests, all.filter((g) => g.id !== id), target?.weddingId ?? null);
+  }
+
+  async getGuestInvite(weddingId: string, token: string): Promise<GuestInvite | null> {
+    const g = this.guests().find((x) => x.weddingId === weddingId && x.token === token);
+    return g ? { name: g.name, greeting: guestGreeting(g) } : null;
+  }
+
+  /** Demo mode can only see opens from this browser; the backend sees them from every phone. */
+  async markGuest(weddingId: string, token: string, mark: GuestMark): Promise<void> {
+    const all = this.guests();
+    const i = all.findIndex((g) => g.weddingId === weddingId && g.token === token);
+    if (i < 0) return;
+    const field = mark === 'opened' ? 'openedAt' : mark === 'rsvp' ? 'rsvpAt' : 'gaveAt';
+    if (all[i][field]) return;
+    all[i] = { ...all[i], [field]: Date.now(), ...(mark !== 'opened' && !all[i].openedAt ? { openedAt: Date.now() } : {}) };
+    this.write(KEYS.guests, all, weddingId);
+  }
+
   async listOwners(): Promise<string[]> {
     return [];
   }
@@ -147,6 +185,7 @@ export class LocalStorageWeddingRepository extends WeddingRepository implements 
     const isDemo = (id: string) => id === demo.id || this.isDemoWedding(id);
     writeJson(KEYS.contributions, [...this.contributions().filter((c) => !isDemo(c.weddingId)), ...demoContributions(demo)]);
     writeJson(KEYS.rsvps, [...this.rsvps().filter((r) => !isDemo(r.weddingId)), ...demoRsvps(demo)]);
+    writeJson(KEYS.guests, [...this.guests().filter((g) => !isDemo(g.weddingId)), ...demoGuests(demo)]);
     this.write(KEYS.weddings, [...this.weddings().filter((w) => !w.demo && w.slug !== demo.slug), demo], null);
     writeJson(KEYS.seed, DEMO_SEED_VERSION);
   }
@@ -170,6 +209,10 @@ export class LocalStorageWeddingRepository extends WeddingRepository implements 
 
   private rsvps(): Rsvp[] {
     return list<Rsvp>(KEYS.rsvps);
+  }
+
+  private guests(): Guest[] {
+    return list<Guest>(KEYS.guests);
   }
 
   private write(key: string, value: unknown, weddingId: string | null): void {

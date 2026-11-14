@@ -114,7 +114,7 @@
             <button type="button" class="btn primary small" (click)="writeStory()" [disabled]="storyBusy()">
               @if (storyBusy()) { <span class="spinner" aria-hidden="true"></span> } Write our story
             </button>
-            <span class="hint">{{ settings.isDemo() ? 'Demo mode: offline templates, no key needed.' : 'Uses your ' + settings.provider() + ' key.' }}</span>
+            <span class="hint">{{ settings.aiHint() }}</span>
           </div>
           @if (storyError()) { <p class="alert small">{{ storyError() }}</p> }
         </div>

@@ -1,7 +1,8 @@
-import { Contribution, Rsvp, Side, Wedding } from '../models';
+import { defaultInvite } from '../invite';
+import { Contribution, Guest, Rsvp, Side, Wedding } from '../models';
 
 /** Bump to re-seed browsers that already have an older copy of the sample. */
-export const DEMO_SEED_VERSION = 2;
+export const DEMO_SEED_VERSION = 3;
 export const DEMO_SLUG = 'riya-weds-arjun';
 export const DEMO_ID = 'w-demo';
 const HOUR = 3_600_000;
@@ -13,6 +14,20 @@ function isoDaysFromNow(days: number, now = new Date()): string {
 
 /** The sample wedding is always about four weeks away, so the page never looks stale. */
 export function demoWedding(now = new Date()): Wedding {
+  const w = baseDemoWedding(now);
+  w.invite = {
+    ...defaultInvite(w, 'rajasthani', 'english', 'traditional'),
+    showShlok: true,
+    grandparents: { bride: 'Smt. Kamla Devi & Late Shri Hariprasad Sharma', groom: 'Smt. Shanti & Shri Mohanlal Mehta' },
+    swagatotsuk: 'Rohan & Ishita Sharma\nKabir, Myra & all the little cousins\nMama-Mami: Sanjay & Ritu Joshi',
+    darshanabhilashi: 'Sharma & Mehta Parivar\nAll our friends from Pune and Bengaluru',
+    coverPhoto: 'demo/gallery-3.svg',
+    updatedAt: now.getTime() - 5 * 24 * HOUR,
+  };
+  return w;
+}
+
+function baseDemoWedding(now: Date): Wedding {
   const day = (offset: number) => isoDaysFromNow(26 + offset, now);
   const palace = 'Jagmandir Island Palace';
   const palaceAddress = 'Lake Pichola, Udaipur, Rajasthan 313001';
@@ -141,4 +156,52 @@ export function demoRsvps(w: Wedding, now = Date.now()): Rsvp[] {
     ...(phone ? { phone: `91${phone}` } : {}),
     createdAt: now - hoursAgo * HOUR,
   }));
+}
+
+type GuestRow = [string, string, Side, string, string?, ('sent' | 'opened' | 'rsvp' | 'gave' | '')?];
+
+/** 25 guests at every stage, so the invite tracker looks like a real week before the wedding. */
+const GUESTS: GuestRow[] = [
+  ['Nana & Nani', 'Nana-Nani', 'bride', 'Family', '9810012345', 'gave'],
+  ['Sunita Mausi', 'Sunita Mausi & family', 'bride', "Mummy's side", '9822012345', 'gave'],
+  ['Rajesh Chacha', 'Rajesh Chacha & family', 'groom', "Papa's side", '9811012345', 'gave'],
+  ['Priya & Karan', '', 'bride', 'College friends', '9765012345', 'gave'],
+  ['Vikram Bhaiya', '', 'groom', 'Cousins', '9899012345', 'gave'],
+  ['Dadi', '', 'groom', 'Family', '9811112340', 'rsvp'],
+  ['Meera & Rohit Joshi', 'Joshi Parivar', 'bride', 'Neighbours', '9811112345', 'gave'],
+  ['Neha Kulkarni', '', 'bride', 'College friends', '9822334455', 'rsvp'],
+  ['Pooja Bua', 'Pooja Bua & family', 'groom', "Papa's side", '9876501234', 'gave'],
+  ['Sanjay & Ritu Joshi', 'Mama-Mami', 'bride', "Mama's family", '9820098200', 'rsvp'],
+  ['Anil Verma', 'Verma Parivar', 'groom', 'Office', '9845012345', 'opened'],
+  ['Deepa Iyer', 'The Iyers, B-204', 'groom', 'Neighbours', '9845098450', 'gave'],
+  ['Farhan & Zoya', '', 'bride', 'College friends', '9839012345', 'gave'],
+  ['Kabir Malhotra', '', 'groom', 'School friends', '9873012345', 'gave'],
+  ['Ananya Kapoor', '', 'bride', 'Office', '9818012345', 'gave'],
+  ['Dr. Shalini Rao', '', 'bride', 'Family friends', '9822077777', 'gave'],
+  ['Gupta Uncle', 'Gupta Parivar', 'groom', 'Family friends', '9811066666', 'opened'],
+  ['Ritika & Sameer', '', 'bride', 'Office', '9830012345', 'opened'],
+  ['Harsh Bhatt', 'Bhatt Parivar', 'groom', "Papa's side", '9824012345', 'sent'],
+  ['Kavya Nair', '', 'bride', 'School friends', '9895012345', 'sent'],
+  ['Mohit Chacha', 'Mohit Chacha & family', 'groom', "Papa's side", '9829012345', 'sent'],
+  ['Swati Didi', 'Swati Didi & Jiju', 'bride', 'Cousins', '9850012345', ''],
+  ['Arora Family', 'Arora Parivar', 'groom', 'Neighbours', '9810077777', ''],
+  ['Lakshmi Aunty', '', 'bride', "Mummy's side", '', ''],
+  ['Team Data Platform', 'Team Data Platform', 'groom', 'Office', '9886012345', 'opened'],
+];
+
+export function demoGuests(w: Wedding, now = Date.now()): Guest[] {
+  const order = ['', 'sent', 'opened', 'rsvp', 'gave'];
+  return GUESTS.map(([name, greeting, side, group, phone, status = ''], i) => {
+    const step = order.indexOf(status);
+    const at = (n: number, hours: number) => (step >= n ? now - (hours - i) * HOUR : undefined);
+    const g: Guest = { id: `gu-demo-${i + 1}`, weddingId: w.id, name, side, group, token: `demo${String(i + 1).padStart(4, '0')}tk`, createdAt: now - (300 - i) * HOUR };
+    if (greeting) g.greeting = greeting;
+    if (phone) g.phone = `91${phone}`;
+    const sent = at(1, 200), opened = at(2, 150), rsvp = at(3, 120), gave = at(4, 60);
+    if (sent) g.sentAt = sent;
+    if (opened) g.openedAt = opened;
+    if (rsvp) g.rsvpAt = rsvp;
+    if (gave) g.gaveAt = gave;
+    return g;
+  });
 }

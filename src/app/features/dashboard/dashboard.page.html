@@ -68,7 +68,7 @@
         <button class="btn small" type="button" (click)="copyLink()">Copy link</button>
         <a class="btn small" [routerLink]="['/w', w.slug, 'card']">Print venue QR</a>
       </div>
-      <p class="hint provider">Thank-you notes are written by <a routerLink="/settings">{{ settings.isDemo() ? 'Demo mode (offline templates)' : settings.provider() }}</a>.</p>
+      <p class="hint provider">Thank-you notes are written by <a routerLink="/settings">{{ settings.isDemo() ? 'offline templates' : settings.provider() === 'auto' ? 'free AI (no key)' : settings.provider() }}</a>.</p>
     </section>
   </div>
 
