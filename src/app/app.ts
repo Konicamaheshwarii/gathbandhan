@@ -2,6 +2,8 @@ import { ChangeDetectionStrategy, Component, computed, inject } from '@angular/c
 import { toSignal } from '@angular/core/rxjs-interop';
 import { NavigationEnd, Router, RouterLink, RouterLinkActive, RouterOutlet } from '@angular/router';
 import { filter, map } from 'rxjs';
+import { AuthService } from './core/auth/auth.service';
+import { WeddingRepository } from './core/data/wedding.repository';
 import { PROVIDERS, SettingsStore } from './core/settings.store';
 import { ToastsComponent } from './shared/toast.service';
 
@@ -10,6 +12,9 @@ import { ToastsComponent } from './shared/toast.service';
   imports: [RouterOutlet, RouterLink, RouterLinkActive, ToastsComponent],
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
+    @if (demoMode) {
+      <p class="demo-banner" role="note"><span aria-hidden="true">🪔</span> Demo mode: data stays in this browser.</p>
+    }
     <header class="top" [class.guest]="guestView()">
       <a routerLink="/" class="brand" aria-label="Shagun home">
         <svg class="logo" viewBox="0 0 64 64" width="26" height="26" aria-hidden="true">
@@ -29,6 +34,9 @@ import { ToastsComponent } from './shared/toast.service';
           <a routerLink="/settings" routerLinkActive="active">Settings</a>
         </nav>
         <a routerLink="/settings" class="chip provider" [title]="'AI provider: ' + providerLabel()">AI: {{ providerLabel() }}</a>
+        @if (auth.enabled) {
+          <a routerLink="/login" class="chip account" [title]="auth.user()?.email ?? 'Sign in'">{{ auth.user() ? 'Account' : 'Sign in' }}</a>
+        }
       }
     </header>
     <main><router-outlet /></main>
@@ -42,13 +50,15 @@ import { ToastsComponent } from './shared/toast.service';
 export class App {
   private readonly settings = inject(SettingsStore);
   private readonly router = inject(Router);
+  protected readonly auth = inject(AuthService);
+  protected readonly demoMode = inject(WeddingRepository).mode === 'local';
 
   private readonly url = toSignal(
     this.router.events.pipe(filter((e) => e instanceof NavigationEnd), map((e) => e.urlAfterRedirects)),
     { initialValue: '' },
   );
   /** Guests arriving from WhatsApp see the wedding, not the couple's tools. */
-  protected readonly guestView = computed(() => /^\/w\/[^/]+(\/give)?(\?|$)/.test(this.url()));
+  protected readonly guestView = computed(() => /^\/w\/[^/]+(\/give|\/rsvp)?(\?|$)/.test(this.url()));
   protected readonly providerLabel = computed(
     () => PROVIDERS.find((p) => p.id === this.settings.provider())?.label.split(' (')[0] ?? '');
 }

@@ -1,6 +1,15 @@
 <h1>Settings</h1>
 
 <section class="card stack">
+  <h2>Where your data lives</h2>
+  @if (backend) {
+    <p class="small"><span class="chip good">Online</span> Connected to Supabase. Pages, shagun and RSVPs are shared across every phone and laptop; only the couple can see the dashboard.</p>
+  } @else {
+    <p class="small"><span class="chip gold">Demo mode</span> Data stays in this browser. To make pages work across devices, the site owner adds free Supabase keys to <code>public/config.json</code> (see <code>docs/SUPABASE_SETUP.md</code>).</p>
+  }
+</section>
+
+<section class="card stack">
   <h2>AI writer</h2>
   <p class="muted small">Used to draft your page story, suggest dreams with target amounts, and write thank-you notes.</p>
   <div class="providers" role="radiogroup" aria-label="AI provider">
@@ -71,7 +80,6 @@
   <p class="muted small">
     Shagun never handles money. Guests pay with a standard UPI intent link or QR code, straight from their UPI app to
     the couple's UPI ID. "I've paid" is the guest's own confirmation, which is why the dashboard lets the couple verify
-    each one against their bank app. Wedding pages and contributions are stored in this browser (localStorage); share
-    links carry the wedding page itself so they open on any phone.
+    each one against their bank app. @if (backend) { Guests see totals and blessings but never other guests' phone numbers, and amounts only if the couple chooses to show them. } @else { In demo mode wedding pages and contributions are stored in this browser (localStorage); share links carry the wedding page itself so they open on any phone. }
   </p>
 </section>

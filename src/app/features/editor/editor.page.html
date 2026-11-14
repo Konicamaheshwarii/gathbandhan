@@ -59,7 +59,21 @@
             <span>{{ form.controls.coverImage.value ? 'Change photo' : '+ Your photo' }}</span>
           </label>
         </div>
-        <span class="hint">Photos are resized on your device. Share links use the colour style so they stay short.</span>
+        <span class="hint">Photos are resized on your device.@if (!backend) { Share links use the colour style so they stay short. }</span>
+      </div>
+
+      <div class="stack">
+        <span class="label">With the blessings of <span class="hint">(optional, shown on your page)</span></span>
+        <div class="two">
+          <label>
+            Bride's parents
+            <input type="text" formControlName="brideParents" placeholder="Mrs. Sunita & Mr. Rakesh Sharma" />
+          </label>
+          <label>
+            Groom's parents
+            <input type="text" formControlName="groomParents" placeholder="Mrs. Kavita & Mr. Anil Mehta" />
+          </label>
+        </div>
       </div>
     </section>
 
@@ -111,12 +125,26 @@
         <textarea formControlName="story" rows="6" placeholder="A few lines about you two, and why you would love shagun towards your dreams instead of gifts."></textarea>
         <span class="hint">{{ form.controls.story.value.length }}/1200</span>
       </label>
+
+      <app-story-editor [milestones]="form.controls.milestones" [partner1]="form.controls.partner1.value" [partner2]="form.controls.partner2.value" />
+
+      <div class="stack">
+        <span class="label">Photos <span class="hint">(up to six, shown under your story)</span></span>
+        <app-gallery-editor [photos]="form.controls.gallery" />
+      </div>
+    </section>
+
+    <!-- Functions -->
+    <section class="card stack">
+      <h2><span class="num-badge">3</span> Wedding functions</h2>
+      <p class="muted small">Haldi, mehndi, sangeet, the wedding, the reception: guests see a timeline, add each one to their calendar and RSVP.</p>
+      <app-events-editor [events]="form.controls.events" [weddingDate]="form.controls.date.value" [venue]="form.controls.venue.value" />
     </section>
 
     <!-- Goals -->
     <section class="card stack">
       <div class="row">
-        <h2><span class="num-badge">3</span> Your dreams</h2>
+        <h2><span class="num-badge">4</span> Your dreams</h2>
         <span class="spacer"></span>
         <button type="button" class="btn small ai-btn" (click)="goalsHelperOpen.set(!goalsHelperOpen())" [attr.aria-expanded]="goalsHelperOpen()">
           ✨ Suggest with AI
@@ -223,7 +251,7 @@
 
     <!-- Payment -->
     <section class="card stack">
-      <h2><span class="num-badge">4</span> Where shagun goes</h2>
+      <h2><span class="num-badge">5</span> Where shagun goes</h2>
       <p class="muted small">Guests pay this UPI ID directly from their own app. Shagun never holds or sees the money.</p>
       <div class="two">
         <label>

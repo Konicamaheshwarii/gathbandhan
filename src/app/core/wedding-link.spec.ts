@@ -14,6 +14,24 @@ describe('wedding share links', () => {
     expect(back.goals).toEqual(w.goals);
   });
 
+  it('carries functions, families and the story timeline (version 2), and still opens version 1 links', async () => {
+    const w = wedding({
+      events: [{ id: 'e1', kind: 'sangeet', name: 'Sangeet', date: '2026-12-11', time: '19:30', venue: 'Durbar Hall', mapsUrl: 'https://maps.app.goo.gl/x', dressCode: 'Indo-western' }],
+      families: { bride: 'Mrs. & Mr. Rao', groom: 'Mrs. & Mr. Khanna' },
+      milestones: [{ id: 'm1', when: '2019', title: 'Train chai', text: 'We met.', emoji: '☕' }],
+      gallery: [{ id: 'p1', url: 'data:image/jpeg;base64,AAAA' }],
+    });
+    const back = await decodeWedding(await encodeWedding(w));
+    expect(back.events).toEqual(w.events!);
+    expect(back.families).toEqual(w.families!);
+    expect(back.milestones).toEqual(w.milestones!);
+    expect(back.gallery).toBeUndefined();
+
+    const v1 = packWedding(w).slice(0, 13);
+    v1[0] = 1;
+    expect(unpackWedding(v1).events).toEqual([]);
+  });
+
   it('leaves uploaded photos out to keep links short', async () => {
     const w = wedding({ cover: { preset: 'peacock', imageUrl: 'data:image/jpeg;base64,' + 'A'.repeat(50_000) } });
     const encoded = await encodeWedding(w);

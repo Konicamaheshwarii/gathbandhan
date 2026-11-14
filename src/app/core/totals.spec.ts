@@ -1,5 +1,5 @@
 import { contribution, wedding } from './testing';
-import { computeTotals, expectedShagun } from './totals';
+import { computeTotals, expectedShagun, publicActivity, totalsFromActivity } from './totals';
 
 describe('computeTotals', () => {
   it('sums each goal and the wedding, separating verified money', () => {
@@ -42,5 +42,34 @@ describe('expectedShagun', () => {
   it('multiplies guests by the typical shagun', () => {
     expect(expectedShagun(200, 2000)).toBe(400000);
     expect(expectedShagun(-5, 2000)).toBe(0);
+  });
+});
+
+describe('publicActivity', () => {
+  const list = () => [
+    contribution('g1', 2100, { guestName: 'Kabir', message: 'Enjoy!', phone: '919876543210', side: 'groom', createdAt: 5 }),
+    contribution('g1', 5100, { guestName: 'Zoya', message: '', createdAt: 6 }),
+    contribution('g2', 1100, { guestName: 'kabir ', message: 'Trees!', createdAt: 7 }),
+  ];
+
+  it('never exposes phone numbers, and hides amounts unless the couple shows them', () => {
+    const hidden = publicActivity(wedding({ showAmounts: false }), list());
+    expect(hidden.wall.map((e) => e.guestName)).toEqual(['kabir ', 'Kabir']);
+    expect(hidden.wall.every((e) => !('amount' in e) && !('phone' in e))).toBeTrue();
+    expect(hidden.wall[1].side).toBe('groom');
+    const shown = publicActivity(wedding({ showAmounts: true }), list());
+    expect(shown.wall[1].amount).toBe(2100);
+  });
+
+  it('gives the same totals guests and the couple see', () => {
+    const w = wedding();
+    const a = publicActivity(w, list());
+    expect(a.goals).toEqual({ g1: { raised: 7200, count: 2 }, g2: { raised: 1100, count: 1 } });
+    expect(a.contributors).toBe(2);
+    const pub = totalsFromActivity(w, a);
+    const full = computeTotals(w, list());
+    expect(pub.raised).toBe(full.raised);
+    expect(pub.percent).toBe(full.percent);
+    expect(pub.goals.map((g) => g.percent)).toEqual(full.goals.map((g) => g.percent));
   });
 });

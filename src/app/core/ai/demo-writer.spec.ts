@@ -1,6 +1,7 @@
+import { validateMilestones } from './prompts';
 import { DemoProvider } from '../llm/demo.provider';
 import { goalsRequest, storyRequest, thanksRequest, validateGoals } from './prompts';
-import { coupleFirstNames, demoGoals, demoStory, demoThanks, meetingClause } from './demo-writer';
+import { coupleFirstNames, demoGoals, demoStory, demoThanks, meetingClause, demoMilestones } from './demo-writer';
 import { StoryInput, ThanksInput } from './ai.models';
 
 const story = (patch: Partial<StoryInput> = {}): StoryInput => ({
@@ -103,5 +104,35 @@ describe('DemoProvider', () => {
     for await (const c of provider.stream(storyRequest(story()))) chunks.push(c);
     expect(chunks.length).toBeGreaterThan(10);
     expect(chunks.join('')).toBe(demoStory(story()));
+  });
+});
+
+describe('demoMilestones', () => {
+  const input = { partner1: 'Riya Sharma', partner2: 'Arjun Mehta', howWeMet: 'on a delayed train in 2019', details: 'Long distance Pune–Bengaluru in 2021. Proposed on Diwali 2024 on the terrace.', language: 'english' as const };
+
+  it('goes from how they met, through their moments, to the wedding', () => {
+    const list = demoMilestones(input);
+    expect(list[0]).toEqual(jasmine.objectContaining({ when: '2019', title: 'How we met' }));
+    expect(list[0].text).toContain('met on a delayed train');
+    expect(list.map((m) => m.title)).toContain('The proposal');
+    expect(list.find((m) => m.title === 'The proposal')!.when).toBe('2024');
+    expect(list[list.length - 1].title).toBe('Shubh vivah');
+    expect(validateMilestones({ milestones: list }).length).toBe(list.length);
+  });
+
+  it('writes Hindi and Hinglish too, and is deterministic', () => {
+    expect(demoMilestones({ ...input, language: 'hindi' })[0].title).toBe('पहली मुलाक़ात');
+    expect(demoMilestones({ ...input, language: 'hinglish' })[0].text).toContain('Hum met');
+    expect(demoMilestones(input)).toEqual(demoMilestones(input));
+  });
+});
+
+describe('validateMilestones', () => {
+  it('drops empty items, fixes emojis and caps the list', () => {
+    const raw = { milestones: [{ title: 'A', text: 'x', emoji: 'no' }, { title: '', text: 'y' }, ...Array(9).fill({ title: 'B', text: 'z', emoji: '💍' })] };
+    const list = validateMilestones(raw);
+    expect(list.length).toBe(6);
+    expect(list[0].emoji).toBe('💛');
+    expect(() => validateMilestones({})).toThrowError(/timeline/);
   });
 });

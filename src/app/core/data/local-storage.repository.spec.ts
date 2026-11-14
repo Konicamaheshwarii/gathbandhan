@@ -80,6 +80,37 @@ describe('LocalStorageWeddingRepository', () => {
     expect(await repo.getWeddingBySlug('asha-weds-dev')).not.toBeNull();
   });
 
+  it('seeds a sample with functions, families, story, photos, goal updates and RSVPs', async () => {
+    const demo = (await repo.getWeddingBySlug(DEMO_SLUG))!;
+    expect(demo.events!.map((e) => e.kind)).toEqual(['haldi', 'mehndi', 'sangeet', 'wedding', 'reception']);
+    expect(demo.families!.bride).toContain('Sharma');
+    expect(demo.milestones!.length).toBe(4);
+    expect(demo.gallery!.length).toBe(4);
+    expect(demo.goals[0].updates![0].text).toContain('Flights booked');
+    expect((await repo.listRsvps(demo.id)).length).toBe(10);
+  });
+
+  it('records RSVPs and shows guests only the public view of contributions', async () => {
+    await repo.saveWedding(wedding());
+    expect(await repo.isOwner('w1')).toBeTrue();
+    expect(await repo.isOwner('nope')).toBeFalse();
+    const r = await repo.addRsvp({ weddingId: 'w1', guestName: 'Sharma Parivar', eventIds: ['e1'], partySize: 4, note: '' });
+    expect((await repo.listRsvps('w1'))[0].id).toBe(r.id);
+    await repo.deleteRsvp(r.id);
+    expect(await repo.listRsvps('w1')).toEqual([]);
+
+    await repo.addContribution({ weddingId: 'w1', goalId: 'g1', guestName: 'Kabir', amount: 2100, message: 'Hi', phone: '919876543210' });
+    const pub = await repo.getPublicActivity('w1');
+    expect(pub.raised).toBe(2100);
+    expect(pub.wall[0]).toEqual(jasmine.objectContaining({ guestName: 'Kabir', message: 'Hi' }));
+    expect(JSON.stringify(pub)).not.toContain('9876543210');
+  });
+
+  it('has no co-owners in demo mode', async () => {
+    expect(await repo.listOwners()).toEqual([]);
+    await expectAsync(repo.addOwner()).toBeRejectedWithError(/backend/);
+  });
+
   it('reports a full storage instead of losing data silently', async () => {
     spyOn(Storage.prototype, 'setItem').and.throwError('QuotaExceededError');
     await expectAsync(repo.saveWedding(wedding())).toBeRejectedWithError(/out of storage/);

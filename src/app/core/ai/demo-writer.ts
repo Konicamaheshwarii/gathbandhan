@@ -1,7 +1,7 @@
 import { formatInr, formatInrShort } from '../format';
 import { NoteLanguage } from '../models';
 import { firstName, pickBy } from '../util';
-import { GoalSuggestions, GoalsInput, StoryInput, SuggestedGoal, ThanksInput } from './ai.models';
+import { GoalSuggestions, GoalsInput, MilestonesInput, StoryInput, SuggestedGoal, SuggestedMilestone, ThanksInput } from './ai.models';
 import { roundTarget } from './prompts';
 
 /**
@@ -204,4 +204,50 @@ export function demoThanks(input: ThanksInput): string {
   // The Hinglish template reads better with "aapke shagun aur ₹X" than with the English phrase.
   if (input.language === 'hinglish' && input.mentionAmount) parts.amountEn = ` (${formatInr(input.amount)})`;
   return pickBy(NOTES[input.language], guest)(parts);
+}
+
+// ---------- story timeline ----------
+
+const YEAR = /\b(19|20)\d{2}\b/;
+const MOMENTS: [RegExp, string, string][] = [
+  [/propos|engag|ring|roka|sagai/i, '💍', 'The proposal'],
+  [/moved|shift|relocat|new city|long[- ]distance/i, '🏙️', 'A new city'],
+  [/trip|travel|holiday|vacation/i, '✈️', 'Our first trip'],
+  [/famil|parents|met the/i, '🪔', 'Meeting the families'],
+  [/dog|cat|pet|puppy/i, '🐶', 'One more member'],
+  [/home|flat|house/i, '🏡', 'Our first home'],
+];
+
+const TIMELINE_WORDS: Record<NoteLanguage, { met: string; wedding: string; soon: string; weddingText: (a: string, b: string) => string }> = {
+  english: { met: 'How we met', wedding: 'Shubh vivah', soon: 'Then', weddingText: (a, b) => `${a} and ${b}, with all of you there. The best chapter starts now.` },
+  hinglish: { met: 'Pehli mulaqat', wedding: 'Shubh vivah', soon: 'Phir', weddingText: (a, b) => `${a} aur ${b}, aap sab ke saath. Asli kahani ab shuru hoti hai!` },
+  hindi: { met: 'पहली मुलाक़ात', wedding: 'शुभ विवाह', soon: 'फिर', weddingText: (a, b) => `${a} और ${b}, आप सबके आशीर्वाद के साथ। असली कहानी अब शुरू होती है।` },
+};
+
+/** Splits the couple's notes into moments and places them between "how we met" and the wedding. */
+export function demoMilestones(input: MilestonesInput): SuggestedMilestone[] {
+  const a = firstName(input.partner1) || 'One of us';
+  const b = firstName(input.partner2) || 'the other';
+  const t = TIMELINE_WORDS[input.language];
+  const met = meetingClause(input.howWeMet);
+  const metText =
+    input.language === 'hindi' ? (met ? `हमारी कहानी तब शुरू हुई जब we ${met}.` : `${a} और ${b} की कहानी एक छोटी-सी मुलाक़ात से शुरू हुई।`)
+    : input.language === 'hinglish' ? (met ? `Hum ${met}, aur wahi se sab shuru hua.` : `${a} aur ${b} mile, aur baatein kabhi khatam nahi hui.`)
+    : met ? sentence(`We ${met}, and that was that`) : `${a} and ${b} met, and neither of us has stopped talking since.`;
+  const out: SuggestedMilestone[] = [{ when: input.howWeMet.match(YEAR)?.[0] ?? '', title: t.met, emoji: '✨', text: metText }];
+  const parts = input.details
+    .split(/[.;\n]|,\s*(?=then\b|and then\b|we\b|in\b|on\b)/i)
+    .map((p) => p.trim())
+    .filter((p) => p.length > 3);
+  for (const part of parts.slice(0, 3)) {
+    const rule = MOMENTS.find(([re]) => re.test(part));
+    out.push({
+      when: part.match(YEAR)?.[0] ?? t.soon,
+      title: rule?.[2] ?? pickBy(['A little milestone', 'Growing together', 'One more chapter'], part),
+      emoji: rule?.[1] ?? '💛',
+      text: sentence(part),
+    });
+  }
+  out.push({ when: '', title: t.wedding, emoji: '🔥', text: t.weddingText(a, b) });
+  return out;
 }

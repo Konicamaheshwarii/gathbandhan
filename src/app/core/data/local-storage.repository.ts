@@ -1,28 +1,34 @@
 import { Injectable, OnDestroy } from '@angular/core';
 import { Observable, Subject } from 'rxjs';
-import { Contribution, NewContribution, Wedding } from '../models';
+import { Contribution, NewContribution, NewRsvp, PublicActivity, Rsvp, Wedding } from '../models';
 import { readJson, writeJson } from '../storage';
+import { publicActivity } from '../totals';
 import { uid } from '../util';
-import { DEMO_SEED_VERSION, demoContributions, demoWedding } from './seed';
+import { DEMO_SEED_VERSION, demoContributions, demoRsvps, demoWedding } from './seed';
 import { RepositoryChange, WeddingRepository } from './wedding.repository';
 
 export const KEYS = {
   weddings: 'sg.weddings',
   contributions: 'sg.contributions',
+  rsvps: 'sg.rsvps',
   seed: 'sg.seedVersion',
 } as const;
 
+const NO_ACCOUNTS = 'Co-owners need the online backend. In demo mode everything stays in this browser.';
+
 /**
- * Browser-only repository. Writes are synchronous under the hood, but the API is async so a
- * network implementation is a drop-in replacement. Other tabs are notified through the
- * `storage` event and a BroadcastChannel, which keeps the blessing wall live.
+ * Browser-only repository (demo mode). Writes are synchronous under the hood, but the API is
+ * async so the Supabase implementation is a drop-in replacement. Other tabs are notified through
+ * the `storage` event and a BroadcastChannel, which keeps the blessing wall live.
  */
 @Injectable()
 export class LocalStorageWeddingRepository extends WeddingRepository implements OnDestroy {
+  readonly mode = 'local' as const;
+
   private readonly changes$ = new Subject<RepositoryChange>();
   private readonly channel = typeof BroadcastChannel !== 'undefined' ? new BroadcastChannel('sg.changes') : null;
   private readonly onStorage = (e: StorageEvent) => {
-    if (e.key === KEYS.weddings || e.key === KEYS.contributions) this.changes$.next({ weddingId: null });
+    if (e.key === KEYS.weddings || e.key === KEYS.contributions || e.key === KEYS.rsvps) this.changes$.next({ weddingId: null });
   };
 
   constructor() {
@@ -64,7 +70,19 @@ export class LocalStorageWeddingRepository extends WeddingRepository implements 
 
   async deleteWedding(id: string): Promise<void> {
     writeJson(KEYS.contributions, this.contributions().filter((c) => c.weddingId !== id));
+    writeJson(KEYS.rsvps, this.rsvps().filter((r) => r.weddingId !== id));
     this.write(KEYS.weddings, this.weddings().filter((w) => w.id !== id), id);
+  }
+
+  /** Everything in this browser was made (or opened) here, so this browser manages it. */
+  async isOwner(weddingId: string): Promise<boolean> {
+    return this.weddings().some((w) => w.id === weddingId);
+  }
+
+  async getPublicActivity(weddingId: string): Promise<PublicActivity> {
+    const w = this.weddings().find((x) => x.id === weddingId);
+    const list = this.contributions().filter((c) => c.weddingId === weddingId);
+    return w ? publicActivity(w, list) : { goals: {}, raised: 0, contributors: 0, wall: [] };
   }
 
   async listContributions(weddingId: string): Promise<Contribution[]> {
@@ -94,12 +112,41 @@ export class LocalStorageWeddingRepository extends WeddingRepository implements 
     this.write(KEYS.contributions, all.filter((c) => c.id !== id), target?.weddingId ?? null);
   }
 
+  async listRsvps(weddingId: string): Promise<Rsvp[]> {
+    return this.rsvps()
+      .filter((r) => r.weddingId === weddingId)
+      .sort((a, b) => b.createdAt - a.createdAt);
+  }
+
+  async addRsvp(input: NewRsvp): Promise<Rsvp> {
+    const rsvp: Rsvp = { ...input, id: uid('r'), createdAt: Date.now() };
+    this.write(KEYS.rsvps, [...this.rsvps(), rsvp], input.weddingId);
+    return rsvp;
+  }
+
+  async deleteRsvp(id: string): Promise<void> {
+    const all = this.rsvps();
+    const target = all.find((r) => r.id === id);
+    this.write(KEYS.rsvps, all.filter((r) => r.id !== id), target?.weddingId ?? null);
+  }
+
+  async listOwners(): Promise<string[]> {
+    return [];
+  }
+
+  async addOwner(): Promise<void> {
+    throw new Error(NO_ACCOUNTS);
+  }
+
+  async removeOwner(): Promise<void> {
+    throw new Error(NO_ACCOUNTS);
+  }
+
   async resetDemo(): Promise<void> {
     const demo = demoWedding();
-    writeJson(KEYS.contributions, [
-      ...this.contributions().filter((c) => !this.isDemoWedding(c.weddingId)),
-      ...demoContributions(demo),
-    ]);
+    const isDemo = (id: string) => id === demo.id || this.isDemoWedding(id);
+    writeJson(KEYS.contributions, [...this.contributions().filter((c) => !isDemo(c.weddingId)), ...demoContributions(demo)]);
+    writeJson(KEYS.rsvps, [...this.rsvps().filter((r) => !isDemo(r.weddingId)), ...demoRsvps(demo)]);
     this.write(KEYS.weddings, [...this.weddings().filter((w) => !w.demo && w.slug !== demo.slug), demo], null);
     writeJson(KEYS.seed, DEMO_SEED_VERSION);
   }
@@ -114,13 +161,15 @@ export class LocalStorageWeddingRepository extends WeddingRepository implements 
   }
 
   private weddings(): Wedding[] {
-    const list = readJson<Wedding[]>(KEYS.weddings, []);
-    return Array.isArray(list) ? list : [];
+    return list<Wedding>(KEYS.weddings);
   }
 
   private contributions(): Contribution[] {
-    const list = readJson<Contribution[]>(KEYS.contributions, []);
-    return Array.isArray(list) ? list : [];
+    return list<Contribution>(KEYS.contributions);
+  }
+
+  private rsvps(): Rsvp[] {
+    return list<Rsvp>(KEYS.rsvps);
   }
 
   private write(key: string, value: unknown, weddingId: string | null): void {
@@ -131,4 +180,9 @@ export class LocalStorageWeddingRepository extends WeddingRepository implements 
     this.changes$.next(change);
     this.channel?.postMessage(change);
   }
+}
+
+function list<T>(key: string): T[] {
+  const value = readJson<T[]>(key, []);
+  return Array.isArray(value) ? value : [];
 }

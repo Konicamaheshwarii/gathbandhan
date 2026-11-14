@@ -1,8 +1,8 @@
 import { formatInr } from '../format';
 import { LlmRequest } from '../llm/llm-provider';
-import { MAX_GOALS, NoteLanguage } from '../models';
+import { MAX_GOALS, MAX_MILESTONES, NoteLanguage } from '../models';
 import { clamp } from '../util';
-import { GoalSuggestions, GoalsInput, StoryInput, SuggestedGoal, ThanksInput } from './ai.models';
+import { GoalSuggestions, GoalsInput, MilestonesInput, StoryInput, SuggestedGoal, SuggestedMilestone, ThanksInput } from './ai.models';
 
 const SYSTEM = `You help Indian couples with their wedding shagun page: a wishlist of real goals
 (honeymoon, first home, a trip) that guests contribute to by UPI instead of buying gifts.
@@ -75,6 +75,25 @@ shagun will make possible, and sign off with the couple's first names. Plain tex
   };
 }
 
+export function milestonesRequest(input: MilestonesInput): LlmRequest {
+  return {
+    task: 'milestones',
+    json: true,
+    input,
+    system: SYSTEM,
+    prompt: `Draft the "our story" timeline for a couple's wedding page, in their voice ("we").
+Couple: ${fence('names', `${input.partner1} & ${input.partner2}`, 120)}
+How they met: ${fence('how_we_met', input.howWeMet)}
+Other moments they mentioned: ${fence('details', input.details)}
+Language: ${LANGUAGE[input.language]}.
+3 to 5 milestones in order, from how they met to the wedding. Use only facts they gave; where a date is
+unknown, use a soft label such as "Soon after". Titles under 40 characters, each text under 30 words.
+
+Reply with JSON only:
+{"milestones":[{"when":"March 2019","title":"...","text":"...","emoji":"one emoji"}]}`,
+  };
+}
+
 // ---------- reply parsing ----------
 
 export function extractJson(text: string): any {
@@ -139,4 +158,20 @@ export function validateGoals(raw: any): GoalSuggestions {
   }
   if (!goals.length) throw new Error('The AI did not suggest any usable goals. Try describing your plans in more detail.');
   return { goals, tip: str(raw?.tip, 240) };
+}
+
+/** Coerces a model reply into at most MAX_MILESTONES clean milestones. */
+export function validateMilestones(raw: any): SuggestedMilestone[] {
+  const list: any[] = Array.isArray(raw?.milestones) ? raw.milestones : Array.isArray(raw) ? raw : [];
+  const out: SuggestedMilestone[] = [];
+  for (const m of list) {
+    const title = str(m?.title, 60);
+    const text = str(m?.text, 240);
+    if (!title || !text) continue;
+    const emoji = str(m?.emoji, 8);
+    out.push({ when: str(m?.when, 40), title, text, emoji: EMOJI.test(emoji) ? emoji : '💛' });
+    if (out.length === MAX_MILESTONES) break;
+  }
+  if (!out.length) throw new Error('The AI did not return a usable timeline. Add a few details and try again.');
+  return out;
 }

@@ -48,7 +48,22 @@
 .stat { display: grid; text-align: right; strong { font: 600 1.6rem/1 var(--font-display); } }
 .give-cta { font-size: 1.05rem; min-height: 50px; }
 
-.story p { white-space: pre-line; margin: 0; font-size: 1.04rem; }
+.story-text { white-space: pre-line; margin: 0; font-size: 1.04rem; }
+.story h2 { margin-bottom: 0.4rem; }
+
+.families { margin-top: 0.9rem; p { margin: 0; } .eyebrow { margin-bottom: 0.15rem; } span { display: inline-block; } }
+.amp-small { margin: 0 0.45rem; color: #ffd88a; }
+
+.update {
+  display: flex;
+  gap: 0.6rem;
+  align-items: flex-start;
+  background: var(--good-soft);
+  border-radius: 12px;
+  padding: 0.55rem 0.7rem;
+  p { margin: 0; }
+  img { width: 3.2rem; height: 3.2rem; border-radius: 10px; object-fit: cover; flex: none; }
+}
 
 .section-title { margin: 0.25rem 0 0.75rem; }
 .goals { display: grid; gap: 1rem; grid-template-columns: repeat(auto-fill, minmax(min(100%, 260px), 1fr)); }

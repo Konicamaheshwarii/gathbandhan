@@ -21,6 +21,7 @@ export class SettingsPage {
   private readonly toast = inject(ToastService);
 
   protected readonly providers = PROVIDERS;
+  protected readonly backend = inject(WeddingRepository).mode === 'supabase';
   protected readonly themes: Theme[] = ['system', 'light', 'dark'];
   protected readonly current = computed(() => PROVIDERS.find((p) => p.id === this.store.provider())!);
   protected readonly real = computed(() => (this.store.isDemo() ? null : (this.store.provider() as RealProvider)));

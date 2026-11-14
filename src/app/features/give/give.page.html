@@ -60,6 +60,15 @@
                      (input)="guestName.set($any($event.target).value)" />
               @if (submitted() && errors().name) { <span class="error-text">{{ errors().name }}</span> }
             </label>
+            <div class="side">
+              <span class="side-label">You are from <span class="hint">(optional)</span></span>
+              <div class="row" role="radiogroup" aria-label="Side">
+                @for (s of sides; track s.id) {
+                  <button type="button" role="radio" class="toggle" [attr.aria-checked]="side() === s.id"
+                          (click)="side.set(side() === s.id ? null : s.id)">{{ s.label }}</button>
+                }
+              </div>
+            </div>
             <label>
               Message for the wall <span class="hint">(optional)</span>
               <textarea rows="3" [attr.maxlength]="messageMax" placeholder="Sada khush raho…" [value]="message()"

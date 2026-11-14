@@ -12,7 +12,79 @@ export interface Goal {
   /** Optional small photo as a data URL (kept small so localStorage does not fill up). */
   imageUrl?: string;
   description?: string;
+  /** Short news from the couple guests see on the goal ("Honeymoon booked!"). Newest first. */
+  updates?: GoalUpdate[];
 }
+
+export interface GoalUpdate {
+  id: string;
+  text: string;
+  imageUrl?: string;
+  createdAt: number;
+}
+
+export const EVENT_KINDS = ['haldi', 'mehndi', 'sangeet', 'wedding', 'reception', 'custom'] as const;
+export type EventKind = (typeof EVENT_KINDS)[number];
+export const EVENT_META: Record<EventKind, { label: string; emoji: string }> = {
+  haldi: { label: 'Haldi', emoji: '🌼' },
+  mehndi: { label: 'Mehndi', emoji: '🌿' },
+  sangeet: { label: 'Sangeet', emoji: '🎶' },
+  wedding: { label: 'Wedding', emoji: '🔥' },
+  reception: { label: 'Reception', emoji: '🥂' },
+  custom: { label: 'Function', emoji: '✨' },
+};
+
+/** One function of the wedding (haldi, mehndi, sangeet…). Times are local Indian time (IST). */
+export interface WeddingEvent {
+  id: string;
+  kind: EventKind;
+  /** Display name, e.g. "Mehndi & Ladies Sangeet". Defaults to the kind's label. */
+  name: string;
+  /** YYYY-MM-DD */
+  date: string;
+  /** HH:mm, 24-hour. */
+  time: string;
+  /** HH:mm; when empty the calendar entry lasts three hours. */
+  endTime?: string;
+  venue: string;
+  address?: string;
+  mapsUrl?: string;
+  dressCode?: string;
+}
+
+/** "With blessings from…": parents' names as the couple wants them printed. */
+export interface Families {
+  bride?: string;
+  groom?: string;
+}
+
+export type Side = 'bride' | 'groom';
+export const SIDES: { id: Side; label: string }[] = [
+  { id: 'bride', label: "Bride's side" },
+  { id: 'groom', label: "Groom's side" },
+];
+
+export interface GalleryPhoto {
+  id: string;
+  /** Storage URL (backend) or a compressed data URL (demo mode). */
+  url: string;
+  caption?: string;
+}
+
+/** One moment of "our story" (how we met, the proposal…). */
+export interface Milestone {
+  id: string;
+  /** Free text such as "March 2019" or "Diwali 2023". */
+  when: string;
+  title: string;
+  text: string;
+  emoji: string;
+}
+
+export const MAX_EVENTS = 8;
+export const MAX_PHOTOS = 6;
+export const MAX_MILESTONES = 6;
+export const MAX_GOAL_UPDATES = 5;
 
 export interface Wedding {
   id: string;
@@ -31,6 +103,10 @@ export interface Wedding {
   payeeName: string;
   /** Show contribution amounts on the public blessing wall. Off by default: shagun is personal. */
   showAmounts: boolean;
+  events?: WeddingEvent[];
+  families?: Families;
+  gallery?: GalleryPhoto[];
+  milestones?: Milestone[];
   createdAt: number;
   /** Seeded sample wedding (shown with a banner). */
   demo?: boolean;
@@ -49,6 +125,7 @@ export interface Contribution {
   message: string;
   /** Optional, so the couple can send a WhatsApp thank-you. Digits only, with country code. */
   phone?: string;
+  side?: Side;
   createdAt: number;
   /** The guest tapped "I've paid"; the couple marks it verified after checking their bank app. */
   status: ContributionStatus;
@@ -56,6 +133,43 @@ export interface Contribution {
 }
 
 export type NewContribution = Omit<Contribution, 'id' | 'createdAt' | 'status' | 'thankedAt'>;
+
+/** What anyone may see of a contribution: never the phone, and the amount only when the couple shows amounts. */
+export interface WallEntry {
+  id: string;
+  goalId: string;
+  guestName: string;
+  message: string;
+  amount?: number;
+  side?: Side;
+  createdAt: number;
+}
+
+/** Public, non-sensitive view of a wedding's shagun: totals per goal and the blessing wall. */
+export interface PublicActivity {
+  goals: Record<string, { raised: number; count: number }>;
+  raised: number;
+  contributors: number;
+  wall: WallEntry[];
+}
+
+export interface Rsvp {
+  id: string;
+  weddingId: string;
+  guestName: string;
+  phone?: string;
+  side?: Side;
+  /** Events the guest will attend. */
+  eventIds: string[];
+  /** People in the party, including the guest. */
+  partySize: number;
+  note: string;
+  createdAt: number;
+}
+
+export type NewRsvp = Omit<Rsvp, 'id' | 'createdAt'>;
+export const MAX_PARTY = 20;
+export const NOTE_MAX = 280;
 
 export const MIN_GOALS = 2;
 export const MAX_GOALS = 5;

@@ -2,14 +2,18 @@ import { ChangeDetectionStrategy, Component, computed, effect, inject, input, si
 import { RouterLink } from '@angular/router';
 import { AiService } from '../../core/ai/ai.service';
 import { contributionsCsv, downloadText } from '../../core/csv';
-import { Contribution, NOTE_LANGUAGES, NoteLanguage } from '../../core/models';
+import { Contribution, GoalUpdate, NOTE_LANGUAGES, NoteLanguage, SIDES, Side } from '../../core/models';
 import { SettingsStore } from '../../core/settings.store';
 import { inviteMessage, whatsappUrl } from '../../core/share';
 import { firstName } from '../../core/util';
 import { WeddingStore } from '../../core/wedding.store';
+import { Wedding } from '../../core/models';
 import { copyText } from '../../shared/clipboard';
 import { InrPipe, TimeAgoPipe } from '../../shared/pipes';
 import { ToastService } from '../../shared/toast.service';
+import { CoOwnersComponent } from './co-owners.component';
+import { GoalUpdateComponent, withUpdate, withoutUpdate } from './goal-update.component';
+import { RsvpSummaryComponent } from './rsvp-summary.component';
 
 type Filter = 'all' | 'unverified' | 'verified' | 'unthanked';
 
@@ -23,7 +27,7 @@ interface NoteDraft {
 
 @Component({
   selector: 'app-dashboard',
-  imports: [RouterLink, InrPipe, TimeAgoPipe],
+  imports: [RouterLink, InrPipe, TimeAgoPipe, RsvpSummaryComponent, CoOwnersComponent, GoalUpdateComponent],
   providers: [WeddingStore],
   changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './dashboard.page.html',
@@ -45,6 +49,8 @@ export class DashboardPage {
     { id: 'unthanked', label: 'Not thanked' },
   ];
   protected readonly filter = signal<Filter>('all');
+  protected readonly sides = SIDES;
+  protected readonly side = signal<Side | 'all'>('all');
   protected readonly query = signal('');
   /** Contribution whose thank-you panel is open. */
   protected readonly openNote = signal<string | null>(null);
@@ -69,13 +75,20 @@ export class DashboardPage {
   });
   protected readonly visible = computed(() => {
     const q = this.query().trim().toLowerCase();
+    const side = this.side();
     return this.store.contributions().filter((c) => {
+      if (side !== 'all' && c.side !== side) return false;
       const f = this.filter();
       if (f === 'unverified' && c.status === 'verified') return false;
       if (f === 'verified' && c.status !== 'verified') return false;
       if (f === 'unthanked' && c.thankedAt) return false;
       return !q || c.guestName.toLowerCase().includes(q) || c.message.toLowerCase().includes(q);
     });
+  });
+  protected readonly bySide = computed(() => {
+    const list = this.store.contributions();
+    const total = (side: Side) => list.filter((c) => c.side === side).reduce((t, c) => t + c.amount, 0);
+    return { bride: total('bride'), groom: total('groom') };
   });
   protected readonly whatsapp = computed(() => {
     const w = this.store.wedding();
@@ -84,7 +97,7 @@ export class DashboardPage {
   });
 
   constructor() {
-    effect(() => void this.store.load(this.slug()));
+    effect(() => void this.store.load(this.slug(), { manage: true }));
   }
 
   protected async toggleVerified(c: Contribution): Promise<void> {
@@ -95,6 +108,26 @@ export class DashboardPage {
     if (!confirm(`Remove ${c.guestName}'s contribution? Use this only for mistakes or duplicates.`)) return;
     await this.store.remove(c);
     this.toast.show('Contribution removed');
+  }
+
+  protected async postUpdate(goalId: string, update: GoalUpdate): Promise<void> {
+    await this.editGoal(goalId, (g) => withUpdate(g, update), 'Update posted on your page');
+  }
+
+  protected async deleteUpdate(goalId: string, updateId: string): Promise<void> {
+    if (!confirm('Delete this update?')) return;
+    await this.editGoal(goalId, (g) => withoutUpdate(g, updateId), 'Update deleted');
+  }
+
+  private async editGoal(goalId: string, change: (g: Wedding['goals'][number]) => Wedding['goals'][number], message: string): Promise<void> {
+    const w = this.store.wedding();
+    if (!w) return;
+    try {
+      await this.store.saveWedding({ ...w, goals: w.goals.map((g) => (g.id === goalId ? change(g) : g)) });
+      this.toast.show(message);
+    } catch (e) {
+      this.toast.show((e as Error).message);
+    }
   }
 
   protected exportCsv(): void {

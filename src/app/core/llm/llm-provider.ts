@@ -1,4 +1,4 @@
-export type LlmTask = 'story' | 'goals' | 'thanks' | 'ping';
+export type LlmTask = 'story' | 'goals' | 'thanks' | 'milestones' | 'ping';
 
 export interface LlmRequest {
   task: LlmTask;

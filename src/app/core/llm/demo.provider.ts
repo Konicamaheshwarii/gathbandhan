@@ -1,5 +1,5 @@
-import { GoalsInput, StoryInput, ThanksInput } from '../ai/ai.models';
-import { demoGoals, demoStory, demoThanks } from '../ai/demo-writer';
+import { GoalsInput, MilestonesInput, StoryInput, ThanksInput } from '../ai/ai.models';
+import { demoGoals, demoMilestones, demoStory, demoThanks } from '../ai/demo-writer';
 import { LlmProvider, LlmRequest } from './llm-provider';
 
 const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
@@ -17,6 +17,8 @@ export class DemoProvider implements LlmProvider {
         return demoThanks(req.input as ThanksInput);
       case 'story':
         return demoStory(req.input as StoryInput);
+      case 'milestones':
+        return JSON.stringify({ milestones: demoMilestones(req.input as MilestonesInput) });
       default:
         return '{"ok":true}';
     }

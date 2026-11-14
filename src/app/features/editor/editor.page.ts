@@ -1,6 +1,6 @@
 import { ChangeDetectionStrategy, Component, computed, effect, inject, input, signal, untracked } from '@angular/core';
 import { toSignal } from '@angular/core/rxjs-interop';
-import { ReactiveFormsModule } from '@angular/forms';
+import { AbstractControl, FormArray, ReactiveFormsModule } from '@angular/forms';
 import { Router, RouterLink } from '@angular/router';
 import { startWith } from 'rxjs';
 import { GoalSuggestions, STORY_TONES, StoryTone, SuggestedGoal } from '../../core/ai/ai.models';
@@ -13,11 +13,14 @@ import { expectedShagun } from '../../core/totals';
 import { resizeImage } from '../../shared/image';
 import { InrPipe } from '../../shared/pipes';
 import { ToastService } from '../../shared/toast.service';
+import { EventsEditorComponent } from './events-editor.component';
+import { GalleryEditorComponent } from './gallery-editor.component';
+import { StoryEditorComponent } from './story-editor.component';
 import { GOAL_EMOJIS, goalForm, toWedding, weddingForm } from './wedding-form';
 
 @Component({
   selector: 'app-editor',
-  imports: [ReactiveFormsModule, RouterLink, InrPipe],
+  imports: [ReactiveFormsModule, RouterLink, InrPipe, EventsEditorComponent, StoryEditorComponent, GalleryEditorComponent],
   changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './editor.page.html',
   styleUrl: './editor.page.scss',
@@ -44,6 +47,7 @@ export class EditorPage {
   protected readonly maxGoals = MAX_GOALS;
   protected readonly tones = STORY_TONES;
   protected readonly languages = NOTE_LANGUAGES;
+  protected readonly backend = this.repo.mode === 'supabase';
 
   /** Form values as a signal so totals and previews recompute. */
   private readonly value = toSignal(this.form.valueChanges.pipe(startWith(null)), { initialValue: null });
@@ -89,8 +93,12 @@ export class EditorPage {
     this.original.set(w);
     if (w) {
       const fresh = weddingForm(w);
-      this.form.controls.goals.clear();
-      fresh.controls.goals.controls.forEach((g) => this.form.controls.goals.push(g));
+      // patchValue cannot add rows, so the arrays are rebuilt from the loaded wedding first.
+      for (const key of ['goals', 'events', 'milestones', 'gallery'] as const) {
+        const target = this.form.controls[key] as unknown as FormArray<AbstractControl>;
+        target.clear();
+        (fresh.controls[key] as unknown as FormArray<AbstractControl>).controls.forEach((c) => target.push(c));
+      }
       this.form.patchValue(fresh.getRawValue());
       this.plans.set(w.goals.map((g) => g.title).join(', '));
     }

@@ -1,7 +1,7 @@
 import { Injectable, inject } from '@angular/core';
 import { LlmService } from '../llm/llm.service';
-import { GoalSuggestions, GoalsInput, StoryInput, ThanksInput } from './ai.models';
-import { cleanText, extractJson, goalsRequest, storyRequest, thanksRequest, validateGoals } from './prompts';
+import { GoalSuggestions, GoalsInput, MilestonesInput, StoryInput, SuggestedMilestone, ThanksInput } from './ai.models';
+import { cleanText, extractJson, goalsRequest, milestonesRequest, storyRequest, thanksRequest, validateGoals, validateMilestones } from './prompts';
 
 /** The three AI features, independent of which provider (Gemini, Groq or Demo) is selected. */
 @Injectable({ providedIn: 'root' })
@@ -29,5 +29,9 @@ export class AiService {
     const text = cleanText(await this.llm.complete(thanksRequest(input), signal));
     if (!text) throw new Error('The AI returned an empty note. Please try again.');
     return text;
+  }
+
+  async draftMilestones(input: MilestonesInput, signal?: AbortSignal): Promise<SuggestedMilestone[]> {
+    return validateMilestones(extractJson(await this.llm.complete(milestonesRequest(input), signal)));
   }
 }

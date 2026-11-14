@@ -44,3 +44,19 @@ export interface ThanksInput {
   /** Mention the amount in the note (many families prefer not to). */
   mentionAmount: boolean;
 }
+
+export interface MilestonesInput {
+  partner1: string;
+  partner2: string;
+  howWeMet: string;
+  /** Free text: "engaged Diwali 2024 on Nani's terrace, moved to Pune in 2022". */
+  details: string;
+  language: NoteLanguage;
+}
+
+export interface SuggestedMilestone {
+  when: string;
+  title: string;
+  text: string;
+  emoji: string;
+}

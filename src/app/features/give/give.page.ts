@@ -1,7 +1,7 @@
 import { ChangeDetectionStrategy, Component, computed, effect, inject, input, signal, untracked } from '@angular/core';
 import { RouterLink } from '@angular/router';
 import { formatInr, parseAmount } from '../../core/format';
-import { MAX_UPI_AMOUNT, SHAGUN_CHIPS } from '../../core/models';
+import { MAX_UPI_AMOUNT, SHAGUN_CHIPS, SIDES, Side } from '../../core/models';
 import { inviteMessage, normalizeIndianPhone, whatsappUrl } from '../../core/share';
 import { buildUpiLink, canOpenUpiApps } from '../../core/upi';
 import { firstName } from '../../core/util';
@@ -41,6 +41,8 @@ export class GivePage {
   protected readonly guestName = signal('');
   protected readonly message = signal('');
   protected readonly phone = signal('');
+  protected readonly side = signal<Side | null>(null);
+  protected readonly sides = SIDES;
   protected readonly submitted = signal(false);
   protected readonly saving = signal(false);
 
@@ -122,6 +124,7 @@ export class GivePage {
         amount: this.amount(),
         message: this.message().trim(),
         phone: normalizeIndianPhone(this.phone()) ?? undefined,
+        side: this.side() ?? undefined,
       });
       this.step.set('done');
       globalThis.scrollTo?.({ top: 0 });

@@ -8,12 +8,15 @@ import { copyText } from '../../shared/clipboard';
 import { IndianDatePipe, InrPipe, TimeAgoPipe } from '../../shared/pipes';
 import { ToastService } from '../../shared/toast.service';
 import { ToranComponent } from '../../shared/toran.component';
+import { EventsTimelineComponent } from './events-timeline.component';
+import { GalleryComponent } from './gallery.component';
+import { StoryTimelineComponent } from './story-timeline.component';
 
 const WALL_PAGE = 6;
 
 @Component({
   selector: 'app-wedding',
-  imports: [RouterLink, InrPipe, IndianDatePipe, TimeAgoPipe, ToranComponent],
+  imports: [RouterLink, InrPipe, IndianDatePipe, TimeAgoPipe, ToranComponent, EventsTimelineComponent, StoryTimelineComponent, GalleryComponent],
   providers: [WeddingStore],
   changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './wedding.page.html',
@@ -47,6 +50,7 @@ export class WeddingPage {
   protected readonly goalTitles = computed(
     () => new Map((this.store.wedding()?.goals ?? []).map((g) => [g.id, `${g.emoji} ${g.title}`])),
   );
+  protected readonly sideLabel = (side?: string) => (side === 'bride' ? "Bride's side" : side === 'groom' ? "Groom's side" : '');
   protected readonly wall = computed(() => this.store.blessings().slice(0, this.wallLimit()));
   protected readonly whatsapp = computed(() => {
     const w = this.store.wedding();
@@ -55,7 +59,7 @@ export class WeddingPage {
   });
 
   constructor() {
-    effect(() => void this.store.load(this.slug(), this.d()));
+    effect(() => void this.store.load(this.slug(), { payload: this.d() }));
   }
 
   protected async copyLink(): Promise<void> {

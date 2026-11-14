@@ -1,4 +1,4 @@
-import { COVER_PRESETS, CoverPreset, Goal, MAX_GOALS, Wedding } from './models';
+import { COVER_PRESETS, CoverPreset, EVENT_KINDS, EventKind, Goal, MAX_EVENTS, MAX_GOALS, MAX_MILESTONES, Milestone, Wedding, WeddingEvent } from './models';
 import { isValidVpa } from './upi';
 import { uid } from './util';
 
@@ -9,17 +9,24 @@ import { uid } from './util';
  * Uploaded photos are left out to keep links (and venue QR codes) short.
  */
 
-const VERSION = 1;
+const VERSION = 2;
 const MAX_ENCODED = 8_000;
 const MAX_JSON = 40_000;
 
 type PackedGoal = [string, string, number, string, string];
+type PackedEvent = [string, number, string, string, string, string, string, string, string, string];
+type PackedMilestone = [string, string, string, string, string];
 
 export function packWedding(w: Wedding): unknown[] {
   return [
     VERSION, w.slug, w.partner1, w.partner2, w.date, w.venue, w.city,
     COVER_PRESETS.indexOf(w.cover.preset), w.story.slice(0, 1200), w.upiId, w.payeeName, w.showAmounts ? 1 : 0,
     w.goals.map((g): PackedGoal => [g.id, g.title, g.target, g.emoji, g.description ?? '']),
+    (w.events ?? []).slice(0, MAX_EVENTS).map((e): PackedEvent => [
+      e.id, EVENT_KINDS.indexOf(e.kind), e.name, e.date, e.time, e.endTime ?? '', e.venue, e.address ?? '', e.mapsUrl ?? '', e.dressCode ?? '',
+    ]),
+    [w.families?.bride ?? '', w.families?.groom ?? ''],
+    (w.milestones ?? []).slice(0, MAX_MILESTONES).map((m): PackedMilestone => [m.id, m.when, m.title, m.text.slice(0, 300), m.emoji]),
   ];
 }
 
@@ -29,8 +36,8 @@ const asNum = (v: unknown) => (typeof v === 'number' && Number.isFinite(v) ? v :
 const asArr = (v: unknown) => (Array.isArray(v) ? v : fail());
 
 export function unpackWedding(data: unknown): Wedding {
-  const [version, slug, p1, p2, date, venue, city, preset, story, upiId, payee, showAmounts, goals] = asArr(data);
-  if (version !== VERSION) fail();
+  const [version, slug, p1, p2, date, venue, city, preset, story, upiId, payee, showAmounts, goals, events, families, milestones] = asArr(data);
+  if (version !== 1 && version !== VERSION) fail();
   const upi = asStr(upiId, 300);
   if (!isValidVpa(upi)) fail();
   const goalList = asArr(goals).slice(0, MAX_GOALS).map((g): Goal => {
@@ -40,6 +47,27 @@ export function unpackWedding(data: unknown): Wedding {
     return { id: asStr(id, 40), title: asStr(title, 80), target: t, emoji: asStr(emoji, 16), description: asStr(description, 300) || undefined };
   });
   if (!goalList.length) fail();
+  const eventList = (events === undefined ? [] : asArr(events)).slice(0, MAX_EVENTS).map((e): WeddingEvent => {
+    const [id, kind, name, d, time, endTime, place, address, maps, dress] = asArr(e);
+    const ev: WeddingEvent = {
+      id: asStr(id, 40),
+      kind: (EVENT_KINDS[asNum(kind)] ?? 'custom') as EventKind,
+      name: asStr(name, 60),
+      date: /^\d{4}-\d{2}-\d{2}$/.test(asStr(d, 10)) ? (d as string) : fail(),
+      time: /^\d{2}:\d{2}$/.test(asStr(time, 5)) ? (time as string) : fail(),
+      venue: asStr(place, 120),
+    };
+    if (asStr(endTime, 5)) ev.endTime = endTime as string;
+    if (asStr(address, 200)) ev.address = address as string;
+    if (asStr(maps, 500)) ev.mapsUrl = maps as string;
+    if (asStr(dress, 120)) ev.dressCode = dress as string;
+    return ev;
+  });
+  const [bride, groom] = families === undefined ? ['', ''] : asArr(families);
+  const milestoneList = (milestones === undefined ? [] : asArr(milestones)).slice(0, MAX_MILESTONES).map((m): Milestone => {
+    const [id, when, title, text, emoji] = asArr(m);
+    return { id: asStr(id, 40), when: asStr(when, 40), title: asStr(title, 80), text: asStr(text, 300), emoji: asStr(emoji, 16) };
+  });
   return {
     id: uid('w'),
     slug: asStr(slug, 60).replace(/[^a-z0-9-]/g, '') || fail(),
@@ -54,6 +82,9 @@ export function unpackWedding(data: unknown): Wedding {
     upiId: upi,
     payeeName: asStr(payee, 60),
     showAmounts: showAmounts === 1,
+    events: eventList,
+    families: { bride: asStr(bride ?? '', 120), groom: asStr(groom ?? '', 120) },
+    milestones: milestoneList,
     createdAt: Date.now(),
   };
 }

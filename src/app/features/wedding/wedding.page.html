@@ -23,6 +23,12 @@
           <p class="when">{{ w.date | indianDate: 'long' }}</p>
           <p class="where">{{ w.venue }}@if (w.city) {, {{ w.city }}}</p>
           @if (countdown()) { <span class="countdown">{{ countdown() }}</span> }
+          @if (w.families?.bride || w.families?.groom) {
+            <div class="families">
+              <p class="eyebrow light">With the blessings of</p>
+              <p>@if (w.families?.bride) { <span>{{ w.families?.bride }}</span> }@if (w.families?.bride && w.families?.groom) { <span class="amp-small" aria-hidden="true">✦</span> }@if (w.families?.groom) { <span>{{ w.families?.groom }}</span> }</p>
+            </div>
+          }
         </div>
       </header>
 
@@ -53,11 +59,17 @@
             <a class="btn primary block give-cta" [routerLink]="['/w', w.slug, 'give']">Give shagun 🪔</a>
           </section>
 
-          @if (w.story) {
+          @if (w.story || w.milestones?.length || w.gallery?.length) {
             <section class="card story">
               <h2>Our story</h2>
-              <p>{{ w.story }}</p>
+              @if (w.story) { <p class="story-text">{{ w.story }}</p> }
+              @if (w.milestones?.length) { <app-story-timeline [milestones]="w.milestones!" /> }
+              @if (w.gallery?.length) { <app-gallery [photos]="w.gallery!" /> }
             </section>
+          }
+
+          @if (w.events?.length) {
+            <app-events-timeline [wedding]="w" [pageUrl]="store.shareUrl()" />
           }
 
           <section aria-labelledby="goals-title">
@@ -76,6 +88,13 @@
                       @if (g.goal.description) { <p class="muted small">{{ g.goal.description }}</p> }
                     </div>
                   </div>
+                  @if (g.goal.updates?.length) {
+                    @let u = g.goal.updates![0];
+                    <div class="update">
+                      @if (u.imageUrl) { <img [src]="u.imageUrl" alt="" loading="lazy" /> }
+                      <p class="small"><strong>Update from {{ names().a }} & {{ names().b }}:</strong> {{ u.text }} <span class="muted">· {{ u.createdAt | timeAgo }}</span></p>
+                    </div>
+                  }
                   <div class="progress" [class.funded]="g.funded"><span [style.width.%]="g.percent"></span></div>
                   <div class="goal-foot">
                     <span class="small"><strong class="num">{{ g.raised | inr }}</strong><span class="muted"> of {{ g.goal.target | inr }}</span></span>
@@ -121,7 +140,7 @@
                     <p class="msg">“{{ b.message }}”</p>
                     <p class="who small">
                       <strong>{{ b.guestName }}</strong>
-                      <span class="muted"> · {{ goalTitles().get(b.goalId) ?? 'Shagun' }}@if (w.showAmounts) { · {{ b.amount | inr }}} · {{ b.createdAt | timeAgo }}</span>
+                      <span class="muted"> · {{ goalTitles().get(b.goalId) ?? 'Shagun' }}@if (b.amount !== undefined && w.showAmounts) { · {{ b.amount | inr }}}@if (b.side) { · {{ sideLabel(b.side) }}} · {{ b.createdAt | timeAgo }}</span>
                     </p>
                   </li>
                 }

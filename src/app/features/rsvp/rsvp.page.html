@@ -1,0 +1,100 @@
+@if (store.state() === 'missing') {
+  <div class="card empty">
+    <span class="big" aria-hidden="true">🪔</span>
+    <h1>We could not find this wedding page</h1>
+    <a class="btn primary" routerLink="/">Go to Shagun</a>
+  </div>
+} @else if (store.wedding(); as w) {
+  <div class="wrap">
+    <a class="back small" [routerLink]="['/w', w.slug]">← {{ couple() }}</a>
+
+    @if (done()) {
+      <section class="card done">
+        <span class="done-icon" aria-hidden="true">{{ attending() ? '🎉' : '🙏' }}</span>
+        <h1>{{ attending() ? 'See you there, ' : 'Thank you, ' }}{{ guestName().split(' ')[0] }}!</h1>
+        @if (attending()) {
+          <p>{{ couple() }} now know that {{ partySize() === 1 ? 'you are' : partySize() + ' of you are' }} coming to
+            {{ chosen().size === events().length ? 'every function' : chosen().size + (chosen().size === 1 ? ' function' : ' functions') }}.</p>
+        } @else {
+          <p>We will miss you. {{ couple() }} will be glad to have your blessings anyway.</p>
+        }
+        <div class="stack">
+          <a class="btn primary block" [routerLink]="['/w', w.slug, 'give']">Give shagun 🪔</a>
+          <a class="btn block" [routerLink]="['/w', w.slug]">Back to the wedding page</a>
+        </div>
+      </section>
+    } @else {
+      <form class="stack" (submit)="$event.preventDefault(); submit()" novalidate>
+        <div>
+          <p class="eyebrow">RSVP</p>
+          <h1>Will you join {{ couple() }}?</h1>
+          @if (w.demo) { <p class="note small" role="note">Sample page: your reply is saved only in this browser.</p> }
+        </div>
+
+        <fieldset class="card stack">
+          <legend><h2>Which functions?</h2></legend>
+          @if (events().length) {
+            <ul class="events">
+              @for (e of events(); track e.id) {
+                <li>
+                  <label class="event" [class.on]="chosen().has(e.id)">
+                    <input type="checkbox" [checked]="chosen().has(e.id)" (change)="toggle(e.id)" />
+                    <span class="emoji" aria-hidden="true">{{ meta[e.kind].emoji }}</span>
+                    <span class="text">
+                      <strong>{{ name(e) }}</strong>
+                      <span class="hint">{{ e.date | indianDate }} · {{ time(e.time) }} · {{ e.venue }}</span>
+                    </span>
+                  </label>
+                </li>
+              }
+            </ul>
+            <p class="hint">Untick everything if you cannot make it; the couple will still love to hear from you.</p>
+          } @else {
+            <p class="muted small">The couple has not listed the functions yet. Your reply counts for the wedding.</p>
+          }
+        </fieldset>
+
+        <fieldset class="card stack">
+          <legend><h2>Who is coming?</h2></legend>
+          <label>
+            Your name <span class="hint">(or your family's, e.g. "Sharma Parivar")</span>
+            <input type="text" autocomplete="name" [value]="guestName()" (input)="guestName.set($any($event.target).value)" placeholder="e.g. Sunita Mausi" />
+            @if (submitted() && errors().name) { <span class="error-text">{{ errors().name }}</span> }
+          </label>
+          <div class="party">
+            <span class="label">People, including you</span>
+            <div class="stepper">
+              <button type="button" class="icon-btn" (click)="step(-1)" [disabled]="partySize() <= 1" aria-label="One less">−</button>
+              <output class="num" aria-live="polite">{{ partySize() }}</output>
+              <button type="button" class="icon-btn" (click)="step(1)" [disabled]="partySize() >= maxParty" aria-label="One more">+</button>
+            </div>
+          </div>
+          <div class="stack side">
+            <span class="label">You are from</span>
+            <div class="row" role="radiogroup" aria-label="Side">
+              @for (s of sides; track s.id) {
+                <button type="button" role="radio" class="toggle" [attr.aria-checked]="side() === s.id" (click)="side.set(side() === s.id ? null : s.id)">{{ s.label }}</button>
+              }
+            </div>
+          </div>
+          <label>
+            WhatsApp number <span class="hint">(optional, only the couple sees it)</span>
+            <input type="tel" inputmode="tel" autocomplete="tel" placeholder="98765 43210" [value]="phone()" (input)="phone.set($any($event.target).value)" />
+            @if (submitted() && errors().phone) { <span class="error-text">{{ errors().phone }}</span> }
+          </label>
+          <label>
+            Note for the couple <span class="hint">(optional: food preferences, arriving late…)</span>
+            <textarea rows="2" [attr.maxlength]="noteMax" [value]="note()" (input)="note.set($any($event.target).value)"></textarea>
+          </label>
+        </fieldset>
+
+        <button class="btn primary block big-btn" type="submit" [disabled]="saving()">
+          @if (saving()) { <span class="spinner" aria-hidden="true"></span> }
+          {{ attending() ? 'Send RSVP' : 'Send regrets' }}
+        </button>
+      </form>
+    }
+  </div>
+} @else {
+  <div class="empty"><span class="spinner" aria-hidden="true"></span></div>
+}

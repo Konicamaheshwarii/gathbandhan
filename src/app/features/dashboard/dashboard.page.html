@@ -4,6 +4,16 @@
     <h1>No wedding page here</h1>
     <a class="btn primary" routerLink="/create">Create your page</a>
   </div>
+} @else if (store.state() === 'ready' && !store.owner()) {
+  <div class="card empty owner-gate">
+    <span class="big" aria-hidden="true">🔒</span>
+    <h1>Only the couple can see this dashboard</h1>
+    <p>Sign in with the email that created this page, or ask the couple to add you as a co-owner.</p>
+    <div class="row center-row">
+      <a class="btn primary" routerLink="/login" [queryParams]="{ next: '/w/' + slug() + '/dashboard' }">Sign in</a>
+      <a class="btn" [routerLink]="['/w', slug()]">View the wedding page</a>
+    </div>
+  </div>
 } @else if (store.wedding(); as w) {
   @let t = store.totals()!;
   <header class="head">
@@ -44,6 +54,7 @@
             </div>
             <div class="progress" [class.funded]="g.funded"><span [style.width.%]="g.percent"></span></div>
             <span class="hint">{{ g.count }} guests · {{ g.verified | inr }} verified · {{ g.percent }}%</span>
+            <app-goal-update [goal]="g.goal" (posted)="postUpdate(g.goal.id, $event)" (removed)="deleteUpdate(g.goal.id, $event)" />
           </li>
         }
       </ul>
@@ -51,7 +62,7 @@
 
     <section class="card share" aria-labelledby="share-h">
       <h2 id="share-h">Invite more guests</h2>
-      <p class="muted small">The link carries your page, so it opens on any phone.</p>
+      <p class="muted small">{{ store.backend ? 'Your page is online, so the link opens on any phone.' : 'The link carries your page, so it opens on any phone.' }}</p>
       <a class="btn whatsapp block" [href]="whatsapp()" target="_blank" rel="noopener">Share on WhatsApp</a>
       <div class="row">
         <button class="btn small" type="button" (click)="copyLink()">Copy link</button>
@@ -59,6 +70,20 @@
       </div>
       <p class="hint provider">Thank-you notes are written by <a routerLink="/settings">{{ settings.isDemo() ? 'Demo mode (offline templates)' : settings.provider() }}</a>.</p>
     </section>
+  </div>
+
+  <div class="grid">
+    <app-rsvp-summary [wedding]="w" [rsvps]="store.rsvps()" />
+    @if (store.backend && !w.demo) {
+      <app-co-owners [weddingId]="w.id" />
+    } @else {
+      <section class="card sides" aria-labelledby="sides-h">
+        <h2 id="sides-h">By family side</h2>
+        <div class="row between"><span>Bride's side</span><strong class="num">{{ bySide().bride | inr }}</strong></div>
+        <div class="row between"><span>Groom's side</span><strong class="num">{{ bySide().groom | inr }}</strong></div>
+        <p class="hint">Guests choose their side when they give shagun. Filter the list below by side.</p>
+      </section>
+    }
   </div>
 
   <section class="card list" aria-labelledby="list-h">
@@ -76,6 +101,12 @@
           </button>
         }
       </div>
+      <div class="row" role="radiogroup" aria-label="Filter by side">
+        <button type="button" role="radio" class="toggle small-toggle" [attr.aria-checked]="side() === 'all'" (click)="side.set('all')">Both sides</button>
+        @for (sd of sides; track sd.id) {
+          <button type="button" role="radio" class="toggle small-toggle" [attr.aria-checked]="side() === sd.id" (click)="side.set(sd.id)">{{ sd.label }}</button>
+        }
+      </div>
       <input type="search" class="search" placeholder="Search guests or messages" aria-label="Search contributions"
              [value]="query()" (input)="query.set($any($event.target).value)" />
     </div>
@@ -88,7 +119,7 @@
             <div class="c-main">
               <div class="c-who">
                 <strong>{{ c.guestName }}</strong>
-                <span class="hint">{{ goalTitle().get(c.goalId)?.emoji }} {{ goalTitle().get(c.goalId)?.title ?? 'Removed dream' }} · {{ c.createdAt | timeAgo }}</span>
+                <span class="hint">{{ goalTitle().get(c.goalId)?.emoji }} {{ goalTitle().get(c.goalId)?.title ?? 'Removed dream' }}@if (c.side) { · {{ c.side === 'bride' ? "Bride's side" : "Groom's side" }}} · {{ c.createdAt | timeAgo }}</span>
                 @if (c.message) { <p class="c-msg">“{{ c.message }}”</p> }
               </div>
               <strong class="c-amount num">{{ c.amount | inr }}</strong>

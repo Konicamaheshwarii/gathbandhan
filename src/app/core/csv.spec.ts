@@ -19,14 +19,14 @@ describe('CSV export', () => {
   it('writes one row per contribution, oldest first, with a BOM for Excel', () => {
     const csv = contributionsCsv(wedding(), [
       contribution('g2', 1100, { guestName: 'Zoya', createdAt: new Date(2026, 10, 2).getTime(), message: 'जुग जुग जियो' }),
-      contribution('g1', 2100, { guestName: 'Kabir', createdAt: new Date(2026, 10, 1).getTime(), status: 'verified', thankedAt: 5 }),
+      contribution('g1', 2100, { guestName: 'Kabir', createdAt: new Date(2026, 10, 1).getTime(), status: 'verified', thankedAt: 5, side: 'groom' }),
       contribution('old', 501, { guestName: 'Ravi', createdAt: new Date(2026, 10, 3).getTime() }),
     ]);
     expect(csv.startsWith('﻿')).toBeTrue();
     const rows = csv.slice(1).trim().split('\r\n');
-    expect(rows[0]).toBe('Date,Guest,Goal,Amount (INR),Status,Message,Phone,Thanked');
-    expect(rows[1]).toBe('01/11/2026,Kabir,Honeymoon,2100,Verified,,,Yes');
-    expect(rows[2]).toBe('02/11/2026,Zoya,Trees,1100,Guest confirmed,जुग जुग जियो,,No');
+    expect(rows[0]).toBe('Date,Guest,Side,Goal,Amount (INR),Status,Message,Phone,Thanked');
+    expect(rows[1]).toBe("01/11/2026,Kabir,Groom's side,Honeymoon,2100,Verified,,,Yes");
+    expect(rows[2]).toBe('02/11/2026,Zoya,,Trees,1100,Guest confirmed,जुग जुग जियो,,No');
     expect(rows[3]).toContain('(removed goal)');
   });
 });
