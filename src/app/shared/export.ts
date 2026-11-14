@@ -14,13 +14,15 @@ export async function renderPage(node: HTMLElement): Promise<HTMLCanvasElement> 
   await document.fonts?.ready;
   fontCss ??= getFontEmbedCSS(node).catch(() => '');
   const css = await fontCss;
-  const scale = EXPORT_WIDTH / node.offsetWidth;
+  const width = node.offsetWidth;
+  // Exactly 9:16, so the PNG is 1080 x 1920 whatever the on-screen size rounds to.
+  const height = (width * EXPORT_HEIGHT) / EXPORT_WIDTH;
   return toCanvas(node, {
-    pixelRatio: scale,
-    width: node.offsetWidth,
-    height: node.offsetHeight,
-    canvasWidth: node.offsetWidth,
-    canvasHeight: node.offsetHeight,
+    pixelRatio: EXPORT_WIDTH / width,
+    width,
+    height,
+    canvasWidth: width,
+    canvasHeight: height,
     fontEmbedCSS: css,
     imagePlaceholder: PLACEHOLDER,
     cacheBust: false,

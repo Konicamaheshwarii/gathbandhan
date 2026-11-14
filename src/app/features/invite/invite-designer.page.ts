@@ -1,7 +1,7 @@
 import { ChangeDetectionStrategy, Component, ElementRef, computed, effect, inject, input, signal, untracked, viewChildren } from '@angular/core';
 import { RouterLink } from '@angular/router';
 import { AiService } from '../../core/ai/ai.service';
-import { DesignPick, TEMPLATES, defaultInvite, designPicks, draftInviteText, invitePages, templateMeta } from '../../core/invite';
+import { DesignPick, InvitePage, TEMPLATES, defaultInvite, designPicks, draftInviteText, invitePages, templateMeta } from '../../core/invite';
 import { TIER_LABELS } from '../../core/llm/llm-chain';
 import { INVITE_LANGUAGES, INVITE_TONES, InviteDesign, InviteLanguage, InviteTemplate, InviteText, InviteTone } from '../../core/models';
 import { SettingsStore } from '../../core/settings.store';
@@ -43,6 +43,12 @@ export class InviteDesignerPage {
   protected readonly textBusy = signal(false);
   protected readonly textVia = signal('');
   protected readonly personal = signal(false);
+  protected readonly coverPage: InvitePage = { kind: 'cover' };
+  /** The couple's current words in another template, for the style picker. */
+  protected previewOf(d: InviteDesign, id: InviteTemplate): InviteDesign {
+    const meta = templateMeta(id);
+    return { ...d, template: id, palette: meta.palette, showShlok: meta.invocation, aiBackground: false };
+  }
   protected readonly templateName = (id: InviteTemplate) => templateMeta(id).name;
   protected readonly languageLabel = (id: InviteLanguage) => INVITE_LANGUAGES.find((l) => l.id === id)?.label ?? id;
 

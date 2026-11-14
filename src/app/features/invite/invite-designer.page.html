@@ -52,10 +52,7 @@
           <div class="templates" role="radiogroup" aria-label="Invite style">
             @for (t of templates; track t.id) {
               <button type="button" role="radio" class="tpl" [attr.aria-checked]="d.template === t.id" (click)="chooseTemplate(t.id)">
-                <span class="mini" [style.background]="t.palette.paper" [style.border-color]="t.palette.accent" [style.color]="t.palette.primary">
-                  <span class="mini-frame" [style.border-color]="t.palette.primary"></span>
-                  <b>{{ couple() }}</b>
-                </span>
+                <app-invite-page class="mini" [wedding]="w" [design]="previewOf(d, t.id)" [page]="coverPage" aria-hidden="true" />
                 <span class="tpl-name">{{ t.name }}</span>
                 <span class="hint">{{ t.blurb }}</span>
               </button>

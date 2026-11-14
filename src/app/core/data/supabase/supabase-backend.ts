@@ -8,7 +8,7 @@ import { SupabaseAuthService } from './supabase-auth.service';
 import { SupabaseWeddingRepository } from './supabase.repository';
 import { SUPABASE_CLIENT, T } from './supabase.token';
 
-const PROBE_TIMEOUT_MS = 8_000;
+const PROBE_TIMEOUT_MS = 6_000;
 
 /**
  * One cheap read of the weddings table. Any problem (tables missing because schema.sql was not

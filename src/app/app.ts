@@ -56,7 +56,7 @@ import { ToastsComponent } from './shared/toast.service';
       }
     </header>
 
-    @if (!guestView() && pwa.offerInstall()) {
+    @if (installHere() && pwa.offerInstall()) {
       <aside class="install" aria-label="Install the app">
         <span class="install-icon" aria-hidden="true"><img src="icons/icon-96.png" alt="" width="40" height="40" /></span>
         <div class="install-text">
@@ -103,6 +103,8 @@ export class App {
   );
   /** Guests arriving from WhatsApp see the wedding, not the couple's tools. */
   protected readonly guestView = computed(() => /^\/(w\/[^/]+(\/give|\/rsvp)?|i\/.+)(\?|$)/.test(this.url()));
+  /** Offer the app on the home page and the dashboard only, not on every screen. */
+  protected readonly installHere = computed(() => /^\/(\?|$)|\/dashboard(\?|$)/.test(this.url()));
   protected readonly providerLabel = computed(
     () => PROVIDERS.find((p) => p.id === this.settings.provider())?.label.split(' (')[0] ?? '');
 }
