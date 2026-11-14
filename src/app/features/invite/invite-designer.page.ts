@@ -10,13 +10,14 @@ import { WeddingStore } from '../../core/wedding.store';
 import { appBaseUrl } from '../../core/wedding-link';
 import { pagePng, pagesPdf, saveBlob } from '../../shared/export';
 import { ensureInviteFonts } from '../../shared/invite-fonts';
+import { LogoComponent } from '../../shared/logo.component';
 import { ToastService } from '../../shared/toast.service';
 import { InvitePageComponent } from './invite-page.component';
 
 /** The couple designs their digital kankotri: template, words (AI or typed), colours, families, export. */
 @Component({
   selector: 'app-invite-designer',
-  imports: [RouterLink, InvitePageComponent],
+  imports: [LogoComponent, RouterLink, InvitePageComponent],
   providers: [WeddingStore],
   changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './invite-designer.page.html',

@@ -9,6 +9,7 @@ import { firstName } from '../../core/util';
 import { WeddingStore } from '../../core/wedding.store';
 import { Wedding } from '../../core/models';
 import { copyText } from '../../shared/clipboard';
+import { LogoComponent } from '../../shared/logo.component';
 import { IndianDatePipe, InrPipe, TimeAgoPipe } from '../../shared/pipes';
 import { readJson } from '../../core/storage';
 import { CARD_PRINTED_KEY, activityFeed, daysToGo, inviteStats, weddingChecklist } from '../../core/stats';
@@ -31,7 +32,7 @@ interface NoteDraft {
 
 @Component({
   selector: 'app-dashboard',
-  imports: [RouterLink, InrPipe, IndianDatePipe, TimeAgoPipe, RsvpSummaryComponent, CoOwnersComponent, GoalUpdateComponent, TrendChartComponent, SideSplitComponent],
+  imports: [LogoComponent, RouterLink, InrPipe, IndianDatePipe, TimeAgoPipe, RsvpSummaryComponent, CoOwnersComponent, GoalUpdateComponent, TrendChartComponent, SideSplitComponent],
   providers: [WeddingStore],
   changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './dashboard.page.html',

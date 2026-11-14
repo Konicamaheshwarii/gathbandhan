@@ -76,7 +76,7 @@ export function eventLocation(e: WeddingEvent): string {
 
 /** An .ics file with one VEVENT per function. */
 export function weddingIcs(w: Wedding, events: readonly WeddingEvent[], pageUrl = '', now = new Date()): string {
-  const lines = ['BEGIN:VCALENDAR', 'VERSION:2.0', 'PRODID:-//Shagun//Wedding functions//EN', 'CALSCALE:GREGORIAN', 'METHOD:PUBLISH'];
+  const lines = ['BEGIN:VCALENDAR', 'VERSION:2.0', 'PRODID:-//Gathbandhan//Wedding functions//EN', 'CALSCALE:GREGORIAN', 'METHOD:PUBLISH'];
   for (const e of events) {
     const range = eventRange(e);
     if (!range) continue;

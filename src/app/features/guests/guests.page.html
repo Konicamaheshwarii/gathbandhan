@@ -1,5 +1,5 @@
 @if (store.state() === 'missing') {
-  <div class="card empty"><span class="big" aria-hidden="true">🪔</span><h1>No wedding page here</h1><a class="btn primary" routerLink="/create">Create your page</a></div>
+  <div class="card empty"><app-logo class="big" [size]="52" /><h1>No wedding page here</h1><a class="btn primary" routerLink="/create">Create your page</a></div>
 } @else if (store.state() === 'ready' && !store.owner()) {
   <div class="card empty"><span class="big" aria-hidden="true">🔒</span><h1>Only the couple can see the guest list</h1>
     <a class="btn primary" routerLink="/login" [queryParams]="{ next: '/w/' + slug() + '/guests' }">Sign in</a></div>

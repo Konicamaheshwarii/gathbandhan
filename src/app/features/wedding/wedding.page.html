@@ -4,11 +4,11 @@
   }
   @case ('missing') {
     <div class="card empty missing">
-      <span class="big" aria-hidden="true">🪔</span>
+      <app-logo class="big" [size]="52" />
       <h1>We could not find this wedding page</h1>
       <p>The link may be incomplete. Ask the couple to share it again from their dashboard.</p>
       @if (store.error()) { <p class="small">{{ store.error() }}</p> }
-      <a class="btn primary" routerLink="/">Go to Shagun</a>
+      <a class="btn primary" routerLink="/">Go to Gathbandhan</a>
     </div>
   }
   @case ('ready') {
@@ -59,7 +59,7 @@
             <div class="progress thick" role="progressbar" aria-label="Total shagun" [attr.aria-valuenow]="t.percent" aria-valuemin="0" aria-valuemax="100">
               <span [style.width.%]="t.percent"></span>
             </div>
-            <a class="btn primary block give-cta" [routerLink]="['/w', w.slug, 'give']">Give shagun 🪔</a>
+            <a class="btn primary block give-cta" [routerLink]="['/w', w.slug, 'give']">Give shagun</a>
           </section>
 
           @if (w.story || w.milestones?.length || w.gallery?.length) {
@@ -163,7 +163,7 @@
       </div>
 
       <div class="sticky-cta no-print">
-        <a class="btn primary block" [routerLink]="['/w', w.slug, 'give']">Give shagun 🪔</a>
+        <a class="btn primary block" [routerLink]="['/w', w.slug, 'give']">Give shagun</a>
       </div>
     }
   }

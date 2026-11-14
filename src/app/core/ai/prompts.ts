@@ -4,7 +4,8 @@ import { MAX_GOALS, MAX_MILESTONES, NoteLanguage } from '../models';
 import { clamp } from '../util';
 import { GoalSuggestions, GoalsInput, MilestonesInput, StoryInput, SuggestedGoal, SuggestedMilestone, ThanksInput } from './ai.models';
 
-const SYSTEM = `You help Indian couples with their wedding shagun page: a wishlist of real goals
+const SYSTEM = `You help Indian couples on Gathbandhan, an app for wedding e-invites and digital shagun,
+with their wedding shagun page: a wishlist of real goals
 (honeymoon, first home, a trip) that guests contribute to by UPI instead of buying gifts.
 Write warmly and tastefully. Never sound like a fundraiser or like you are asking for money;
 shagun is a blessing guests already give. No hashtags. No more than one emoji per paragraph.

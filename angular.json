@@ -3,7 +3,7 @@
   "version": 1,
   "newProjectRoot": "projects",
   "projects": {
-    "shagun-wishlist": {
+    "gathbandhan": {
       "projectType": "application",
       "schematics": {
         "@schematics/angular:component": {
@@ -59,10 +59,10 @@
           "builder": "@angular/build:dev-server",
           "configurations": {
             "production": {
-              "buildTarget": "shagun-wishlist:build:production"
+              "buildTarget": "gathbandhan:build:production"
             },
             "development": {
-              "buildTarget": "shagun-wishlist:build:development"
+              "buildTarget": "gathbandhan:build:development"
             }
           },
           "defaultConfiguration": "development"

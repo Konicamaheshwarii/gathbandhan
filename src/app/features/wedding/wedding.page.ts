@@ -5,6 +5,7 @@ import { inviteMessage, whatsappUrl } from '../../core/share';
 import { firstName } from '../../core/util';
 import { WeddingStore } from '../../core/wedding.store';
 import { copyText } from '../../shared/clipboard';
+import { LogoComponent } from '../../shared/logo.component';
 import { IndianDatePipe, InrPipe, TimeAgoPipe } from '../../shared/pipes';
 import { ToastService } from '../../shared/toast.service';
 import { ToranComponent } from '../../shared/toran.component';
@@ -16,7 +17,7 @@ const WALL_PAGE = 6;
 
 @Component({
   selector: 'app-wedding',
-  imports: [RouterLink, InrPipe, IndianDatePipe, TimeAgoPipe, ToranComponent, EventsTimelineComponent, StoryTimelineComponent, GalleryComponent],
+  imports: [LogoComponent, RouterLink, InrPipe, IndianDatePipe, TimeAgoPipe, ToranComponent, EventsTimelineComponent, StoryTimelineComponent, GalleryComponent],
   providers: [WeddingStore],
   changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './wedding.page.html',

@@ -7,6 +7,7 @@ import { buildUpiLink, canOpenUpiApps } from '../../core/upi';
 import { firstName } from '../../core/util';
 import { WeddingStore } from '../../core/wedding.store';
 import { copyText } from '../../shared/clipboard';
+import { LogoComponent } from '../../shared/logo.component';
 import { InrPipe } from '../../shared/pipes';
 import { QrCodeComponent } from '../../shared/qr-code.component';
 import { ToastService } from '../../shared/toast.service';
@@ -16,7 +17,7 @@ const MESSAGE_MAX = 280;
 
 @Component({
   selector: 'app-give',
-  imports: [RouterLink, InrPipe, QrCodeComponent],
+  imports: [LogoComponent, RouterLink, InrPipe, QrCodeComponent],
   providers: [WeddingStore],
   changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './give.page.html',

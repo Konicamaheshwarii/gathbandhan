@@ -13,7 +13,7 @@ import { ToastService } from '../../shared/toast.service';
       @if (!auth.enabled) {
         <section class="card stack">
           <h1>No sign-in needed</h1>
-          <p class="muted">This copy of Shagun runs in demo mode: your pages stay in this browser, so there is nothing to sign in to.
+          <p class="muted">This copy of Gathbandhan runs in demo mode: your pages stay in this browser, so there is nothing to sign in to.
             Once the owner connects the free Supabase backend, couples sign in here with just their email.</p>
           <a class="btn primary" routerLink="/">Go home</a>
         </section>

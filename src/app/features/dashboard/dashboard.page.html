@@ -1,6 +1,6 @@
 @if (store.state() === 'missing') {
   <div class="card empty">
-    <span class="big" aria-hidden="true">🪔</span>
+    <app-logo class="big" [size]="52" />
     <h1>No wedding page here</h1>
     <a class="btn primary" routerLink="/create">Create your page</a>
   </div>
@@ -98,7 +98,7 @@
         <ol class="feed">
           @for (a of activity(); track a.id) {
             <li [class]="'feed-item ' + a.kind">
-              <span class="feed-icon" aria-hidden="true">{{ a.kind === 'shagun' ? '🪔' : a.kind === 'rsvp' ? '✅' : '💌' }}</span>
+              <span class="feed-icon" aria-hidden="true">{{ a.kind === 'shagun' ? '🌼' : a.kind === 'rsvp' ? '✅' : '💌' }}</span>
               <span><strong>{{ a.who }}</strong> {{ a.text }}<span class="hint"> · {{ a.at | timeAgo }}</span></span>
             </li>
           }

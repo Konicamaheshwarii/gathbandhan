@@ -33,7 +33,7 @@ export async function probeBackend(client: Pick<SupabaseClient, 'from'>, timeout
  * Loaded with a dynamic import from main.ts only when config.json has Supabase keys, so demo
  * mode never downloads supabase-js. Throws BackendNotReady when the backend fails its first check.
  *
- * The magic link returns to `…/shagun-wishlist/#access_token=…`, which collides with hash
+ * The magic link returns to `…/gathbandhan/#access_token=…`, which collides with hash
  * routing. supabase-js reads the tokens while the client initialises (before Angular starts);
  * afterwards the URL is put back to the page the couple was on.
  */

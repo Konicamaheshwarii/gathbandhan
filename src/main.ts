@@ -15,7 +15,7 @@ async function start(): Promise<void> {
     } catch (e) {
       // Tables not created yet, a paused project or no network: run in demo mode and say why.
       const reason = e instanceof BackendNotReady ? e.message : 'the online database could not be started';
-      console.warn(`Shagun is running in demo mode: ${reason}.`, e);
+      console.warn(`Gathbandhan is running in demo mode: ${reason}.`, e);
       backend = [{ provide: BACKEND_STATUS, useValue: { configured: true, online: false, reason } }];
     }
   }

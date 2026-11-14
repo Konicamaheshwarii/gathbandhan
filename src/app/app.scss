@@ -19,7 +19,8 @@
   color: var(--text);
   text-decoration: none;
 }
-.logo { color: var(--accent); }
+.foot-brand { display: flex; flex-wrap: wrap; justify-content: center; align-items: center; gap: 0.25rem 0.6rem; margin-bottom: 0.4rem !important; font-size: 1rem; }
+.tagline { font-size: 0.82rem; }
 
 nav {
   display: flex;
@@ -47,6 +48,7 @@ main { flex: 1; width: 100%; max-width: 1120px; margin: 0 auto; padding: 0.25rem
   font-size: 0.82rem;
   padding: 1rem 16px calc(1.5rem + env(safe-area-inset-bottom));
   p { margin: 0 auto; max-width: 36rem; }
+  p + p { margin-top: 0.2rem; }
 }
 
 @media (max-width: 560px) {
@@ -133,3 +135,4 @@ main { flex: 1; width: 100%; max-width: 1120px; margin: 0 auto; padding: 0.25rem
   .install-text span { display: none; }
   .install { padding: 0.5rem 0.6rem; }
 }
+.demo-banner { --knot-case: var(--surface-2); }

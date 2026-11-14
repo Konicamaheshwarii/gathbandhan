@@ -6,7 +6,7 @@
     <p class="small"><span class="chip good">Online</span> Connected to Supabase. Pages, shagun and RSVPs are shared across every phone and laptop; only the couple can see the dashboard.</p>
   } @else {
     @if (backendStatus.configured) {
-      <p class="small"><span class="chip gold">Demo mode</span> Supabase keys are in <code>public/config.json</code>, but {{ backendStatus.reason }}, so Shagun is running in demo mode and data stays in this browser.
+      <p class="small"><span class="chip gold">Demo mode</span> Supabase keys are in <code>public/config.json</code>, but {{ backendStatus.reason }}, so Gathbandhan is running in demo mode and data stays in this browser.
         The site owner can fix this by following <code>docs/SUPABASE_SETUP.md</code> (step 3 creates the tables); the site switches to online mode on the next visit.</p>
     } @else {
       <p class="small"><span class="chip gold">Demo mode</span> Data stays in this browser. To make pages work across devices, the site owner adds free Supabase keys to <code>public/config.json</code> (see <code>docs/SUPABASE_SETUP.md</code>).</p>
@@ -24,7 +24,7 @@
     <li [class.on]="store.provider() !== 'demo' && store.settings().allowCloudAi"><strong>3. Pollinations.ai</strong> (free, no key; your text is sent to that service; about one reply every 45 seconds, and only on the published site)</li>
     <li class="on"><strong>4. Offline templates</strong> (always works)</li>
   </ol>
-  <p class="hint">Shagun uses the first one that answers. If one is slow or fails, the next one takes over.</p>
+  <p class="hint">Gathbandhan uses the first one that answers. If one is slow or fails, the next one takes over.</p>
   <div class="providers" role="radiogroup" aria-label="AI provider">
     @for (p of providers; track p.id) {
       <button type="button" role="radio" class="provider" [class.on]="store.provider() === p.id"
@@ -50,7 +50,7 @@
     </label>
     <p class="muted small">
       Get a free key at <a [href]="current().keyUrl" target="_blank" rel="noopener">{{ current().keyUrl }}</a>.
-      It is stored in this browser only and sent straight to {{ current().label }}, never to Shagun's backend.
+      It is stored in this browser only and sent straight to {{ current().label }}, never to Gathbandhan's backend.
     </p>
     <label>
       Model
@@ -84,9 +84,9 @@
 <section class="card stack">
   <h2>Install the app</h2>
   @if (pwa.standalone()) {
-    <p class="small"><span class="chip good">Installed</span> You are using Shagun as an app.</p>
+    <p class="small"><span class="chip good">Installed</span> You are using Gathbandhan as an app.</p>
   } @else {
-    <p class="muted small">Add Shagun to your home screen to open it like an app, with your pages available even on a weak network.</p>
+    <p class="muted small">Add Gathbandhan to your home screen to open it like an app, with your pages available even on a weak network.</p>
     <ul class="small install-steps">
       <li><strong>Android (Chrome):</strong> tap <em>Install app</em> below, or the ⋮ menu → <em>Install app</em> / <em>Add to Home screen</em>.</li>
       <li><strong>iPhone / iPad (Safari):</strong> tap <em>Share</em> ⬆️ → <em>Add to Home Screen</em> → <em>Add</em>.</li>
@@ -120,7 +120,7 @@
 <section class="card stack">
   <h2>Money and privacy</h2>
   <p class="muted small">
-    Shagun never handles money. Guests pay with a standard UPI intent link or QR code, straight from their UPI app to
+    Gathbandhan never handles money. Guests pay with a standard UPI intent link or QR code, straight from their UPI app to
     the couple's UPI ID. "I've paid" is the guest's own confirmation, which is why the dashboard lets the couple verify
     each one against their bank app. @if (backend) { Guests see totals and blessings but never other guests' phone numbers, and amounts only if the couple chooses to show them. } @else { In demo mode wedding pages and contributions are stored in this browser (localStorage); share links carry the wedding page itself so they open on any phone. }
   </p>

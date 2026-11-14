@@ -9,6 +9,7 @@ import { normalizeIndianPhone, whatsappUrl } from '../../core/share';
 import { SettingsStore } from '../../core/settings.store';
 import { WeddingStore } from '../../core/wedding.store';
 import { copyText } from '../../shared/clipboard';
+import { LogoComponent } from '../../shared/logo.component';
 import { TimeAgoPipe } from '../../shared/pipes';
 import { ToastService } from '../../shared/toast.service';
 
@@ -28,7 +29,7 @@ interface ContactsManager {
  */
 @Component({
   selector: 'app-guests',
-  imports: [RouterLink, TimeAgoPipe],
+  imports: [LogoComponent, RouterLink, TimeAgoPipe],
   providers: [WeddingStore],
   changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './guests.page.html',

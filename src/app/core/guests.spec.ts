@@ -48,8 +48,8 @@ describe('guest list', () => {
 
   it('writes a personal WhatsApp invite with the guest link in each language', () => {
     const w = wedding({ city: 'Mumbai' });
-    const url = inviteUrl('asha-weds-dev', 'abcdefgh23', 'https://x.github.io/shagun-wishlist/');
-    expect(url).toBe('https://x.github.io/shagun-wishlist/#/i/asha-weds-dev/abcdefgh23');
+    const url = inviteUrl('asha-weds-dev', 'abcdefgh23', 'https://x.github.io/gathbandhan/');
+    expect(url).toBe('https://x.github.io/gathbandhan/#/i/asha-weds-dev/abcdefgh23');
     const en = inviteWhatsappText(w, { name: 'Sharma Ji', greeting: 'Sharma Parivar' }, url, 'english');
     expect(en).toContain('Dear Sharma Parivar');
     expect(en).toContain('Asha & Dev');

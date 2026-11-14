@@ -55,7 +55,7 @@ export function buildPdf(images: PdfImage[], title = 'Wedding invitation'): Uint
   object(1, '<< /Type /Catalog /Pages 2 0 R >>');
   object(2, `<< /Type /Pages /Kids [${images.map((_, i) => `${pageId(i)} 0 R`).join(' ')}] /Count ${n} >>`);
   const safeTitle = title.replace(/[\\()]/g, '').replace(/[^\x20-\x7e]/g, '');
-  object(3, `<< /Title (${safeTitle}) /Producer (Shagun) >>`);
+  object(3, `<< /Title (${safeTitle}) /Producer (Gathbandhan) >>`);
   images.forEach((img, i) => {
     const h = 720;
     const w = Math.round((img.width / img.height) * h * 100) / 100;

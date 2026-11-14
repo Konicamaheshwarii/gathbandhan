@@ -1,8 +1,8 @@
 @if (store.state() === 'missing') {
   <div class="card empty">
-    <span class="big" aria-hidden="true">🪔</span>
+    <app-logo class="big" [size]="52" />
     <h1>We could not find this wedding page</h1>
-    <a class="btn primary" routerLink="/">Go to Shagun</a>
+    <a class="btn primary" routerLink="/">Go to Gathbandhan</a>
   </div>
 } @else if (store.wedding(); as w) {
   <div class="wrap">
@@ -19,7 +19,7 @@
           <p>We will miss you. {{ couple() }} will be glad to have your blessings anyway.</p>
         }
         <div class="stack">
-          <a class="btn primary block" [routerLink]="['/w', w.slug, 'give']">Give shagun 🪔</a>
+          <a class="btn primary block" [routerLink]="['/w', w.slug, 'give']">Give shagun</a>
           <a class="btn block" [routerLink]="['/w', w.slug]">Back to the wedding page</a>
         </div>
       </section>

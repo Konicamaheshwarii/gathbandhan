@@ -60,7 +60,7 @@ describe('wedding share links', () => {
   });
 
   it('builds hash-routed URLs under any base path', () => {
-    expect(weddingUrl('a-weds-b', undefined, 'https://u.github.io/shagun-wishlist/')).toBe('https://u.github.io/shagun-wishlist/#/w/a-weds-b');
+    expect(weddingUrl('a-weds-b', undefined, 'https://u.github.io/gathbandhan/')).toBe('https://u.github.io/gathbandhan/#/w/a-weds-b');
     expect(weddingUrl('a-weds-b', 'xyz', 'https://h/')).toBe('https://h/#/w/a-weds-b?d=xyz');
     expect(toBase64Url(new Uint8Array([251, 255]))).toBe('-_8');
   });

@@ -5,13 +5,14 @@ import { EVENT_META, MAX_PARTY, NOTE_MAX, SIDES, Side } from '../../core/models'
 import { normalizeIndianPhone } from '../../core/share';
 import { firstName } from '../../core/util';
 import { WeddingStore } from '../../core/wedding.store';
+import { LogoComponent } from '../../shared/logo.component';
 import { IndianDatePipe } from '../../shared/pipes';
 import { ToastService } from '../../shared/toast.service';
 
 /** Guests tell the couple which functions they will attend and how many people are coming. */
 @Component({
   selector: 'app-rsvp',
-  imports: [RouterLink, IndianDatePipe],
+  imports: [LogoComponent, RouterLink, IndianDatePipe],
   providers: [WeddingStore],
   changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './rsvp.page.html',

@@ -213,7 +213,7 @@ const MOMENTS: [RegExp, string, string][] = [
   [/propos|engag|ring|roka|sagai/i, '💍', 'The proposal'],
   [/moved|shift|relocat|new city|long[- ]distance/i, '🏙️', 'A new city'],
   [/trip|travel|holiday|vacation/i, '✈️', 'Our first trip'],
-  [/famil|parents|met the/i, '🪔', 'Meeting the families'],
+  [/famil|parents|met the/i, '🌼', 'Meeting the families'],
   [/dog|cat|pet|puppy/i, '🐶', 'One more member'],
   [/home|flat|house/i, '🏡', 'Our first home'],
 ];

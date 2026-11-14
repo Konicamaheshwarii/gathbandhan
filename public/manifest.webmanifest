@@ -1,7 +1,7 @@
 {
-  "name": "Shagun: wedding e-invites and shagun by UPI",
-  "short_name": "Shagun",
-  "description": "Digital kankotri, RSVPs and a wedding wishlist guests bless by UPI.",
+  "name": "Gathbandhan: wedding e-invites & digital shagun",
+  "short_name": "Gathbandhan",
+  "description": "Digital kankotri, RSVPs and a wedding wishlist guests bless with shagun by UPI.",
   "id": "./",
   "start_url": "./",
   "scope": "./",

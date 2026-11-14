@@ -37,7 +37,7 @@ export class PollinationsProvider implements LlmProvider {
             { role: 'user', content: req.prompt },
           ],
           private: true,
-          referrer: 'shagun-wishlist',
+          referrer: 'gathbandhan',
           ...(req.json ? { jsonMode: true } : {}),
         }),
         signal,

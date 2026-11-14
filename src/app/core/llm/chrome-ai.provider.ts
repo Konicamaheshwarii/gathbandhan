@@ -1,6 +1,6 @@
 import { LlmError, LlmProvider, LlmRequest } from './llm-provider';
 
-/** The subset of Chrome's built-in Prompt API (window.LanguageModel, Gemini Nano) that Shagun uses. */
+/** The subset of Chrome's built-in Prompt API (window.LanguageModel, Gemini Nano) that Gathbandhan uses. */
 interface PromptSession {
   prompt(input: string, options?: { signal?: AbortSignal }): Promise<string>;
   promptStreaming(input: string, options?: { signal?: AbortSignal }): AsyncIterable<string> | ReadableStream<string>;
@@ -23,7 +23,7 @@ export function chromeSupports(req: LlmRequest): boolean {
 
 /**
  * On-device AI in desktop Chrome (138+). Free, private (nothing leaves the laptop) and no key.
- * Used only when the model is already downloaded: Shagun never triggers a multi-GB download.
+ * Used only when the model is already downloaded: Gathbandhan never triggers a multi-GB download.
  */
 export class ChromeAiProvider implements LlmProvider {
   constructor(private readonly api: LanguageModelApi | null = languageModelApi()) {}

@@ -1,11 +1,11 @@
 {
-  "name": "shagun-wishlist",
+  "name": "gathbandhan",
   "version": "0.0.0",
   "scripts": {
     "ng": "ng",
     "start": "ng serve",
     "build": "ng build",
-    "build:pages": "ng build --base-href /shagun-wishlist/",
+    "build:pages": "ng build --base-href /gathbandhan/",
     "watch": "ng build --watch --configuration development",
     "test": "ng test",
     "test:ci": "ng test --watch=false --browsers=ChromeHeadlessCI"

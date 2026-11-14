@@ -18,7 +18,7 @@ export function whatsappUrl(text: string, phone?: string | null): string {
 export function inviteMessage(w: Wedding, url: string, totalTarget: number): string {
   const goals = w.goals.slice(0, 3).map((g) => `${g.emoji} ${g.title}`).join('\n');
   return [
-    `🪔 ${w.partner1} & ${w.partner2} are getting married on ${formatDate(w.date)}!`,
+    `💍 ${w.partner1} & ${w.partner2} are getting married on ${formatDate(w.date)}!`,
     '',
     'Instead of gifts, you can bless us with shagun towards the dreams we are starting our life with:',
     goals,

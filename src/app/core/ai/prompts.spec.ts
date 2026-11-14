@@ -12,6 +12,12 @@ describe('prompts', () => {
     expect(req.prompt).toContain('₹4,00,000');
   });
 
+  it('names the product Gathbandhan and keeps shagun as the gift', () => {
+    const req = goalsRequest({ plans: 'Japan', city: 'Pune', guests: 200, averageShagun: 2000 });
+    expect(req.system).toContain('Gathbandhan');
+    expect(req.system).toContain('digital shagun');
+  });
+
   it('asks for the right language and keeps the amount private by default', () => {
     const story = storyRequest({ partner1: 'A', partner2: 'B', howWeMet: '', details: '', tone: 'warm', language: 'hinglish' });
     expect(story.prompt).toContain('Hinglish');

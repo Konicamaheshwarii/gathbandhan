@@ -1,8 +1,8 @@
 -- =====================================================================================
--- Shagun: database schema for Supabase (free tier).
+-- Gathbandhan: database schema for Supabase (free tier).
 --
--- Every table, function and bucket is prefixed "shagun_" so this project can share one
--- Supabase project with other apps without name clashes.
+-- Every table, function and bucket is prefixed "shagun_" (from the app's original name,
+-- Shagun) so this project can share one Supabase project with other apps without name clashes.
 --
 -- Paste this whole file into Supabase → SQL Editor → New query, then click "Run".
 -- It is safe to run again: tables are only created when missing, and functions,

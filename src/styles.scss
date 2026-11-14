@@ -1,4 +1,4 @@
-/* Shagun design tokens: cream paper, maroon ink, marigold accents. */
+/* Gathbandhan design tokens: cream paper, maroon ink, marigold accents. */
 :root {
   --bg: #fbf5ec;
   --surface: #fffdf9;
@@ -12,6 +12,8 @@
   --marigold: #ef9a12;
   --marigold-deep: #d9730b;
   --gold: #b8892b;
+  --knot-red: #8a1c3b;       /* logo threads */
+  --knot-gold: #c9a227;
   --leaf: #3f7d3a;
   --good: #2f7d4f;
   --good-soft: #e3f2e7;
@@ -37,6 +39,8 @@
   --marigold: #f2a93b;
   --marigold-deep: #e48b1d;
   --gold: #d9b25f;
+  --knot-red: #e0708d;
+  --knot-gold: #d9b25f;
   --good: #6cc78f;
   --good-soft: #173323;
   --warn: #f0b04a;
@@ -245,7 +249,11 @@ textarea { resize: vertical; min-height: 5rem; line-height: 1.5; }
   padding: 2rem 1rem;
   color: var(--muted);
   .big { font-size: 2.2rem; display: block; margin-bottom: 0.3rem; }
+  app-logo.big { display: flex; justify-content: center; margin-bottom: 0.6rem; }
 }
+
+/* The logo's over/under gaps take the colour of whatever it sits on. */
+.card { --knot-case: var(--surface); }
 
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after { animation-duration: 0.01ms !important; transition-duration: 0.01ms !important; }

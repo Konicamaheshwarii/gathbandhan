@@ -3,7 +3,7 @@
     <span class="big" aria-hidden="true">💌</span>
     <h1>We could not find this invitation</h1>
     <p>The link may be incomplete. Ask the family to send it again.</p>
-    <a class="btn primary" routerLink="/">Go to Shagun</a>
+    <a class="btn primary" routerLink="/">Go to Gathbandhan</a>
   </div>
 } @else if (store.wedding(); as w) {
   @let d = design()!;
@@ -23,12 +23,12 @@
       }
     </div>
 
-    <p class="made small">Made with <a routerLink="/">Shagun</a>. Shagun goes straight to the couple by UPI.</p>
+    <p class="made small">Made with <a routerLink="/">Gathbandhan</a>. Shagun goes straight to the couple by UPI.</p>
   </div>
 
   <nav class="actions" aria-label="Invitation actions">
     <a class="act primary" [routerLink]="['/w', w.slug, 'rsvp']"><span aria-hidden="true">✅</span>RSVP</a>
-    <a class="act" [routerLink]="['/w', w.slug, 'give']"><span aria-hidden="true">🪔</span>Shagun</a>
+    <a class="act" [routerLink]="['/w', w.slug, 'give']"><span aria-hidden="true">🌼</span>Shagun</a>
     <button class="act" type="button" (click)="addToCalendar()"><span aria-hidden="true">📅</span>Calendar</button>
     <button class="act" type="button" (click)="share()"><span aria-hidden="true">📤</span>Share</button>
     <button class="act" type="button" (click)="toggleMusic()" [attr.aria-pressed]="music()" [title]="music() ? 'Stop the shehnai' : 'Play a soft shehnai'">

@@ -61,7 +61,7 @@ function baseDemoWedding(now: Date): Wedding {
       { id: 'm-1', when: 'March 2019', title: 'The last cup of chai', emoji: '☕', text: 'A Pune–Delhi train, eleven hours late, and one cup of chai left. Arjun gave it up. Riya pretended not to be impressed.' },
       { id: 'm-2', when: '2020–2022', title: 'Two cities, one video call', emoji: '📱', text: 'Riya in Pune, Arjun in Bengaluru. We watched the same films at the same time and argued about the endings.' },
       { id: 'm-3', when: 'Diwali 2024', title: 'The proposal', emoji: '💍', text: 'On Nani’s terrace in Bhilwara, between the diyas. Arjun forgot the speech; the ring did the talking.' },
-      { id: 'm-4', when: 'February 2025', title: 'Roka with both families', emoji: '🪔', text: 'Two families, one very long lunch, and the first time our mothers agreed on everything.' },
+      { id: 'm-4', when: 'February 2025', title: 'Roka with both families', emoji: '🌼', text: 'Two families, one very long lunch, and the first time our mothers agreed on everything.' },
     ],
     gallery: [
       { id: 'p-1', url: 'demo/gallery-1.svg', caption: 'Udaipur, where it all comes together' },

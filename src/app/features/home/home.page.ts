@@ -8,6 +8,7 @@ import { InviteDesign, InviteLanguage, InviteTemplate, Wedding } from '../../cor
 import { computeTotals } from '../../core/totals';
 import { firstName } from '../../core/util';
 import { ensureInviteFonts } from '../../shared/invite-fonts';
+import { LogoComponent } from '../../shared/logo.component';
 import { IndianDatePipe, InrPipe } from '../../shared/pipes';
 import { InvitePageComponent } from '../invite/invite-page.component';
 
@@ -26,8 +27,8 @@ const SHOWCASE: [InviteTemplate, InviteLanguage][] = [
 ];
 
 const FAQ: { q: string; a: string }[] = [
-  { q: 'Is Shagun free?', a: 'Yes. The site, the e-invites, the guest tracker and the AI writing are free. There are no fees on shagun: guests pay you directly by UPI.' },
-  { q: 'Does Shagun ever touch the money?', a: 'Never. Guests pay from their own UPI app (GPay, PhonePe, Paytm, BHIM or a bank app) straight to your UPI ID. Shagun only records the blessing, and you tick each one off against your bank app.' },
+  { q: 'Is Gathbandhan free?', a: 'Yes. The site, the e-invites, the guest tracker and the AI writing are free. There are no fees on shagun: guests pay you directly by UPI.' },
+  { q: 'Does Gathbandhan ever touch the money?', a: 'Never. Guests pay from their own UPI app (GPay, PhonePe, Paytm, BHIM or a bank app) straight to your UPI ID. Gathbandhan only records the blessing, and you tick each one off against your bank app.' },
   { q: 'Do guests need to install anything or sign up?', a: 'No. Guests open a link from WhatsApp, read the invite, RSVP and give shagun without an account. Only the couple signs in, with just an email.' },
   { q: 'Which languages are supported?', a: 'Invites, WhatsApp messages and thank-you notes can be written in English, हिन्दी, ગુજરાતી or Hinglish, with proper Devanagari and Gujarati fonts.' },
   { q: 'Where does the AI send my text?', a: "If Chrome's built-in AI is available it runs on your own device. Otherwise the free Pollinations.ai service writes it (you can switch that off in Settings), and if nothing is available the built-in offline templates do. You can also add your own Gemini or Groq key." },
@@ -37,7 +38,7 @@ const FAQ: { q: string; a: string }[] = [
 
 @Component({
   selector: 'app-home',
-  imports: [RouterLink, InrPipe, IndianDatePipe, InvitePageComponent],
+  imports: [LogoComponent, RouterLink, InrPipe, IndianDatePipe, InvitePageComponent],
   changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './home.page.html',
   styleUrl: './home.page.scss',

@@ -17,7 +17,8 @@ describe('sharing', () => {
 
   it('writes an invite that frames the ask as shagun', () => {
     const text = inviteMessage(wedding(), 'https://x.test/#/w/asha-weds-dev', 350000);
-    expect(text).toContain('Asha Rao & Dev Khanna are getting married on 12 Dec 2026');
+    expect(text).toContain('💍 Asha Rao & Dev Khanna are getting married on 12 Dec 2026');
+    expect(text).not.toContain('🪔');
     expect(text).toContain('🎁 Honeymoon');
     expect(text).toContain('₹3.5 L');
     expect(text.trim().endsWith('https://x.test/#/w/asha-weds-dev')).toBeTrue();
