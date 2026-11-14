@@ -8,6 +8,10 @@ Connecting **Supabase** (a free online database) fixes that. After these steps:
 - every guest's shagun, blessing and RSVP reaches the couple's dashboard, live;
 - couples sign in with just their email (no password), and only they can edit their page and see guests' phone numbers.
 
+> **Where things stand now:** the Supabase project already exists (`https://ktajpcjnkiyvfjmihspq.supabase.co`) and its URL and publishable key are already in `public/config.json`. What is left is **step 3 (paste `schema.sql` and click Run)**, then steps 4 to 6 and 9. Until step 3 is done, the site notices that the tables are missing and keeps running in demo mode, with a note at the top of every page.
+>
+> The project is shared with another app (Saarthi), so every Shagun table, function and photo bucket starts with `shagun_` (`shagun_weddings`, `shagun_contributions`, `shagun-photos`…). The schema never touches anything else.
+
 You do not need to write any code. You will click through Supabase's website, paste one file, and copy two values into one file on GitHub.
 
 > **Cost:** Supabase's free plan is enough for many weddings (500 MB database, 1 GB photo storage). It asks for no credit card. A free project is paused after a week with no visits; open the site once and it wakes up again within a minute.
@@ -35,7 +39,7 @@ You do not need to write any code. You will click through Supabase's website, pa
 3. Click **New query** (or the **+** button). A big empty box appears.
 4. Click inside it, press **Ctrl + V** (or **Cmd + V** on a Mac) to paste.
 5. Click the green **Run** button (bottom right), or press **Ctrl + Enter**.
-6. You should see **"Success. No rows returned"**. That is good.
+6. You should see **"Success. No rows returned"**. That is good. In **Table Editor** you should now see five tables starting with `shagun_`.
 
    - If Supabase shows a warning about "destructive operations", click **Run this query**. The file only removes and re-creates its own security rules.
    - It is safe to run the file again later (for example after an update to Shagun).
@@ -107,7 +111,7 @@ The sign-in email contains a link. Some phones open email links inside the Gmail
 
 ## Step 9. Check that it works
 
-1. Open **https://konicamaheshwarii.github.io/shagun-wishlist/**. The small "Demo mode: data stays in this browser" strip at the top should be **gone**, and the header shows **Sign in**.
+1. Open **https://konicamaheshwarii.github.io/shagun-wishlist/**. The small "Demo mode: data stays in this browser" strip at the top should be **gone**, and the header shows **Sign in**. If the strip is still there, it says why (for example "the online database is not set up yet": run step 3).
 2. Click **Create** → enter your email → open the email from Supabase → tap the link (or type the code).
 3. Create a test wedding page. Open its link on another phone, give a test blessing with "I've paid", and watch it appear on the dashboard within a few seconds.
 4. In the dashboard, under **Who can manage this page**, add your partner's email. They sign in with that email and see the same dashboard.
@@ -119,7 +123,8 @@ The sample wedding (Riya & Arjun) keeps working for everyone; it always stays in
 ## Good to know
 
 - **Emails:** Supabase's built-in email sender is meant for small projects and only sends a few sign-in emails per hour. That is plenty for a couple signing in. If you ever need more, Supabase lets you connect a free email service (Authentication → Emails → SMTP settings).
-- **Photos** are resized on the phone before upload (usually under 200 kB each) and stored in Supabase Storage in a folder per wedding.
+- **Photos** are resized on the phone before upload (usually under 200 kB each) and stored in the `shagun-photos` storage bucket, in a folder per wedding.
+- **Guest lists** for e-invites are private to the couple. Each guest's personal invite link carries a random code that only lets that guest see their own name and tick off "opened", "RSVP'd" and "gave shagun".
 - **Going back to demo mode:** empty both values in `public/config.json` and commit. Nothing in Supabase is deleted.
 - **Backups:** Supabase → **Table Editor** → pick a table → **Export to CSV**. The couple can also export shagun and RSVP lists from their dashboard.
 - **Something went wrong?** Supabase → **Logs** shows recent errors. Running `schema.sql` again never deletes data.

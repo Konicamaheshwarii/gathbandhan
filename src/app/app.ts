@@ -3,6 +3,7 @@ import { toSignal } from '@angular/core/rxjs-interop';
 import { NavigationEnd, Router, RouterLink, RouterLinkActive, RouterOutlet } from '@angular/router';
 import { filter, map } from 'rxjs';
 import { AuthService } from './core/auth/auth.service';
+import { BACKEND_STATUS } from './core/backend-status';
 import { WeddingRepository } from './core/data/wedding.repository';
 import { PROVIDERS, SettingsStore } from './core/settings.store';
 import { ToastsComponent } from './shared/toast.service';
@@ -13,7 +14,10 @@ import { ToastsComponent } from './shared/toast.service';
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
     @if (demoMode) {
-      <p class="demo-banner" role="note"><span aria-hidden="true">🪔</span> Demo mode: data stays in this browser.</p>
+      <p class="demo-banner" role="note">
+        <span aria-hidden="true">🪔</span> Demo mode: data stays in this browser.
+        @if (backendStatus.configured) { <span class="why">Online mode is switched on, but {{ backendStatus.reason }}. <a routerLink="/settings">Details</a></span> }
+      </p>
     }
     <header class="top" [class.guest]="guestView()">
       <a routerLink="/" class="brand" aria-label="Shagun home">
@@ -52,6 +56,7 @@ export class App {
   private readonly router = inject(Router);
   protected readonly auth = inject(AuthService);
   protected readonly demoMode = inject(WeddingRepository).mode === 'local';
+  protected readonly backendStatus = inject(BACKEND_STATUS);
 
   private readonly url = toSignal(
     this.router.events.pipe(filter((e) => e instanceof NavigationEnd), map((e) => e.urlAfterRedirects)),
