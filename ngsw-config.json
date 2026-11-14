@@ -1,0 +1,43 @@
+{
+  "$schema": "./node_modules/@angular/service-worker/config/schema.json",
+  "index": "/index.html",
+  "assetGroups": [
+    {
+      "name": "app",
+      "installMode": "prefetch",
+      "resources": {
+        "files": ["/favicon.svg", "/index.html", "/manifest.webmanifest", "/*.css", "/*.js"]
+      }
+    },
+    {
+      "name": "assets",
+      "installMode": "lazy",
+      "updateMode": "prefetch",
+      "resources": {
+        "files": ["/icons/**", "/demo/**", "/**/*.(svg|cur|jpg|jpeg|png|apng|webp|avif|gif|otf|ttf|woff|woff2)"]
+      }
+    }
+  ],
+  "dataGroups": [
+    {
+      "name": "fonts",
+      "urls": ["https://fonts.googleapis.com/**", "https://fonts.gstatic.com/**"],
+      "cacheConfig": { "strategy": "performance", "maxSize": 60, "maxAge": "30d" }
+    },
+    {
+      "name": "runtime-config",
+      "urls": ["/config.json"],
+      "cacheConfig": { "strategy": "freshness", "maxSize": 1, "maxAge": "30d", "timeout": "3s" }
+    },
+    {
+      "name": "wedding-photos",
+      "urls": ["https://*.supabase.co/storage/v1/object/public/shagun-photos/**"],
+      "cacheConfig": { "strategy": "performance", "maxSize": 80, "maxAge": "30d" }
+    },
+    {
+      "name": "wedding-data",
+      "urls": ["https://*.supabase.co/rest/v1/shagun_weddings**"],
+      "cacheConfig": { "strategy": "freshness", "maxSize": 20, "maxAge": "7d", "timeout": "4s" }
+    }
+  ]
+}

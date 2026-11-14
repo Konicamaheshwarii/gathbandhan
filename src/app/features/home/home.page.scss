@@ -13,7 +13,7 @@ h1 { font-size: clamp(2.1rem, 6vw, 3.3rem); line-height: 1.06; em { font-style: 
 
 .mockup { position: relative; display: grid; justify-items: center; gap: 0.6rem; }
 .phone {
-  position: relative; width: min(300px, 78vw); padding: 12px; border-radius: 40px; background: #1d1012;
+  position: relative; width: min(300px, 62vw); padding: 12px; border-radius: 40px; background: #1d1012;
   box-shadow: 0 30px 70px rgb(110 21 48 / 35%), inset 0 0 0 2px #3a2226;
   transform: rotate(-2.5deg);
 }

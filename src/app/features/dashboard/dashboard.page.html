@@ -130,6 +130,7 @@
         <p class="muted small">{{ store.backend ? 'Your page is online, so the link opens on any phone.' : 'The link carries your page, so it opens on any phone.' }}</p>
         <a class="btn whatsapp block" [href]="whatsapp()" target="_blank" rel="noopener">Share on WhatsApp</a>
         <div class="row">
+          @if (canShare) { <button class="btn small" type="button" (click)="share()">Share…</button> }
           <button class="btn small" type="button" (click)="copyLink()">Copy link</button>
           <a class="btn small" [routerLink]="['/w', w.slug, 'card']">Print venue QR</a>
         </div>

@@ -1,0 +1,28 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+  <defs>
+    <radialGradient id="bg" cx="0.5" cy="0.35" r="0.75">
+      <stop offset="0" stop-color="#b3294f"/>
+      <stop offset="1" stop-color="#6e1530"/>
+    </radialGradient>
+    <linearGradient id="flame" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#ffe08a"/>
+      <stop offset="1" stop-color="#f29a12"/>
+    </linearGradient>
+  </defs>
+  <rect width="512" height="512" fill="url(#bg)" class="bg"/>
+  <g fill="none" stroke="#f6c453" stroke-width="5" opacity="0.35">
+    <circle cx="256" cy="256" r="190"/>
+    <circle cx="256" cy="256" r="172" stroke-dasharray="4 14"/>
+  </g>
+  <g>
+    <circle cx="150" cy="118" r="17" fill="#f29a12"/><circle cx="150" cy="118" r="7" fill="#ffd166"/>
+    <circle cx="203" cy="102" r="17" fill="#e8501a"/><circle cx="203" cy="102" r="7" fill="#ffb347"/>
+    <circle cx="256" cy="97" r="17" fill="#f29a12"/><circle cx="256" cy="97" r="7" fill="#ffd166"/>
+    <circle cx="309" cy="102" r="17" fill="#e8501a"/><circle cx="309" cy="102" r="7" fill="#ffb347"/>
+    <circle cx="362" cy="118" r="17" fill="#f29a12"/><circle cx="362" cy="118" r="7" fill="#ffd166"/>
+  </g>
+  <path d="M256 168c32 40 42 74 0 116c-42-42-32-76 0-116z" fill="url(#flame)"/>
+  <path d="M256 206c15 20 18 38 0 58c-18-20-15-38 0-58z" fill="#e8501a"/>
+  <path d="M136 292h240c-10 62-60 104-120 104s-110-42-120-104z" fill="#f6c453"/>
+  <path d="M150 300h212c-6 10-14 18-24 24H174c-10-6-18-14-24-24z" fill="#d9a12a"/>
+</svg>

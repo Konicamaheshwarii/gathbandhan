@@ -4,6 +4,7 @@ import { BACKEND_STATUS } from '../../core/backend-status';
 import { WeddingRepository } from '../../core/data/wedding.repository';
 import { TIER_LABELS } from '../../core/llm/llm-chain';
 import { LlmService } from '../../core/llm/llm.service';
+import { PwaService } from '../../core/pwa.service';
 import { KeyProvider, PROVIDERS, ProviderId, SettingsStore, Theme } from '../../core/settings.store';
 import { ToastService } from '../../shared/toast.service';
 
@@ -23,6 +24,7 @@ export class SettingsPage {
   protected readonly providers = PROVIDERS;
   protected readonly backend = this.repo.mode === 'supabase';
   protected readonly backendStatus = inject(BACKEND_STATUS);
+  protected readonly pwa = inject(PwaService);
   protected readonly themes: Theme[] = ['system', 'light', 'dark'];
   protected readonly current = computed(() => PROVIDERS.find((p) => p.id === this.store.provider())!);
   protected readonly real = computed<KeyProvider | null>(() => {

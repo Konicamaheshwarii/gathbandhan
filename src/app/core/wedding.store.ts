@@ -3,6 +3,7 @@ import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { WeddingRepository } from './data/wedding.repository';
 import { recalledGuestToken } from './guests';
 import { Contribution, Guest, GuestMark, NewContribution, NewRsvp, PublicActivity, Rsvp, WallEntry, Wedding } from './models';
+import { readJson, writeJson } from './storage';
 import { computeTotals, totalsFromActivity } from './totals';
 import { decodeWedding, encodeWedding, weddingUrl } from './wedding-link';
 
@@ -16,6 +17,14 @@ export interface LoadOptions {
 }
 
 const EMPTY_ACTIVITY: PublicActivity = { goals: {}, raised: 0, contributors: 0, wall: [] };
+
+/** Last copy of a wedding page seen online, so an installed app can still show it offline. */
+interface Snapshot {
+  wedding: Wedding;
+  activity: PublicActivity;
+  at: number;
+}
+const snapKey = (slug: string) => `sg.snap.${slug}`;
 
 /**
  * State for one wedding page. Provided per route component, so every page gets its own copy
@@ -43,6 +52,8 @@ export class WeddingStore {
   /** Public link: just `#/w/slug` with the backend; in demo mode it carries the wedding page. */
   readonly shareUrl = signal('');
   readonly backend = this.repo.mode === 'supabase';
+  /** Showing the copy saved on this device because the backend could not be reached. */
+  readonly fromCache = signal(false);
 
   readonly totals = computed(() => {
     const w = this.wedding();
@@ -74,6 +85,7 @@ export class WeddingStore {
     this.manageMode = !!options.manage;
     this.error.set(null);
     let wedding: Wedding | null = null;
+    this.fromCache.set(false);
     try {
       wedding = await this.repo.getWeddingBySlug(slug);
       if (!wedding && options.payload && this.repo.mode === 'local') {
@@ -82,6 +94,15 @@ export class WeddingStore {
       }
     } catch (e) {
       this.error.set((e as Error).message);
+      const snap = this.backend && !options.manage ? readJson<Snapshot | null>(snapKey(slug), null) : null;
+      if (snap?.wedding) {
+        this.wedding.set(snap.wedding);
+        this.activity.set(snap.activity ?? EMPTY_ACTIVITY);
+        this.fromCache.set(true);
+        this.shareUrl.set(weddingUrl(slug));
+        this.state.set('ready');
+        return snap.wedding;
+      }
     }
     this.wedding.set(wedding);
     if (wedding) {
@@ -177,6 +198,7 @@ export class WeddingStore {
       this.guests.set(guests);
     } else {
       this.activity.set(await this.repo.getPublicActivity(w.id));
+      if (this.backend && !w.demo) writeJson(snapKey(w.slug), { wedding: w, activity: this.activity(), at: Date.now() } satisfies Snapshot);
     }
   }
 

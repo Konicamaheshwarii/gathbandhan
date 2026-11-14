@@ -163,6 +163,20 @@ export class DashboardPage {
     this.toast.show('CSV downloaded');
   }
 
+  protected readonly canShare = typeof navigator !== 'undefined' && 'share' in navigator;
+
+  /** The phone's own share sheet (WhatsApp, Telegram, SMS, email…). */
+  protected async share(): Promise<void> {
+    const w = this.store.wedding();
+    const t = this.store.totals();
+    if (!w || !t) return;
+    try {
+      await navigator.share({ title: this.couple(), text: inviteMessage(w, '', t.target).trim(), url: this.store.shareUrl() });
+    } catch {
+      // closed the share sheet
+    }
+  }
+
   protected async copyLink(): Promise<void> {
     this.toast.show((await copyText(this.store.shareUrl())) ? 'Link copied' : 'Could not copy');
   }

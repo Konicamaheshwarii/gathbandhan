@@ -5,6 +5,7 @@ import { filter, map } from 'rxjs';
 import { AuthService } from './core/auth/auth.service';
 import { BACKEND_STATUS } from './core/backend-status';
 import { WeddingRepository } from './core/data/wedding.repository';
+import { PwaService } from './core/pwa.service';
 import { PROVIDERS, SettingsStore } from './core/settings.store';
 import { ToastsComponent } from './shared/toast.service';
 
@@ -12,11 +13,22 @@ import { ToastsComponent } from './shared/toast.service';
   selector: 'app-root',
   imports: [RouterOutlet, RouterLink, RouterLinkActive, ToastsComponent],
   changeDetection: ChangeDetectionStrategy.OnPush,
+  host: { '[class.standalone]': 'pwa.standalone()' },
   template: `
     @if (demoMode) {
       <p class="demo-banner" role="note">
         <span aria-hidden="true">🪔</span> Demo mode: data stays in this browser.
         @if (backendStatus.configured) { <span class="why">Online mode is switched on, but {{ backendStatus.reason }}. <a routerLink="/settings">Details</a></span> }
+      </p>
+    }
+    @if (!pwa.online()) {
+      <p class="offline-banner" role="status">
+        <span aria-hidden="true">📴</span> You're offline. Pages you opened before still work; giving shagun, RSVPs, AI and saving changes need the internet.
+      </p>
+    }
+    @if (pwa.updateReady()) {
+      <p class="update-banner" role="status">
+        A new version of Shagun is ready. <button class="btn small" type="button" (click)="pwa.applyUpdate()">Refresh</button>
       </p>
     }
     <header class="top" [class.guest]="guestView()">
@@ -43,10 +55,36 @@ import { ToastsComponent } from './shared/toast.service';
         }
       }
     </header>
+
+    @if (!guestView() && pwa.offerInstall()) {
+      <aside class="install" aria-label="Install the app">
+        <span class="install-icon" aria-hidden="true"><img src="icons/icon-96.png" alt="" width="40" height="40" /></span>
+        <div class="install-text">
+          <strong>Install Shagun on your phone</strong>
+          @if (pwa.showIosHelp()) {
+            <span>Tap <b>Share</b> <span aria-hidden="true">⬆️</span> in Safari's toolbar, then <b>Add to Home Screen</b>.</span>
+          } @else {
+            <span>Open it like an app, even with a weak network.</span>
+          }
+        </div>
+        @if (!pwa.showIosHelp()) { <button class="btn small primary" type="button" (click)="pwa.install()">Install app</button> }
+        <button class="btn small ghost" type="button" (click)="pwa.dismiss()" aria-label="Not now">✕</button>
+      </aside>
+    }
+
     <main><router-outlet /></main>
     <footer class="foot">
       <p>Shagun goes straight from the guest's UPI app to the couple. This site never touches the money.</p>
     </footer>
+
+    @if (pwa.standalone() && !guestView()) {
+      <nav class="bottom-nav" aria-label="App">
+        <a routerLink="/" routerLinkActive="active" [routerLinkActiveOptions]="{ exact: true }"><span aria-hidden="true">🏠</span>Home</a>
+        <a routerLink="/create" routerLinkActive="active"><span aria-hidden="true">➕</span>Create</a>
+        <a routerLink="/i/riya-weds-arjun" routerLinkActive="active"><span aria-hidden="true">💌</span>Sample</a>
+        <a routerLink="/settings" routerLinkActive="active"><span aria-hidden="true">⚙️</span>Settings</a>
+      </nav>
+    }
     <app-toasts />
   `,
   styleUrl: './app.scss',
@@ -55,6 +93,7 @@ export class App {
   private readonly settings = inject(SettingsStore);
   private readonly router = inject(Router);
   protected readonly auth = inject(AuthService);
+  protected readonly pwa = inject(PwaService);
   protected readonly demoMode = inject(WeddingRepository).mode === 'local';
   protected readonly backendStatus = inject(BACKEND_STATUS);
 

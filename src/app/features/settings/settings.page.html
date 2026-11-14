@@ -82,6 +82,21 @@
 </section>
 
 <section class="card stack">
+  <h2>Install the app</h2>
+  @if (pwa.standalone()) {
+    <p class="small"><span class="chip good">Installed</span> You are using Shagun as an app.</p>
+  } @else {
+    <p class="muted small">Add Shagun to your home screen to open it like an app, with your pages available even on a weak network.</p>
+    <ul class="small install-steps">
+      <li><strong>Android (Chrome):</strong> tap <em>Install app</em> below, or the ⋮ menu → <em>Install app</em> / <em>Add to Home screen</em>.</li>
+      <li><strong>iPhone / iPad (Safari):</strong> tap <em>Share</em> ⬆️ → <em>Add to Home Screen</em> → <em>Add</em>.</li>
+      <li><strong>Laptop (Chrome or Edge):</strong> click the install icon at the right end of the address bar.</li>
+    </ul>
+    @if (pwa.canPrompt()) { <button class="btn primary" type="button" (click)="pwa.install()">Install app</button> }
+  }
+</section>
+
+<section class="card stack">
   <h2>Appearance</h2>
   <div class="row" role="radiogroup" aria-label="Theme">
     @for (t of themes; track t) {

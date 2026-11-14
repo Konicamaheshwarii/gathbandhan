@@ -34,6 +34,9 @@
 
       <div class="layout">
         <div class="main-col">
+          @if (store.fromCache()) {
+            <p class="note demo-note" role="status">📴 You're offline, so this is the copy saved on this phone. Totals and blessings may be a little out of date.</p>
+          }
           @if (w.demo) {
             <p class="note demo-note" role="note">
               <strong>This is a sample page.</strong> The UPI ID is not real, so please do not pay. Try the whole guest
