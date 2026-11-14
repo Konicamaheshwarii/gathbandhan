@@ -1,6 +1,8 @@
 import { DOCUMENT } from '@angular/common';
 import { ChangeDetectionStrategy, Component, DestroyRef, computed, effect, inject, input, signal } from '@angular/core';
 import { RouterLink } from '@angular/router';
+import { CARD_PRINTED_KEY } from '../../core/stats';
+import { writeJson } from '../../core/storage';
 import { firstName } from '../../core/util';
 import { WeddingStore } from '../../core/wedding.store';
 import { IndianDatePipe } from '../../shared/pipes';
@@ -46,6 +48,8 @@ export class CardPage {
   }
 
   protected print(): void {
+    const w = this.store.wedding();
+    if (w) writeJson(CARD_PRINTED_KEY(w.id), true); // ticks "venue card printed" on the dashboard checklist
     globalThis.print?.();
   }
 }

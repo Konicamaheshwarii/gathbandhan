@@ -9,7 +9,11 @@ import { firstName } from '../../core/util';
 import { WeddingStore } from '../../core/wedding.store';
 import { Wedding } from '../../core/models';
 import { copyText } from '../../shared/clipboard';
-import { InrPipe, TimeAgoPipe } from '../../shared/pipes';
+import { IndianDatePipe, InrPipe, TimeAgoPipe } from '../../shared/pipes';
+import { readJson } from '../../core/storage';
+import { CARD_PRINTED_KEY, activityFeed, daysToGo, inviteStats, weddingChecklist } from '../../core/stats';
+import { SideSplitComponent } from './side-split.component';
+import { TrendChartComponent } from './trend-chart.component';
 import { ToastService } from '../../shared/toast.service';
 import { CoOwnersComponent } from './co-owners.component';
 import { GoalUpdateComponent, withUpdate, withoutUpdate } from './goal-update.component';
@@ -27,7 +31,7 @@ interface NoteDraft {
 
 @Component({
   selector: 'app-dashboard',
-  imports: [RouterLink, InrPipe, TimeAgoPipe, RsvpSummaryComponent, CoOwnersComponent, GoalUpdateComponent],
+  imports: [RouterLink, InrPipe, IndianDatePipe, TimeAgoPipe, RsvpSummaryComponent, CoOwnersComponent, GoalUpdateComponent, TrendChartComponent, SideSplitComponent],
   providers: [WeddingStore],
   changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './dashboard.page.html',
@@ -90,6 +94,28 @@ export class DashboardPage {
     const total = (side: Side) => list.filter((c) => c.side === side).reduce((t, c) => t + c.amount, 0);
     return { bride: total('bride'), groom: total('groom') };
   });
+  protected readonly invites = computed(() => inviteStats(this.store.guests()));
+  protected readonly people = computed(() => this.store.rsvps().filter((r) => r.eventIds.length).reduce((t, r) => t + r.partySize, 0));
+  protected readonly daysLeft = computed(() => {
+    const w = this.store.wedding();
+    return w ? daysToGo(w) : 0;
+  });
+  protected readonly activity = computed(() => {
+    const w = this.store.wedding();
+    return w ? activityFeed(w, this.store.contributions(), this.store.rsvps(), this.store.guests()) : [];
+  });
+  protected readonly checklist = computed(() => {
+    const w = this.store.wedding();
+    return w ? weddingChecklist(w, this.store.contributions(), this.store.rsvps(), this.store.guests(), readJson<boolean>(CARD_PRINTED_KEY(w.id), false)) : [];
+  });
+  protected readonly checkDone = computed(() => this.checklist().filter((c) => c.done).length);
+  protected pct(a: number, b: number): number {
+    return b ? Math.round((a / b) * 100) : 0;
+  }
+  /** The goal's own photo, else its newest update photo. */
+  protected goalPhoto(g: Wedding['goals'][number]): string {
+    return g.imageUrl || g.updates?.find((u) => u.imageUrl)?.imageUrl || '';
+  }
   protected readonly whatsapp = computed(() => {
     const w = this.store.wedding();
     const t = this.store.totals();

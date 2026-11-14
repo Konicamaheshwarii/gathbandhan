@@ -1,35 +1,34 @@
 <section class="hero">
   <div class="hero-copy">
-    <p class="eyebrow">Digital shagun for Indian weddings</p>
-    <h1>Skip the fourth mixer&#8209;grinder. <em>Bless their dreams instead.</em></h1>
+    <p class="eyebrow">E-invites · RSVPs · shagun by UPI</p>
+    <h1>Your wedding, from <em>kankotri</em> to <em>shagun</em>, on one link.</h1>
     <p class="lead">
-      Couples list what they are really saving for: a honeymoon, a first home, a trip to Japan. Guests give shagun
-      towards it in any amount, straight to the couple by UPI, and leave a blessing on the wall.
+      Design a beautiful digital kankotri in English, हिन्दी or ગુજરાતી, send every guest their own invite on WhatsApp,
+      collect RSVPs for each function, and let guests bless the dreams you are saving for, straight to you by UPI.
     </p>
     <div class="row ctas">
-      <a class="btn primary" routerLink="/create">Create your wedding page</a>
-      <a class="btn" [routerLink]="['/w', demoSlug]">See a sample page</a>
+      <a class="btn primary big" [routerLink]="auth.enabled && !auth.user() ? '/login' : '/create'" [queryParams]="auth.enabled && !auth.user() ? { next: '/create' } : {}">Create your wedding page</a>
+      <a class="btn big" [routerLink]="['/i', demoSlug]">See a sample invite</a>
     </div>
-    <p class="math"><strong>200 guests × ₹2,000 = ₹4,00,000.</strong> That is the honeymoon, funded.</p>
+    <ul class="trust">
+      <li><span aria-hidden="true">✓</span> Free, no app for guests</li>
+      <li><span aria-hidden="true">✓</span> Money goes straight to you</li>
+      <li><span aria-hidden="true">✓</span> Free AI in 4 languages</li>
+    </ul>
   </div>
 
-  @if (demo(); as d) {
-    <a class="preview cover cover-marigold" [routerLink]="['/w', d.wedding.slug]" aria-label="Open the sample wedding page">
-      <app-toran />
-      <div class="preview-body">
-        <p class="eyebrow light">{{ d.wedding.date | indianDate }} · {{ d.wedding.city }}</p>
-        <p class="names">{{ d.names }}</p>
-        <div class="preview-card">
-          <div class="row between"><strong>{{ d.raised | inr }}</strong><span class="muted small">of {{ d.target | inr: 'short' }}</span></div>
-          <div class="progress"><span [style.width.%]="d.percent"></span></div>
-          <p class="small muted">{{ d.count }} blessings so far</p>
-          @for (g of d.wedding.goals.slice(0, 3); track g.id) {
-            <div class="mini-goal"><span aria-hidden="true">{{ g.emoji }}</span>{{ g.title }}</div>
-          }
-        </div>
-      </div>
-    </a>
-  }
+  <div class="mockup" aria-label="Sample invitation, changing style">
+    <div class="phone">
+      <span class="notch" aria-hidden="true"></span>
+      @if (demo(); as d) {
+        @for (hd of heroList(); track hd.template + hd.language) {
+          <app-invite-page class="screen" [wedding]="d.wedding" [design]="hd" [page]="cover" />
+        }
+      }
+    </div>
+    <p class="sample-tag">Sample invite · {{ heroDesign() ? heroName() : '' }}</p>
+    <span class="petal p1" aria-hidden="true">🌼</span><span class="petal p2" aria-hidden="true">🌸</span><span class="petal p3" aria-hidden="true">🪔</span>
+  </div>
 </section>
 
 @if (mine().length) {
@@ -38,18 +37,17 @@
     <div class="page-grid">
       @for (p of mine(); track p.wedding.id) {
         <article class="card page-card">
-          <div class="page-cover cover" [class]="'page-cover cover cover-' + p.wedding.cover.preset"
-               [class.photo]="!!p.wedding.cover.imageUrl"
+          <div class="page-cover cover" [class]="'page-cover cover cover-' + p.wedding.cover.preset" [class.photo]="!!p.wedding.cover.imageUrl"
                [style.background-image]="p.wedding.cover.imageUrl ? 'url(' + p.wedding.cover.imageUrl + ')' : null">
             <span>{{ p.names }}</span>
           </div>
-          <p class="muted small">{{ p.wedding.date | indianDate }} · {{ p.count }} contributions</p>
+          <p class="muted small">{{ p.wedding.date | indianDate }} · {{ p.count }} guests blessed</p>
           <div class="progress"><span [style.width.%]="p.percent"></span></div>
           <p class="small"><strong>{{ p.raised | inr }}</strong> <span class="muted"> of {{ p.target | inr }}</span></p>
           <div class="row">
             <a class="btn small primary" [routerLink]="['/w', p.wedding.slug, 'dashboard']">Dashboard</a>
-            <a class="btn small" [routerLink]="['/w', p.wedding.slug]">View page</a>
-            <a class="btn small ghost" [routerLink]="['/w', p.wedding.slug, 'edit']">Edit</a>
+            <a class="btn small" [routerLink]="['/w', p.wedding.slug, 'guests']">Invites</a>
+            <a class="btn small ghost" [routerLink]="['/w', p.wedding.slug]">View page</a>
           </div>
         </article>
       }
@@ -57,33 +55,106 @@
   </section>
 }
 
-<section>
-  <h2 class="center">How it works</h2>
+<section aria-labelledby="how-h">
+  <p class="eyebrow center">How it works</p>
+  <h2 id="how-h" class="center">Three steps, one WhatsApp link</h2>
   <ol class="steps">
     <li class="card">
+      <span class="step-num" aria-hidden="true">1</span>
       <span class="step-icon" aria-hidden="true">🎯</span>
-      <h3>List your real goals</h3>
-      <p class="muted">Two to five dreams with honest targets. AI can draft your story and suggest amounts that fit your guest list.</p>
+      <h3>Create</h3>
+      <p class="muted">Add your functions, families, photos, story and two to five dreams. AI drafts the story and suggests honest targets.</p>
     </li>
     <li class="card">
-      <span class="step-icon" aria-hidden="true">💬</span>
-      <h3>Share it the Indian way</h3>
-      <p class="muted">One tap to WhatsApp with a ready message, plus a printable QR card for the shagun table at the venue.</p>
+      <span class="step-num" aria-hidden="true">2</span>
+      <span class="step-icon" aria-hidden="true">💌</span>
+      <h3>Invite</h3>
+      <p class="muted">Pick a kankotri style, import your guest list, and send everyone a personal invite on WhatsApp. Watch who opened and who RSVP'd.</p>
     </li>
     <li class="card">
+      <span class="step-num" aria-hidden="true">3</span>
       <span class="step-icon" aria-hidden="true">🪔</span>
-      <h3>Guests bless by UPI</h3>
-      <p class="muted">₹501, ₹1,100, ₹2,100 or any amount, paid from GPay, PhonePe or Paytm straight to you. No gateway, no fees.</p>
+      <h3>Receive shagun</h3>
+      <p class="muted">Guests bless a dream with ₹501, ₹1,100 or any amount from their UPI app, and leave a message on your blessing wall.</p>
     </li>
   </ol>
 </section>
 
-<section class="why card">
-  <h2>Not a fundraiser. Just shagun, made useful.</h2>
-  <ul class="why-list">
-    <li><strong>UPI first.</strong> A real <code>upi://pay</code> link and QR code. Money never passes through this site.</li>
-    <li><strong>Blessing wall.</strong> Every guest leaves a message; amounts stay private unless you choose to show them.</li>
-    <li><strong>You stay in control.</strong> Contributions show as "guest confirmed" until you tick them off against your bank app.</li>
-    <li><strong>Thank-you notes in your language.</strong> AI drafts a personal note per guest in English, हिन्दी or Hinglish, ready for WhatsApp.</li>
-  </ul>
+@if (gallery().length) {
+  <section aria-labelledby="tpl-h" class="templates">
+    <div class="row">
+      <div>
+        <p class="eyebrow">Invite styles</p>
+        <h2 id="tpl-h">Six kankotri styles, your colours</h2>
+      </div>
+      <span class="spacer"></span>
+      <a class="btn small" [routerLink]="['/i', demoSlug]">Open the sample invite</a>
+    </div>
+    <div class="carousel" tabindex="0" aria-label="Invite styles (sample content), scroll sideways">
+      @for (g of gallery(); track g.meta.id) {
+        <figure class="tpl-card">
+          <app-invite-page [wedding]="demo()!.wedding" [design]="g.design" [page]="cover" />
+          <figcaption><strong>{{ g.meta.name }}</strong><span class="hint">{{ g.meta.blurb }}</span></figcaption>
+        </figure>
+      }
+    </div>
+    <p class="hint">Samples shown with the demo couple, Riya &amp; Arjun. Every motif is drawn in code, so your invite prints sharp.</p>
+  </section>
+}
+
+<section aria-labelledby="feat-h">
+  <p class="eyebrow center">Everything in one place</p>
+  <h2 id="feat-h" class="center">Made for Indian weddings</h2>
+  <div class="features">
+    <article class="card feature"><span class="f-icon" aria-hidden="true">💌</span><h3>Digital kankotri</h3><p class="muted small">Ganesh, Rajasthani, Gujarati, South Indian, royal or minimal. Animated web invite, PNG for WhatsApp and PDF.</p></article>
+    <article class="card feature"><span class="f-icon" aria-hidden="true">📇</span><h3>Guest tracker</h3><p class="muted small">Import from CSV or contacts, personal links, and see sent, opened, RSVP'd and gave shagun at a glance.</p></article>
+    <article class="card feature"><span class="f-icon" aria-hidden="true">📅</span><h3>Functions and RSVPs</h3><p class="muted small">Haldi to reception with maps, dress codes and add-to-calendar. Headcount per function for the caterer.</p></article>
+    <article class="card feature"><span class="f-icon" aria-hidden="true">🪔</span><h3>Shagun by UPI</h3><p class="muted small">A real UPI link and QR. No gateway, no fees. You verify each blessing against your bank app.</p></article>
+    <article class="card feature"><span class="f-icon" aria-hidden="true">✨</span><h3>Free AI, four languages</h3><p class="muted small">Invite text, WhatsApp messages, your story and thank-you notes in English, Hindi, Gujarati or Hinglish. No key needed.</p></article>
+    <article class="card feature"><span class="f-icon" aria-hidden="true">📊</span><h3>Couple dashboard</h3><p class="muted small">Shagun over time, bride's and groom's side, RSVPs by function, a checklist and thank-yous in one tap.</p></article>
+  </div>
+</section>
+
+@if (demo(); as d) {
+  <section class="live" aria-labelledby="live-h">
+    <div class="live-copy">
+      <p class="eyebrow">Live sample wedding</p>
+      <h2 id="live-h">Walk through it as a guest</h2>
+      <p class="muted">Riya &amp; Arjun's page is a sample with made-up guests and a fake UPI ID. Open the invite, RSVP, "give" shagun and watch the dashboard update.</p>
+      <div class="row">
+        <a class="btn primary" [routerLink]="['/w', d.wedding.slug]">Open the sample page</a>
+        <a class="btn" [routerLink]="['/w', d.wedding.slug, 'dashboard']">See the couple's dashboard</a>
+      </div>
+    </div>
+    <a class="preview cover cover-marigold" [routerLink]="['/w', d.wedding.slug]" aria-label="Open the sample wedding page">
+      <div class="preview-body">
+        <p class="eyebrow light">{{ d.wedding.date | indianDate }} · {{ d.wedding.city }}</p>
+        <p class="names">{{ d.names }}</p>
+        <div class="preview-card">
+          <div class="row between"><strong>{{ d.raised | inr }}</strong><span class="muted small">of {{ d.target | inr: 'short' }}</span></div>
+          <div class="progress"><span [style.width.%]="d.percent"></span></div>
+          <p class="small muted">{{ d.count }} guests have blessed (sample)</p>
+          @for (g of d.wedding.goals.slice(0, 3); track g.id) {
+            <div class="mini-goal"><span aria-hidden="true">{{ g.emoji }}</span>{{ g.title }}</div>
+          }
+        </div>
+      </div>
+    </a>
+  </section>
+}
+
+<section class="faq" aria-labelledby="faq-h">
+  <h2 id="faq-h" class="center">Questions families ask</h2>
+  @for (f of faq; track f.q) {
+    <details class="card">
+      <summary>{{ f.q }}</summary>
+      <p class="muted">{{ f.a }}</p>
+    </details>
+  }
+</section>
+
+<section class="cta-band cover cover-maroon">
+  <h2>Start your wedding page in three minutes</h2>
+  <p>Free. In your language. Shagun straight to you.</p>
+  <a class="btn marigold big" [routerLink]="auth.enabled && !auth.user() ? '/login' : '/create'" [queryParams]="auth.enabled && !auth.user() ? { next: '/create' } : {}">Create your wedding page</a>
 </section>

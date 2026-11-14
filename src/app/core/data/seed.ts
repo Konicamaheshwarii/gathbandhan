@@ -2,7 +2,7 @@ import { defaultInvite } from '../invite';
 import { Contribution, Guest, Rsvp, Side, Wedding } from '../models';
 
 /** Bump to re-seed browsers that already have an older copy of the sample. */
-export const DEMO_SEED_VERSION = 3;
+export const DEMO_SEED_VERSION = 4;
 export const DEMO_SLUG = 'riya-weds-arjun';
 export const DEMO_ID = 'w-demo';
 const HOUR = 3_600_000;
@@ -71,14 +71,14 @@ function baseDemoWedding(now: Date): Wedding {
     ],
     goals: [
       {
-        id: 'g-honeymoon', title: 'Honeymoon in Santorini & Amalfi', target: 300_000, emoji: '🌍',
+        id: 'g-honeymoon', title: 'Honeymoon in Santorini & Amalfi', target: 300_000, emoji: '🌍', imageUrl: 'demo/goal-honeymoon.svg',
         description: 'Ten days of blue domes, lemon groves and absolutely no wedding planning.',
         updates: [{ id: 'u-1', text: 'Flights booked! Mumbai → Athens on the 3rd. Thank you for getting us halfway there already.', imageUrl: 'demo/update-flight.svg', createdAt: now.getTime() - 30 * HOUR }],
       },
-      { id: 'g-home', title: 'Down payment on our first home', target: 1_000_000, emoji: '🏡', description: 'A 2BHK in Pune with a balcony big enough for Dadi’s tulsi plant.' },
-      { id: 'g-kyoto', title: 'Cherry blossoms in Kyoto', target: 200_000, emoji: '🌸', description: 'Our first-anniversary trip, booked for sakura season.' },
+      { id: 'g-home', title: 'Down payment on our first home', target: 1_000_000, emoji: '🏡', imageUrl: 'demo/goal-home.svg', description: 'A 2BHK in Pune with a balcony big enough for Dadi’s tulsi plant.' },
+      { id: 'g-kyoto', title: 'Cherry blossoms in Kyoto', target: 200_000, emoji: '🌸', imageUrl: 'demo/goal-kyoto.svg', description: 'Our first-anniversary trip, booked for sakura season.' },
       {
-        id: 'g-trees', title: '101 trees in Nani’s village', target: 18_000, emoji: '🌳',
+        id: 'g-trees', title: '101 trees in Nani’s village', target: 18_000, emoji: '🌳', imageUrl: 'demo/goal-trees.svg',
         description: 'Planted in Bhilwara with a local NGO, one for every guest table.',
         updates: [{ id: 'u-2', text: 'Fully funded in four days! Planting starts with the monsoon. Every guest gets a photo of their tree.', createdAt: now.getTime() - 60 * HOUR }],
       },

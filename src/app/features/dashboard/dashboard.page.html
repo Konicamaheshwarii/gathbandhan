@@ -16,76 +16,126 @@
   </div>
 } @else if (store.wedding(); as w) {
   @let t = store.totals()!;
-  <header class="head">
-    <div>
-      <p class="eyebrow">Couple dashboard</p>
+  @let inv = invites();
+  <header class="hero cover" [class]="'hero cover cover-' + w.cover.preset" [class.photo]="!!w.cover.imageUrl"
+          [style.background-image]="w.cover.imageUrl ? 'url(' + w.cover.imageUrl + ')' : null">
+    <div class="hero-text">
+      <p class="eyebrow light">Couple dashboard</p>
       <h1>Namaste, {{ couple() }}</h1>
+      <p class="hero-date">{{ w.date | indianDate: 'long' }}@if (w.city) { · {{ w.city }}}</p>
     </div>
-    <div class="row head-actions">
-      <a class="btn small" [routerLink]="['/w', w.slug]">View page</a>
-      <a class="btn small" [routerLink]="['/w', w.slug, 'edit']">Edit</a>
-      <a class="btn small" [routerLink]="['/w', w.slug, 'card']">QR card</a>
-      <a class="btn small" [routerLink]="['/w', w.slug, 'invite']">E-invite</a>
-      <a class="btn small primary" [routerLink]="['/w', w.slug, 'guests']">Guests</a>
+    <div class="countdown" aria-label="Days to go">
+      <strong class="num">{{ daysLeft() >= 0 ? daysLeft() : '🎉' }}</strong>
+      <span>{{ daysLeft() > 1 ? 'days to go' : daysLeft() === 1 ? 'day to go' : daysLeft() === 0 ? 'today!' : 'married' }}</span>
     </div>
   </header>
 
+  <nav class="quick" aria-label="Quick actions">
+    <a [routerLink]="['/w', w.slug, 'guests']"><span aria-hidden="true">💌</span>Send invites</a>
+    <a [routerLink]="['/w', w.slug, 'invite']"><span aria-hidden="true">🎨</span>E-invite</a>
+    <a [href]="whatsapp()" target="_blank" rel="noopener"><span aria-hidden="true">💬</span>Share page</a>
+    <a [routerLink]="['/w', w.slug]"><span aria-hidden="true">👀</span>View page</a>
+    <a [routerLink]="['/w', w.slug, 'edit']"><span aria-hidden="true">✏️</span>Edit</a>
+    <a [routerLink]="['/w', w.slug, 'card']"><span aria-hidden="true">🖨️</span>QR card</a>
+  </nav>
+
   @if (w.demo) {
-    <p class="note" role="note">This is the sample wedding. Try verifying contributions and drafting thank-you notes. <strong>Settings → Reset sample data</strong> restores it.</p>
+    <p class="note" role="note">This is the sample wedding. Try verifying shagun, sending invites and drafting thank-you notes. <strong>Settings → Reset sample data</strong> restores it.</p>
   }
   @if (w.imported) {
     <p class="note" role="note">You opened this page from a share link, so this dashboard only shows contributions made in this browser.</p>
   }
 
-  <section class="tiles" aria-label="Totals">
-    <div class="card tile"><span class="muted small">Total blessed</span><strong class="num">{{ t.raised | inr }}</strong><span class="hint">of {{ t.target | inr }}</span></div>
-    <div class="card tile"><span class="muted small">Verified in bank</span><strong class="num good">{{ t.verified | inr }}</strong><span class="hint">{{ counts().verified }} payments</span></div>
-    <div class="card tile"><span class="muted small">Guests</span><strong class="num">{{ t.contributors }}</strong><span class="hint">{{ store.blessings().length }} blessings</span></div>
-    <div class="card tile"><span class="muted small">To verify</span><strong class="num warn">{{ counts().unverified }}</strong><span class="hint">{{ counts().unthanked }} not thanked yet</span></div>
+  <section class="stats" aria-label="Overview">
+    <div class="card stat lead">
+      <span class="label">Shagun blessed</span>
+      <strong class="num">{{ t.raised | inr }}</strong>
+      <div class="progress"><span [style.width.%]="t.percent"></span></div>
+      <span class="hint">{{ t.percent }}% of {{ t.target | inr }}</span>
+    </div>
+    <div class="card stat"><span class="label">Verified in bank</span><strong class="num good">{{ t.verified | inr }}</strong><span class="hint">{{ counts().unverified }} to check</span></div>
+    <div class="card stat"><span class="label">Guests invited</span><strong class="num">{{ inv.sent }}<small>/{{ inv.total }}</small></strong><span class="hint">{{ inv.total - inv.sent }} not sent yet</span></div>
+    <div class="card stat"><span class="label">Invites opened</span><strong class="num">{{ inv.opened }}</strong><span class="hint">{{ inv.sent ? pct(inv.opened, inv.sent) : 0 }}% of sent</span></div>
+    <div class="card stat"><span class="label">Coming</span><strong class="num">{{ people() }}</strong><span class="hint">{{ store.rsvps().length }} RSVPs</span></div>
+    <div class="card stat"><span class="label">Blessings</span><strong class="num">{{ store.blessings().length }}</strong><span class="hint">{{ counts().unthanked }} to thank</span></div>
   </section>
 
-  <div class="grid">
-    <section class="card goals" aria-labelledby="goals-h">
-      <h2 id="goals-h">By dream</h2>
-      <ul>
-        @for (g of t.goals; track g.goal.id) {
-          <li>
-            <div class="row between">
-              <span class="goal-name"><span aria-hidden="true">{{ g.goal.emoji }}</span> {{ g.goal.title }}</span>
-              <span class="small num"><strong>{{ g.raised | inr: 'short' }}</strong><span class="muted"> / {{ g.goal.target | inr: 'short' }}</span></span>
-            </div>
+  <div class="grid two">
+    <section class="card" aria-labelledby="trend-h">
+      <div class="row"><h2 id="trend-h">Shagun over time</h2><span class="spacer"></span><span class="hint">last 30 days</span></div>
+      <app-trend-chart [contributions]="store.contributions()" />
+    </section>
+    <section class="card" aria-labelledby="side-h">
+      <h2 id="side-h">Bride's side and groom's side</h2>
+      <app-side-split [contributions]="store.contributions()" />
+    </section>
+  </div>
+
+  <section aria-labelledby="goals-h">
+    <h2 id="goals-h" class="section-title">Your dreams</h2>
+    <div class="goal-cards">
+      @for (g of t.goals; track g.goal.id) {
+        <article class="card goal-card" [class.funded]="g.funded">
+          <div class="goal-photo" [style.background-image]="goalPhoto(g.goal) ? 'url(' + goalPhoto(g.goal) + ')' : null">
+            @if (!goalPhoto(g.goal)) { <span class="goal-emoji" aria-hidden="true">{{ g.goal.emoji }}</span> }
+            <span class="chip" [class.good]="g.funded">{{ g.funded ? 'Funded 🎉' : g.percent + '%' }}</span>
+          </div>
+          <div class="goal-body">
+            <h3>{{ g.goal.title }}</h3>
             <div class="progress" [class.funded]="g.funded"><span [style.width.%]="g.percent"></span></div>
-            <span class="hint">{{ g.count }} guests · {{ g.verified | inr }} verified · {{ g.percent }}%</span>
+            <p class="small"><strong class="num">{{ g.raised | inr }}</strong><span class="muted"> of {{ g.goal.target | inr }} · {{ g.count }} guests</span></p>
             <app-goal-update [goal]="g.goal" (posted)="postUpdate(g.goal.id, $event)" (removed)="deleteUpdate(g.goal.id, $event)" />
+          </div>
+        </article>
+      }
+    </div>
+  </section>
+
+  <div class="grid two">
+    <section class="card" aria-labelledby="feed-h">
+      <h2 id="feed-h">Recent activity</h2>
+      @if (activity().length) {
+        <ol class="feed">
+          @for (a of activity(); track a.id) {
+            <li [class]="'feed-item ' + a.kind">
+              <span class="feed-icon" aria-hidden="true">{{ a.kind === 'shagun' ? '🪔' : a.kind === 'rsvp' ? '✅' : '💌' }}</span>
+              <span><strong>{{ a.who }}</strong> {{ a.text }}<span class="hint"> · {{ a.at | timeAgo }}</span></span>
+            </li>
+          }
+        </ol>
+      } @else {
+        <p class="muted small">Nothing yet. Send your invites to get things going.</p>
+      }
+    </section>
+    <section class="card" aria-labelledby="check-h">
+      <div class="row"><h2 id="check-h">Wedding checklist</h2><span class="spacer"></span><span class="chip">{{ checkDone() }}/{{ checklist().length }}</span></div>
+      <ul class="checklist">
+        @for (c of checklist(); track c.id) {
+          <li [class.done]="c.done">
+            <span class="tick" aria-hidden="true">{{ c.done ? '✓' : '' }}</span>
+            <a [routerLink]="c.link">{{ c.label }}</a>
+            <span class="hint">{{ c.detail }}</span>
           </li>
         }
       </ul>
     </section>
-
-    <section class="card share" aria-labelledby="share-h">
-      <h2 id="share-h">Invite more guests</h2>
-      <p class="muted small">{{ store.backend ? 'Your page is online, so the link opens on any phone.' : 'The link carries your page, so it opens on any phone.' }}</p>
-      <a class="btn whatsapp block" [href]="whatsapp()" target="_blank" rel="noopener">Share on WhatsApp</a>
-      <div class="row">
-        <button class="btn small" type="button" (click)="copyLink()">Copy link</button>
-        <a class="btn small" [routerLink]="['/w', w.slug, 'card']">Print venue QR</a>
-      </div>
-      <p class="hint provider">Thank-you notes are written by <a routerLink="/settings">{{ settings.isDemo() ? 'offline templates' : settings.provider() === 'auto' ? 'free AI (no key)' : settings.provider() }}</a>.</p>
-    </section>
   </div>
 
-  <div class="grid">
+  <div class="grid two">
     <app-rsvp-summary [wedding]="w" [rsvps]="store.rsvps()" />
-    @if (store.backend && !w.demo) {
-      <app-co-owners [weddingId]="w.id" />
-    } @else {
-      <section class="card sides" aria-labelledby="sides-h">
-        <h2 id="sides-h">By family side</h2>
-        <div class="row between"><span>Bride's side</span><strong class="num">{{ bySide().bride | inr }}</strong></div>
-        <div class="row between"><span>Groom's side</span><strong class="num">{{ bySide().groom | inr }}</strong></div>
-        <p class="hint">Guests choose their side when they give shagun. Filter the list below by side.</p>
+    <div class="stack">
+      @if (store.backend && !w.demo) { <app-co-owners [weddingId]="w.id" /> }
+      <section class="card share" aria-labelledby="share-h">
+        <h2 id="share-h">Invite more guests</h2>
+        <p class="muted small">{{ store.backend ? 'Your page is online, so the link opens on any phone.' : 'The link carries your page, so it opens on any phone.' }}</p>
+        <a class="btn whatsapp block" [href]="whatsapp()" target="_blank" rel="noopener">Share on WhatsApp</a>
+        <div class="row">
+          <button class="btn small" type="button" (click)="copyLink()">Copy link</button>
+          <a class="btn small" [routerLink]="['/w', w.slug, 'card']">Print venue QR</a>
+        </div>
+        <p class="hint provider">AI writing: <a routerLink="/settings">{{ settings.isDemo() ? 'offline templates' : settings.provider() === 'auto' ? 'free AI (no key)' : settings.provider() }}</a>.</p>
       </section>
-    }
+    </div>
   </div>
 
   <section class="card list" aria-labelledby="list-h">
