@@ -80,4 +80,4 @@ h1 { font-size: clamp(2.1rem, 6vw, 3.3rem); line-height: 1.06; em { font-style: 
 }
 @media (min-width: 600px) and (max-width: 860px) { .features { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
 @media (prefers-reduced-motion: reduce) { .petal, .screen { animation: none; } }
-.brand-line { display: flex; align-items: center; gap: 0.45rem; flex-wrap: wrap; }
+.brand-line app-logo { margin-right: 0.4rem; vertical-align: -5px; }

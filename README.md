@@ -1,4 +1,6 @@
-# Shagun: wedding e-invites, RSVPs and shagun by UPI
+<img src="public/icons/icon.svg" width="72" height="72" alt="Gathbandhan logo: a maroon and a gold thread tied into one knot" align="right">
+
+# Gathbandhan: wedding e-invites & digital shagun
 
 ![Angular](https://img.shields.io/badge/Angular-20-DD0031?logo=angular&logoColor=white)
 ![TypeScript](https://img.shields.io/badge/TypeScript-strict-3178C6?logo=typescript&logoColor=white)
@@ -7,14 +9,14 @@
 ![AI](https://img.shields.io/badge/AI-free%2C%20no%20key%20%7C%20Chrome%20AI%20%7C%20Gemini%20%7C%20Groq-8E75B2)
 ![PWA](https://img.shields.io/badge/PWA-installable%20%2B%20offline-5A0FC8)
 ![UPI](https://img.shields.io/badge/payments-UPI%20intent%20%2B%20QR-097939)
-![CI](https://github.com/Konicamaheshwarii/shagun-wishlist/actions/workflows/ci.yml/badge.svg)
+![CI](https://github.com/Konicamaheshwarii/gathbandhan/actions/workflows/ci.yml/badge.svg)
 ![License](https://img.shields.io/badge/license-MIT-blue)
 
-At Indian weddings, guests give gifts the couple did not ask for: the fourth mixer-grinder, another dinner set. Shagun turns the cash gift guests *already* give into something meaningful, and handles the rest of the wedding admin on the way. The couple designs a **digital kankotri** (wedding invitation) in English, हिन्दी or ગુજરાતી, sends every guest a personal invite on WhatsApp, collects **RSVPs per function** (haldi to reception), and lists two to five real dreams (a honeymoon, a first home) that guests bless with any amount, paid straight to the couple from their own UPI app.
+At Indian weddings, guests give gifts the couple did not ask for: the fourth mixer-grinder, another dinner set. Gathbandhan turns the cash gift guests *already* give into something meaningful, and handles the rest of the wedding admin on the way. The couple designs a **digital kankotri** (wedding invitation) in English, हिन्दी or ગુજરાતી, sends every guest a personal invite on WhatsApp, collects **RSVPs per function** (haldi to reception), and lists two to five real dreams (a honeymoon, a first home) that guests bless with any amount, paid straight to the couple from their own UPI app.
 
-It is deliberately framed as **digital shagun**, not a fundraiser, because Indian couples hesitate to "ask for money". It is UPI-first, WhatsApp-native, free, and works as an installable phone app.
+The name is the *gathbandhan*, the sacred knot that ties the couple together during the pheras; the logo is that knot, a maroon and a gold thread tied into a heart. It is deliberately framed as **digital shagun**, not a fundraiser, because Indian couples hesitate to "ask for money". It is UPI-first, WhatsApp-native, free, and works as an installable phone app.
 
-**[▶ Live demo](https://konicamaheshwarii.github.io/shagun-wishlist/)**: opens with a sample wedding (Riya & Arjun) with a finished invite and 25 guests. No sign-up needed.
+**[▶ Live demo](https://konicamaheshwarii.github.io/gathbandhan/)**: opens with a sample wedding (Riya & Arjun) with a finished invite and 25 guests. No sign-up needed.
 
 ![Landing page on desktop](docs/screenshots/desktop-home.png)
 
@@ -74,7 +76,7 @@ Every AI feature goes through one chain and uses the first tier that answers. A 
 | Tier | What it is | When it is used |
 |---|---|---|
 | 1. Your own key | Gemini or Groq, added in Settings (stays in the browser) | Only if the couple added a key |
-| 2. Chrome built-in AI | Gemini Nano through the Prompt API (`window.LanguageModel`), on-device and private | Desktop Chrome with the model already downloaded (Shagun never starts a download); English and Hinglish only |
+| 2. Chrome built-in AI | Gemini Nano through the Prompt API (`window.LanguageModel`), on-device and private | Desktop Chrome with the model already downloaded (Gathbandhan never starts a download); English and Hinglish only |
 | 3. Pollinations.ai | Free, keyless text API | Unless turned off in Settings. The text is sent to that third-party service, which the app says next to every AI button. Its free tier allows about one reply every 45 seconds per IP and answers browsers on the published site, so Shagun respects a cooldown instead of waiting |
 | 4. Offline templates | Deterministic writers and keyword rules in all four languages | Always; the last word |
 
@@ -82,7 +84,7 @@ AI writes: invite text (language, tone: traditional / modern / fun; the Ganesh s
 
 ## Demo mode and the online backend
 
-Shagun runs in two modes, chosen at start-up from `public/config.json`:
+Gathbandhan runs in two modes, chosen at start-up from `public/config.json`:
 
 - **Demo mode** (empty keys): everything lives in the browser's localStorage, share links carry the wedding page itself (deflated into the URL), and the sample wedding is seeded. A thin strip says "Demo mode: data stays in this browser".
 - **Online mode** (Supabase keys present): weddings, shagun, RSVPs and guests live in Supabase, links are short (`#/w/:slug`), couples sign in by **email magic link or 6-digit code**, a partner can be added as **co-owner**, photos go to Supabase Storage, and the blessing wall and dashboard update **in realtime**. supabase-js is loaded only in this mode (a lazy chunk).
@@ -101,7 +103,7 @@ On start the app reads `shagun_weddings` once. If the tables are missing (schema
 The anon/publishable key is meant to be public; **Row Level Security** protects the data. Setup for a non-technical owner, click by click: **[docs/SUPABASE_SETUP.md](docs/SUPABASE_SETUP.md)**.
 
 ### Database and security (`supabase/schema.sql`)
-One idempotent script to paste into the Supabase SQL editor. Every table, function and the photo bucket is prefixed `shagun_` so the project can be shared with other apps.
+One idempotent script to paste into the Supabase SQL editor. Every table, function and the photo bucket is prefixed `shagun_` so the project can be shared with other apps. The prefix (like the `sg.*` browser storage keys) comes from the app's original name, Shagun, and is kept so existing data and the schema still match.
 
 - **Guests (anon)**: read wedding pages; read totals and the blessing wall only through `shagun_public_activity()` (a security-definer function that never returns phone numbers, and returns amounts only if the couple shows them); **insert-only** on contributions (₹1 to ₹1,00,000, message up to 280 characters, the dream must exist; a trigger forces *guest confirmed*, no thank-you time and server time) and RSVPs (party of 1 to 20, only functions on the page).
 - **A guest with a personal link**: `shagun_guest_invite()` reveals only their own name and greeting; `shagun_guest_mark()` can only tick opened / RSVP'd / gave. The guest list itself is never readable.
@@ -110,7 +112,7 @@ One idempotent script to paste into the Supabase SQL editor. Every table, functi
 
 ## Install it as a phone app
 
-Shagun is a Progressive Web App: a service worker caches the app shell, fonts and the pages you opened, so it opens without network, shows a clear offline notice for actions that need the internet, and offers a refresh when a new version is deployed.
+Gathbandhan is a Progressive Web App: a service worker caches the app shell, fonts and the pages you opened, so it opens without network, shows a clear offline notice for actions that need the internet, and offers a refresh when a new version is deployed.
 
 - **Android (Chrome)**: tap **Install app** on the home page or in Settings, or the ⋮ menu → **Install app** / **Add to Home screen**.
 - **iPhone / iPad (Safari)**: tap **Share** ⬆️ → **Add to Home Screen** → **Add**.
@@ -165,9 +167,9 @@ Everything works in demo mode out of the box. For online mode, follow [docs/SUPA
 - calendar files (IST to UTC, RFC 5545 escaping and line folding, Google Calendar links), RSVP headcount and CSV
 - dashboard stats (running totals, side split, invite funnel, activity feed, checklist), the PWA service, the RSVP and give flows, share links, formatting, UPI links and totals
 
-Browser checks with Puppeteer at 375 px and 1280 px in demo mode: guest page, functions and calendar download, give flow with side, RSVP, personal invite (greeting, page animation, shehnai toggle, RSVP ticks the guest off), guest list import and the send queue, invite designer in Hindi and Gujarati with PNG and PDF export, dashboard chart tooltip, CSV export, goal updates and the editor. A production build served under `/shagun-wishlist/` was checked for a valid manifest (no installability errors in Chrome), an active service worker, and offline loading of the home page, wedding page and invite. A config pointing at a database without tables was checked to fall back to demo mode with the notice.
+Browser checks with Puppeteer at 375 px and 1280 px in demo mode: guest page, functions and calendar download, give flow with side, RSVP, personal invite (greeting, page animation, shehnai toggle, RSVP ticks the guest off), guest list import and the send queue, invite designer in Hindi and Gujarati with PNG and PDF export, dashboard chart tooltip, CSV export, goal updates and the editor. A production build served under `/gathbandhan/` was checked for a valid manifest (no installability errors in Chrome), an active service worker, and offline loading of the home page, wedding page and invite. A config pointing at a database without tables was checked to fall back to demo mode with the notice.
 
-CI (GitHub Actions) runs the tests and a production build with `--base-href /shagun-wishlist/` on every push, then deploys `main` to GitHub Pages.
+CI (GitHub Actions) runs the tests and a production build with `--base-href /gathbandhan/` on every push, then deploys `main` to GitHub Pages.
 
 ## Limitations
 

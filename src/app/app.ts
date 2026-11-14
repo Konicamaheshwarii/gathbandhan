@@ -56,11 +56,11 @@ import { ToastsComponent } from './shared/toast.service';
       <aside class="install" aria-label="Install the app">
         <span class="install-icon" aria-hidden="true"><img src="icons/icon-96.png" alt="" width="40" height="40" /></span>
         <div class="install-text">
-          <strong>Install Gathbandhan on your phone</strong>
+          <strong>Install Gathbandhan</strong>
           @if (pwa.showIosHelp()) {
             <span>Tap <b>Share</b> <span aria-hidden="true">⬆️</span> in Safari's toolbar, then <b>Add to Home Screen</b>.</span>
           } @else {
-            <span>Open it like an app, even with a weak network.</span>
+            <span>Open it like an app on your phone, even with a weak network.</span>
           }
         </div>
         @if (!pwa.showIosHelp()) { <button class="btn small primary" type="button" (click)="pwa.install()">Install app</button> }

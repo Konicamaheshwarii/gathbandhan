@@ -1,6 +1,6 @@
-# Put Shagun online with Supabase (free, about 15 minutes)
+# Put Gathbandhan online with Supabase (free, about 15 minutes)
 
-Right now Shagun runs in **demo mode**: every wedding page lives only in the browser where it was made. Guests on other phones can still pay by UPI, but the couple's dashboard does not see their blessings.
+Right now Gathbandhan runs in **demo mode**: every wedding page lives only in the browser where it was made. Guests on other phones can still pay by UPI, but the couple's dashboard does not see their blessings.
 
 Connecting **Supabase** (a free online database) fixes that. After these steps:
 
@@ -10,7 +10,7 @@ Connecting **Supabase** (a free online database) fixes that. After these steps:
 
 > **Where things stand now:** the Supabase project already exists (`https://ktajpcjnkiyvfjmihspq.supabase.co`) and its URL and publishable key are already in `public/config.json`. What is left is **step 3 (paste `schema.sql` and click Run)**, then steps 4 to 6 and 9. Until step 3 is done, the site notices that the tables are missing and keeps running in demo mode, with a note at the top of every page.
 >
-> The project is shared with another app (Saarthi), so every Shagun table, function and photo bucket starts with `shagun_` (`shagun_weddings`, `shagun_contributions`, `shagun-photos`…). The schema never touches anything else.
+> The project is shared with another app (Saarthi), so every Gathbandhan table, function and photo bucket starts with `shagun_`, from the app's original name, Shagun (`shagun_weddings`, `shagun_contributions`, `shagun-photos`…). The schema never touches anything else.
 
 You do not need to write any code. You will click through Supabase's website, paste one file, and copy two values into one file on GitHub.
 
@@ -21,20 +21,20 @@ You do not need to write any code. You will click through Supabase's website, pa
 ## Step 1. Create a Supabase account
 
 1. Go to **https://supabase.com** and click **Start your project**.
-2. Click **Continue with GitHub** and sign in with the same GitHub account that hosts Shagun (`Konicamaheshwarii`). Allow access when GitHub asks.
+2. Click **Continue with GitHub** and sign in with the same GitHub account that hosts Gathbandhan (`Konicamaheshwarii`). Allow access when GitHub asks.
 
 ## Step 2. Create the project
 
 1. Click **New project**.
 2. **Organization:** keep the one Supabase made for you (your name).
-3. **Project name:** `shagun`
-4. **Database password:** click **Generate a password**, then **Copy** and save it somewhere safe (a notes app is fine). Shagun never needs it, but Supabase may ask for it later.
+3. **Project name:** `gathbandhan`
+4. **Database password:** click **Generate a password**, then **Copy** and save it somewhere safe (a notes app is fine). Gathbandhan never needs it, but Supabase may ask for it later.
 5. **Region:** choose **South Asia (Mumbai)**. It is the closest to Indian guests, so pages load fastest.
 6. Click **Create new project** and wait 1–2 minutes until the dashboard says the project is ready.
 
 ## Step 3. Create the tables (paste one file)
 
-1. Open this file in the Shagun repository on GitHub: **`supabase/schema.sql`**. Click the **Copy raw file** button (two overlapping squares, top right of the file).
+1. Open this file in the Gathbandhan repository on GitHub: **`supabase/schema.sql`**. Click the **Copy raw file** button (two overlapping squares, top right of the file).
 2. In Supabase, click **SQL Editor** in the left menu (the icon looks like `>_`).
 3. Click **New query** (or the **+** button). A big empty box appears.
 4. Click inside it, press **Ctrl + V** (or **Cmd + V** on a Mac) to paste.
@@ -42,7 +42,7 @@ You do not need to write any code. You will click through Supabase's website, pa
 6. You should see **"Success. No rows returned"**. That is good. In **Table Editor** you should now see five tables starting with `shagun_`.
 
    - If Supabase shows a warning about "destructive operations", click **Run this query**. The file only removes and re-creates its own security rules.
-   - It is safe to run the file again later (for example after an update to Shagun).
+   - It is safe to run the file again later (for example after an update to Gathbandhan).
 
 ## Step 4. Turn on email sign-in
 
@@ -56,14 +56,14 @@ You do not need to write any code. You will click through Supabase's website, pa
 2. **Site URL:** replace what is there with
 
    ```
-   https://konicamaheshwarii.github.io/shagun-wishlist/
+   https://konicamaheshwarii.github.io/gathbandhan/
    ```
 
    and click **Save**.
 3. Under **Redirect URLs**, click **Add URL**, paste the same address
 
    ```
-   https://konicamaheshwarii.github.io/shagun-wishlist/
+   https://konicamaheshwarii.github.io/gathbandhan/
    ```
 
    and click **Save URLs**.
@@ -77,7 +77,7 @@ The sign-in email contains a link. Some phones open email links inside the Gmail
 2. Open the **Magic Link** template. Below the existing link, add a line:
 
    ```
-   Or type this code in Shagun: {{ .Token }}
+   Or type this code in Gathbandhan: {{ .Token }}
    ```
 
 3. Click **Save**. Do the same in the **Confirm signup** template (first-time sign-ins use that one).
@@ -89,13 +89,13 @@ The sign-in email contains a link. Some phones open email links inside the Gmail
 2. Still in Project Settings, open **API Keys**.
    - Copy the **anon** **public** key (a long text starting with `eyJ…`). If you see a newer **Publishable key** (starting with `sb_publishable_…`), you can use that instead.
 
-   **Never copy the `service_role` / secret key.** Shagun does not need it, and it must never be put on a website.
+   **Never copy the `service_role` / secret key.** Gathbandhan does not need it, and it must never be put on a website.
 
 > **Is it safe to publish the anon key?** Yes. It is designed to be public: it is inside every Supabase website. What protects your data is **Row Level Security**, which `schema.sql` switched on. With the anon key a stranger can only do what a wedding guest can do: open a wedding page, see totals and blessings (never phone numbers), and add a blessing or an RSVP within sensible limits (₹1 to ₹1,00,000, messages up to 280 characters).
 
-## Step 8. Paste the keys into Shagun
+## Step 8. Paste the keys into Gathbandhan
 
-1. On GitHub, open the Shagun repository and go to the file **`public/config.json`**.
+1. On GitHub, open the Gathbandhan repository and go to the file **`public/config.json`**.
 2. Click the **pencil** icon (Edit this file).
 3. Put your two values between the quotes, so it looks like this (with your own values):
 
@@ -111,7 +111,7 @@ The sign-in email contains a link. Some phones open email links inside the Gmail
 
 ## Step 9. Check that it works
 
-1. Open **https://konicamaheshwarii.github.io/shagun-wishlist/**. The small "Demo mode: data stays in this browser" strip at the top should be **gone**, and the header shows **Sign in**. If the strip is still there, it says why (for example "the online database is not set up yet": run step 3).
+1. Open **https://konicamaheshwarii.github.io/gathbandhan/**. The small "Demo mode: data stays in this browser" strip at the top should be **gone**, and the header shows **Sign in**. If the strip is still there, it says why (for example "the online database is not set up yet": run step 3).
 2. Click **Create** → enter your email → open the email from Supabase → tap the link (or type the code).
 3. Create a test wedding page. Open its link on another phone, give a test blessing with "I've paid", and watch it appear on the dashboard within a few seconds.
 4. In the dashboard, under **Who can manage this page**, add your partner's email. They sign in with that email and see the same dashboard.
