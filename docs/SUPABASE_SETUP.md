@@ -1,0 +1,125 @@
+# Put Shagun online with Supabase (free, about 15 minutes)
+
+Right now Shagun runs in **demo mode**: every wedding page lives only in the browser where it was made. Guests on other phones can still pay by UPI, but the couple's dashboard does not see their blessings.
+
+Connecting **Supabase** (a free online database) fixes that. After these steps:
+
+- a wedding page opens on any phone with a short link like `…/#/w/riya-weds-arjun`;
+- every guest's shagun, blessing and RSVP reaches the couple's dashboard, live;
+- couples sign in with just their email (no password), and only they can edit their page and see guests' phone numbers.
+
+You do not need to write any code. You will click through Supabase's website, paste one file, and copy two values into one file on GitHub.
+
+> **Cost:** Supabase's free plan is enough for many weddings (500 MB database, 1 GB photo storage). It asks for no credit card. A free project is paused after a week with no visits; open the site once and it wakes up again within a minute.
+
+---
+
+## Step 1. Create a Supabase account
+
+1. Go to **https://supabase.com** and click **Start your project**.
+2. Click **Continue with GitHub** and sign in with the same GitHub account that hosts Shagun (`Konicamaheshwarii`). Allow access when GitHub asks.
+
+## Step 2. Create the project
+
+1. Click **New project**.
+2. **Organization:** keep the one Supabase made for you (your name).
+3. **Project name:** `shagun`
+4. **Database password:** click **Generate a password**, then **Copy** and save it somewhere safe (a notes app is fine). Shagun never needs it, but Supabase may ask for it later.
+5. **Region:** choose **South Asia (Mumbai)**. It is the closest to Indian guests, so pages load fastest.
+6. Click **Create new project** and wait 1–2 minutes until the dashboard says the project is ready.
+
+## Step 3. Create the tables (paste one file)
+
+1. Open this file in the Shagun repository on GitHub: **`supabase/schema.sql`**. Click the **Copy raw file** button (two overlapping squares, top right of the file).
+2. In Supabase, click **SQL Editor** in the left menu (the icon looks like `>_`).
+3. Click **New query** (or the **+** button). A big empty box appears.
+4. Click inside it, press **Ctrl + V** (or **Cmd + V** on a Mac) to paste.
+5. Click the green **Run** button (bottom right), or press **Ctrl + Enter**.
+6. You should see **"Success. No rows returned"**. That is good.
+
+   - If Supabase shows a warning about "destructive operations", click **Run this query**. The file only removes and re-creates its own security rules.
+   - It is safe to run the file again later (for example after an update to Shagun).
+
+## Step 4. Turn on email sign-in
+
+1. Left menu: **Authentication** → **Sign In / Providers** (on some accounts it is **Providers**).
+2. Make sure **Email** is **Enabled**. Keep **Confirm email** turned on.
+3. Click **Save** if you changed anything.
+
+## Step 5. Tell Supabase where the site lives
+
+1. Left menu: **Authentication** → **URL Configuration**.
+2. **Site URL:** replace what is there with
+
+   ```
+   https://konicamaheshwarii.github.io/shagun-wishlist/
+   ```
+
+   and click **Save**.
+3. Under **Redirect URLs**, click **Add URL**, paste the same address
+
+   ```
+   https://konicamaheshwarii.github.io/shagun-wishlist/
+   ```
+
+   and click **Save URLs**.
+4. *(Optional, for testing on your own computer)* add `http://localhost:4200/` as a second redirect URL.
+
+## Step 6 (optional). Let couples type a 6-digit code
+
+The sign-in email contains a link. Some phones open email links inside the Gmail app's own browser, which is a different browser from the one the couple started in. A short code avoids that problem:
+
+1. **Authentication** → **Emails** (or **Email Templates**).
+2. Open the **Magic Link** template. Below the existing link, add a line:
+
+   ```
+   Or type this code in Shagun: {{ .Token }}
+   ```
+
+3. Click **Save**. Do the same in the **Confirm signup** template (first-time sign-ins use that one).
+
+## Step 7. Copy your two keys
+
+1. Left menu: **Project Settings** (gear icon at the bottom) → **Data API** (on some accounts **API**).
+   - Copy the **Project URL**. It looks like `https://abcdefghijklm.supabase.co`.
+2. Still in Project Settings, open **API Keys**.
+   - Copy the **anon** **public** key (a long text starting with `eyJ…`). If you see a newer **Publishable key** (starting with `sb_publishable_…`), you can use that instead.
+
+   **Never copy the `service_role` / secret key.** Shagun does not need it, and it must never be put on a website.
+
+> **Is it safe to publish the anon key?** Yes. It is designed to be public: it is inside every Supabase website. What protects your data is **Row Level Security**, which `schema.sql` switched on. With the anon key a stranger can only do what a wedding guest can do: open a wedding page, see totals and blessings (never phone numbers), and add a blessing or an RSVP within sensible limits (₹1 to ₹1,00,000, messages up to 280 characters).
+
+## Step 8. Paste the keys into Shagun
+
+1. On GitHub, open the Shagun repository and go to the file **`public/config.json`**.
+2. Click the **pencil** icon (Edit this file).
+3. Put your two values between the quotes, so it looks like this (with your own values):
+
+   ```json
+   {
+     "supabaseUrl": "https://abcdefghijklm.supabase.co",
+     "supabaseAnonKey": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...."
+   }
+   ```
+
+4. Click **Commit changes…** → **Commit changes**.
+5. GitHub rebuilds the site automatically. Open the **Actions** tab and wait for the green tick (2–3 minutes).
+
+## Step 9. Check that it works
+
+1. Open **https://konicamaheshwarii.github.io/shagun-wishlist/**. The small "Demo mode: data stays in this browser" strip at the top should be **gone**, and the header shows **Sign in**.
+2. Click **Create** → enter your email → open the email from Supabase → tap the link (or type the code).
+3. Create a test wedding page. Open its link on another phone, give a test blessing with "I've paid", and watch it appear on the dashboard within a few seconds.
+4. In the dashboard, under **Who can manage this page**, add your partner's email. They sign in with that email and see the same dashboard.
+
+The sample wedding (Riya & Arjun) keeps working for everyone; it always stays in each visitor's own browser.
+
+---
+
+## Good to know
+
+- **Emails:** Supabase's built-in email sender is meant for small projects and only sends a few sign-in emails per hour. That is plenty for a couple signing in. If you ever need more, Supabase lets you connect a free email service (Authentication → Emails → SMTP settings).
+- **Photos** are resized on the phone before upload (usually under 200 kB each) and stored in Supabase Storage in a folder per wedding.
+- **Going back to demo mode:** empty both values in `public/config.json` and commit. Nothing in Supabase is deleted.
+- **Backups:** Supabase → **Table Editor** → pick a table → **Export to CSV**. The couple can also export shagun and RSVP lists from their dashboard.
+- **Something went wrong?** Supabase → **Logs** shows recent errors. Running `schema.sql` again never deletes data.
