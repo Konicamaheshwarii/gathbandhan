@@ -1,0 +1,89 @@
+<section class="hero">
+  <div class="hero-copy">
+    <p class="eyebrow">Digital shagun for Indian weddings</p>
+    <h1>Skip the fourth mixer&#8209;grinder. <em>Bless their dreams instead.</em></h1>
+    <p class="lead">
+      Couples list what they are really saving for: a honeymoon, a first home, a trip to Japan. Guests give shagun
+      towards it in any amount, straight to the couple by UPI, and leave a blessing on the wall.
+    </p>
+    <div class="row ctas">
+      <a class="btn primary" routerLink="/create">Create your wedding page</a>
+      <a class="btn" [routerLink]="['/w', demoSlug]">See a sample page</a>
+    </div>
+    <p class="math"><strong>200 guests × ₹2,000 = ₹4,00,000.</strong> That is the honeymoon, funded.</p>
+  </div>
+
+  @if (demo(); as d) {
+    <a class="preview cover cover-marigold" [routerLink]="['/w', d.wedding.slug]" aria-label="Open the sample wedding page">
+      <app-toran />
+      <div class="preview-body">
+        <p class="eyebrow light">{{ d.wedding.date | indianDate }} · {{ d.wedding.city }}</p>
+        <p class="names">{{ d.names }}</p>
+        <div class="preview-card">
+          <div class="row between"><strong>{{ d.raised | inr }}</strong><span class="muted small">of {{ d.target | inr: 'short' }}</span></div>
+          <div class="progress"><span [style.width.%]="d.percent"></span></div>
+          <p class="small muted">{{ d.count }} blessings so far</p>
+          @for (g of d.wedding.goals.slice(0, 3); track g.id) {
+            <div class="mini-goal"><span aria-hidden="true">{{ g.emoji }}</span>{{ g.title }}</div>
+          }
+        </div>
+      </div>
+    </a>
+  }
+</section>
+
+@if (mine().length) {
+  <section class="stack">
+    <h2>Your wedding pages</h2>
+    <div class="page-grid">
+      @for (p of mine(); track p.wedding.id) {
+        <article class="card page-card">
+          <div class="page-cover cover" [class]="'page-cover cover cover-' + p.wedding.cover.preset"
+               [class.photo]="!!p.wedding.cover.imageUrl"
+               [style.background-image]="p.wedding.cover.imageUrl ? 'url(' + p.wedding.cover.imageUrl + ')' : null">
+            <span>{{ p.names }}</span>
+          </div>
+          <p class="muted small">{{ p.wedding.date | indianDate }} · {{ p.count }} contributions</p>
+          <div class="progress"><span [style.width.%]="p.percent"></span></div>
+          <p class="small"><strong>{{ p.raised | inr }}</strong> <span class="muted"> of {{ p.target | inr }}</span></p>
+          <div class="row">
+            <a class="btn small primary" [routerLink]="['/w', p.wedding.slug, 'dashboard']">Dashboard</a>
+            <a class="btn small" [routerLink]="['/w', p.wedding.slug]">View page</a>
+            <a class="btn small ghost" [routerLink]="['/w', p.wedding.slug, 'edit']">Edit</a>
+          </div>
+        </article>
+      }
+    </div>
+  </section>
+}
+
+<section>
+  <h2 class="center">How it works</h2>
+  <ol class="steps">
+    <li class="card">
+      <span class="step-icon" aria-hidden="true">🎯</span>
+      <h3>List your real goals</h3>
+      <p class="muted">Two to five dreams with honest targets. AI can draft your story and suggest amounts that fit your guest list.</p>
+    </li>
+    <li class="card">
+      <span class="step-icon" aria-hidden="true">💬</span>
+      <h3>Share it the Indian way</h3>
+      <p class="muted">One tap to WhatsApp with a ready message, plus a printable QR card for the shagun table at the venue.</p>
+    </li>
+    <li class="card">
+      <span class="step-icon" aria-hidden="true">🪔</span>
+      <h3>Guests bless by UPI</h3>
+      <p class="muted">₹501, ₹1,100, ₹2,100 or any amount, paid from GPay, PhonePe or Paytm straight to you. No gateway, no fees.</p>
+    </li>
+  </ol>
+</section>
+
+<section class="why card">
+  <h2>Not a fundraiser. Just shagun, made useful.</h2>
+  <ul class="why-list">
+    <li><strong>UPI first.</strong> A real <code>upi://pay</code> link and QR code. Money never passes through this site.</li>
+    <li><strong>Blessing wall.</strong> Every guest leaves a message; amounts stay private unless you choose to show them.</li>
+    <li><strong>You stay in control.</strong> Contributions show as "guest confirmed" until you tick them off against your bank app.</li>
+    <li><strong>Thank-you notes in your language.</strong> AI drafts a personal note per guest in English, हिन्दी or Hinglish, ready for WhatsApp.</li>
+  </ul>
+</section>

@@ -1,0 +1,157 @@
+@if (store.state() === 'missing') {
+  <div class="card empty">
+    <span class="big" aria-hidden="true">🪔</span>
+    <h1>No wedding page here</h1>
+    <a class="btn primary" routerLink="/create">Create your page</a>
+  </div>
+} @else if (store.wedding(); as w) {
+  @let t = store.totals()!;
+  <header class="head">
+    <div>
+      <p class="eyebrow">Couple dashboard</p>
+      <h1>Namaste, {{ couple() }}</h1>
+    </div>
+    <div class="row head-actions">
+      <a class="btn small" [routerLink]="['/w', w.slug]">View page</a>
+      <a class="btn small" [routerLink]="['/w', w.slug, 'edit']">Edit</a>
+      <a class="btn small" [routerLink]="['/w', w.slug, 'card']">QR card</a>
+    </div>
+  </header>
+
+  @if (w.demo) {
+    <p class="note" role="note">This is the sample wedding. Try verifying contributions and drafting thank-you notes. <strong>Settings → Reset sample data</strong> restores it.</p>
+  }
+  @if (w.imported) {
+    <p class="note" role="note">You opened this page from a share link, so this dashboard only shows contributions made in this browser.</p>
+  }
+
+  <section class="tiles" aria-label="Totals">
+    <div class="card tile"><span class="muted small">Total blessed</span><strong class="num">{{ t.raised | inr }}</strong><span class="hint">of {{ t.target | inr }}</span></div>
+    <div class="card tile"><span class="muted small">Verified in bank</span><strong class="num good">{{ t.verified | inr }}</strong><span class="hint">{{ counts().verified }} payments</span></div>
+    <div class="card tile"><span class="muted small">Guests</span><strong class="num">{{ t.contributors }}</strong><span class="hint">{{ store.blessings().length }} blessings</span></div>
+    <div class="card tile"><span class="muted small">To verify</span><strong class="num warn">{{ counts().unverified }}</strong><span class="hint">{{ counts().unthanked }} not thanked yet</span></div>
+  </section>
+
+  <div class="grid">
+    <section class="card goals" aria-labelledby="goals-h">
+      <h2 id="goals-h">By dream</h2>
+      <ul>
+        @for (g of t.goals; track g.goal.id) {
+          <li>
+            <div class="row between">
+              <span class="goal-name"><span aria-hidden="true">{{ g.goal.emoji }}</span> {{ g.goal.title }}</span>
+              <span class="small num"><strong>{{ g.raised | inr: 'short' }}</strong><span class="muted"> / {{ g.goal.target | inr: 'short' }}</span></span>
+            </div>
+            <div class="progress" [class.funded]="g.funded"><span [style.width.%]="g.percent"></span></div>
+            <span class="hint">{{ g.count }} guests · {{ g.verified | inr }} verified · {{ g.percent }}%</span>
+          </li>
+        }
+      </ul>
+    </section>
+
+    <section class="card share" aria-labelledby="share-h">
+      <h2 id="share-h">Invite more guests</h2>
+      <p class="muted small">The link carries your page, so it opens on any phone.</p>
+      <a class="btn whatsapp block" [href]="whatsapp()" target="_blank" rel="noopener">Share on WhatsApp</a>
+      <div class="row">
+        <button class="btn small" type="button" (click)="copyLink()">Copy link</button>
+        <a class="btn small" [routerLink]="['/w', w.slug, 'card']">Print venue QR</a>
+      </div>
+      <p class="hint provider">Thank-you notes are written by <a routerLink="/settings">{{ settings.isDemo() ? 'Demo mode (offline templates)' : settings.provider() }}</a>.</p>
+    </section>
+  </div>
+
+  <section class="card list" aria-labelledby="list-h">
+    <div class="row list-head">
+      <h2 id="list-h">Contributions</h2>
+      <span class="spacer"></span>
+      <button class="btn small" type="button" (click)="exportCsv()" [disabled]="!store.contributions().length">Export CSV</button>
+    </div>
+    <div class="row filters">
+      <div class="row" role="tablist" aria-label="Filter contributions">
+        @for (f of filters; track f.id) {
+          <button type="button" role="tab" class="toggle small-toggle" [attr.aria-selected]="filter() === f.id"
+                  [attr.aria-pressed]="filter() === f.id" (click)="filter.set(f.id)">
+            {{ f.label }} <span class="count">{{ counts()[f.id] }}</span>
+          </button>
+        }
+      </div>
+      <input type="search" class="search" placeholder="Search guests or messages" aria-label="Search contributions"
+             [value]="query()" (input)="query.set($any($event.target).value)" />
+    </div>
+
+    @if (visible().length) {
+      <ul class="rows">
+        @for (c of visible(); track c.id) {
+          @let d = draft(c.id);
+          <li class="contribution" [class.open]="openNote() === c.id">
+            <div class="c-main">
+              <div class="c-who">
+                <strong>{{ c.guestName }}</strong>
+                <span class="hint">{{ goalTitle().get(c.goalId)?.emoji }} {{ goalTitle().get(c.goalId)?.title ?? 'Removed dream' }} · {{ c.createdAt | timeAgo }}</span>
+                @if (c.message) { <p class="c-msg">“{{ c.message }}”</p> }
+              </div>
+              <strong class="c-amount num">{{ c.amount | inr }}</strong>
+              <div class="c-actions">
+                <label class="switch" [class.on]="c.status === 'verified'">
+                  <input type="checkbox" [checked]="c.status === 'verified'" (change)="toggleVerified(c)"
+                         [attr.aria-label]="'Verified ' + c.guestName + ' in bank app'" />
+                  <span class="track" aria-hidden="true"><span class="knob"></span></span>
+                  <span class="switch-label">{{ c.status === 'verified' ? 'Verified' : 'Guest confirmed' }}</span>
+                </label>
+                <button class="btn small" type="button" (click)="toggleNote(c)" [attr.aria-expanded]="openNote() === c.id">
+                  {{ c.thankedAt ? 'Thanked ✓' : 'Thank-you note' }}
+                </button>
+              </div>
+            </div>
+
+            @if (openNote() === c.id) {
+              <div class="note-panel">
+                <div class="row">
+                  <div class="row" role="radiogroup" aria-label="Note language">
+                    @for (l of languages; track l.id) {
+                      <button type="button" role="radio" class="toggle small-toggle" [attr.aria-checked]="d.language === l.id"
+                              (click)="setLanguage(c, l.id)" [disabled]="d.busy">{{ l.label }}</button>
+                    }
+                  </div>
+                  <label class="check">
+                    <input type="checkbox" [checked]="d.mentionAmount" (change)="setMentionAmount(c, $any($event.target).checked)" [disabled]="d.busy" />
+                    Mention the amount
+                  </label>
+                </div>
+                @if (d.error) { <p class="alert small">{{ d.error }}</p> }
+                <div class="note-box">
+                  <textarea rows="8" [value]="d.text" (input)="editNote(c, $any($event.target).value)"
+                            [attr.aria-label]="'Thank-you note for ' + c.guestName" [disabled]="d.busy"></textarea>
+                  @if (d.busy) { <div class="note-busy"><span class="spinner" aria-hidden="true"></span> Writing…</div> }
+                </div>
+                <div class="row">
+                  <a class="btn small whatsapp" [href]="noteWhatsapp(c)" target="_blank" rel="noopener"
+                     [class.disabled]="!d.text" (click)="markThanked(c, true)">
+                    {{ c.phone ? 'Send on WhatsApp' : 'Open WhatsApp' }}
+                  </a>
+                  <button class="btn small" type="button" (click)="copyNote(c)" [disabled]="!d.text">Copy</button>
+                  <button class="btn small ghost" type="button" (click)="writeNote(c)" [disabled]="d.busy">Rewrite</button>
+                  <span class="spacer"></span>
+                  @if (c.thankedAt) {
+                    <button class="btn small ghost" type="button" (click)="markThanked(c, false)">Mark not thanked</button>
+                  } @else {
+                    <button class="btn small ghost" type="button" (click)="markThanked(c, true)">Mark thanked</button>
+                  }
+                  <button class="btn small ghost danger" type="button" (click)="remove(c)">Remove</button>
+                </div>
+              </div>
+            }
+          </li>
+        }
+      </ul>
+    } @else {
+      <div class="empty">
+        <span class="big" aria-hidden="true">🌼</span>
+        @if (store.contributions().length) { Nothing matches this filter. } @else { No shagun yet. Share your page to get the first blessing! }
+      </div>
+    }
+  </section>
+} @else {
+  <div class="empty"><span class="spinner" aria-hidden="true"></span></div>
+}

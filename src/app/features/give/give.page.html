@@ -1,0 +1,145 @@
+@if (store.state() === 'missing') {
+  <div class="card empty">
+    <span class="big" aria-hidden="true">🪔</span>
+    <h1>We could not find this wedding page</h1>
+    <a class="btn primary" routerLink="/">Go to Shagun</a>
+  </div>
+} @else if (store.wedding(); as w) {
+  <div class="wrap">
+    <a class="back small" [routerLink]="['/w', w.slug]">← {{ couple() }}</a>
+
+    <ol class="steps" aria-label="Progress">
+      <li [class.on]="step() === 'details'" [class.done]="step() !== 'details'">Your shagun</li>
+      <li [class.on]="step() === 'pay'" [class.done]="step() === 'done'">Pay by UPI</li>
+      <li [class.on]="step() === 'done'">Blessed</li>
+    </ol>
+
+    @switch (step()) {
+      @case ('details') {
+        <form class="stack" (submit)="$event.preventDefault(); toPayment()" novalidate>
+          <h1>Bless {{ couple() }}</h1>
+
+          <fieldset class="card stack">
+            <legend><h2>Choose a dream</h2></legend>
+            <div class="goal-options" role="radiogroup" aria-label="Dream">
+              @for (g of w.goals; track g.id) {
+                <button type="button" role="radio" class="goal-option" [attr.aria-checked]="goalId() === g.id"
+                        (click)="goalId.set(g.id)">
+                  <span class="emoji" aria-hidden="true">{{ g.emoji }}</span>
+                  <span class="goal-title">{{ g.title }}</span>
+                </button>
+              }
+            </div>
+            @if (submitted() && errors().goal) { <span class="error-text">{{ errors().goal }}</span> }
+          </fieldset>
+
+          <fieldset class="card stack">
+            <legend><h2>Your shagun</h2></legend>
+            <div class="chips" role="group" aria-label="Quick amounts">
+              @for (c of chips; track c) {
+                <button type="button" class="toggle amount-chip" [attr.aria-pressed]="amount() === c" (click)="chooseChip(c)">{{ c | inr }}</button>
+              }
+            </div>
+            <label>
+              Or any amount
+              <div class="amount-input">
+                <span aria-hidden="true">₹</span>
+                <input type="text" inputmode="numeric" autocomplete="off" [value]="amountText()"
+                       (input)="amountText.set($any($event.target).value)" aria-describedby="amount-hint" />
+              </div>
+              <span id="amount-hint" class="hint">Shagun traditionally ends in 1: ₹501, ₹1,100, ₹2,100…</span>
+            </label>
+            @if (submitted() && errors().amount) { <span class="error-text" role="alert">{{ errors().amount }}</span> }
+          </fieldset>
+
+          <fieldset class="card stack">
+            <legend><h2>Your blessing</h2></legend>
+            <label>
+              Your name
+              <input type="text" autocomplete="name" placeholder="e.g. Sunita Mausi" [value]="guestName()"
+                     (input)="guestName.set($any($event.target).value)" />
+              @if (submitted() && errors().name) { <span class="error-text">{{ errors().name }}</span> }
+            </label>
+            <label>
+              Message for the wall <span class="hint">(optional)</span>
+              <textarea rows="3" [attr.maxlength]="messageMax" placeholder="Sada khush raho…" [value]="message()"
+                        (input)="message.set($any($event.target).value)"></textarea>
+              <span class="hint">{{ message().length }}/{{ messageMax }}</span>
+            </label>
+            <label>
+              WhatsApp number <span class="hint">(optional, only the couple sees it, for their thank-you)</span>
+              <input type="tel" inputmode="tel" autocomplete="tel" placeholder="98765 43210" [value]="phone()"
+                     (input)="phone.set($any($event.target).value)" />
+              @if (submitted() && errors().phone) { <span class="error-text">{{ errors().phone }}</span> }
+            </label>
+          </fieldset>
+
+          <button class="btn primary block big-btn" type="submit">
+            Continue to pay @if (amount() > 0 && !errors().amount) { {{ amount() | inr }} }
+          </button>
+        </form>
+      }
+
+      @case ('pay') {
+        <section class="stack">
+          <div class="card pay-summary">
+            <p class="eyebrow">Paying {{ w.payeeName }} directly</p>
+            <p class="pay-amount num">{{ amount() | inr }}</p>
+            <p class="muted">{{ selectedGoal()?.emoji }} {{ selectedGoal()?.title }}</p>
+          </div>
+
+          @if (w.demo) {
+            <p class="note" role="note"><strong>Sample page:</strong> this UPI ID is not real. Skip the payment and tap "I've paid" to see the rest of the flow.</p>
+          }
+
+          <div class="card pay-card" [class.phone-first]="onPhone">
+            @if (onPhone) {
+              <a class="btn marigold block big-btn" [href]="upiLink()">Pay {{ amount() | inr }} with a UPI app</a>
+              <p class="muted small center">Opens GPay, PhonePe, Paytm, BHIM or your bank's app with everything filled in.</p>
+              <div class="divider"><span>or scan from another phone</span></div>
+            } @else {
+              <h2 class="center">Scan with any UPI app</h2>
+            }
+            <div class="qr-box">
+              <app-qr-code [value]="upiLink()" [label]="'UPI QR code to pay ' + (amount() | inr) + ' to ' + w.payeeName" />
+            </div>
+            <div class="vpa-row">
+              <div>
+                <span class="hint">UPI ID</span>
+                <p class="vpa">{{ w.upiId }}</p>
+              </div>
+              <button class="btn small" type="button" (click)="copy(w.upiId, 'UPI ID')">Copy</button>
+            </div>
+            <p class="hint">If your app shows a limit or a warning for links, open it yourself and pay {{ amount() | inr }} to this UPI ID.</p>
+          </div>
+
+          <div class="card stack confirm">
+            <p class="small muted">Once the payment goes through, let {{ couple() }} know. They will confirm it against their bank app.</p>
+            <button class="btn primary block big-btn" type="button" (click)="confirmPaid()" [disabled]="saving()">
+              @if (saving()) { <span class="spinner" aria-hidden="true"></span> } I've paid {{ amount() | inr }}
+            </button>
+            <button class="btn ghost block" type="button" (click)="step.set('details')">← Change amount or message</button>
+          </div>
+        </section>
+      }
+
+      @case ('done') {
+        <section class="card done">
+          <div class="petals" aria-hidden="true">
+            @for (p of [1, 2, 3, 4, 5, 6, 7, 8, 9, 10]; track p) { <span [style.--i]="p"></span> }
+          </div>
+          <span class="done-icon" aria-hidden="true">🙏</span>
+          <h1>Dhanyavaad, {{ guestName().split(' ')[0] }}!</h1>
+          <p>Your shagun of <strong>{{ amount() | inr }}</strong> towards <strong>{{ selectedGoal()?.title }}</strong> is on its way to {{ couple() }}.
+            @if (message().trim()) { Your blessing is now on their wall. }</p>
+          <div class="stack">
+            <a class="btn primary block" [routerLink]="['/w', w.slug]">See the blessing wall</a>
+            <a class="btn whatsapp block" [href]="shareWhatsapp()" target="_blank" rel="noopener">Tell the family on WhatsApp</a>
+          </div>
+        </section>
+      }
+    }
+  </div>
+} @else {
+  <div class="empty"><span class="spinner" aria-hidden="true"></span></div>
+}

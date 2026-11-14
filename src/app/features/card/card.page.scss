@@ -1,0 +1,68 @@
+:host { display: grid; grid-template-columns: minmax(0, 1fr); gap: 1.5rem; padding-top: 0.5rem; }
+
+.controls { display: grid; gap: 0.5rem; h1 { margin: 0; } p { margin: 0; } }
+.back { color: var(--muted); text-decoration: none; font-weight: 600; }
+.toggle .hint { color: inherit; opacity: 0.75; margin-left: 0.25rem; }
+
+.sheet-wrap { display: grid; place-items: center; }
+
+/* Sized in container units so the preview and the printed card are the same design at any size. */
+.sheet {
+  container-type: inline-size;
+  width: min(100%, 400px);
+  aspect-ratio: 105 / 148;
+  border-radius: 14px;
+  overflow: hidden;
+  color: #fff8ee;
+  display: flex;
+  flex-direction: column;
+  box-shadow: 0 18px 50px rgb(74 20 30 / 28%);
+  print-color-adjust: exact;
+  -webkit-print-color-adjust: exact;
+  &.a5 { width: min(100%, 520px); }
+}
+.sheet-body {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  padding: 1cqw 7cqw 6cqw;
+}
+.kicker { font-size: 3.4cqw; letter-spacing: 0.2em; text-transform: uppercase; color: #ffd88a; margin: 2cqw 0 1cqw; }
+.names { font: 500 10.5cqw/1.05 var(--font-display); margin: 0; }
+.date { font: 500 4cqw var(--font-display); margin: 1.5cqw 0 4cqw; }
+.panel {
+  flex: 1;
+  width: 100%;
+  background: #fffdf9;
+  color: #2a1613;
+  border-radius: 4cqw;
+  padding: 4cqw 5cqw;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1.5cqw;
+}
+.ask { font: 600 4.6cqw/1.25 var(--font-display); margin: 0; color: #8a1c3b; }
+.qr { width: 44cqw; }
+.scan { font-size: 3.2cqw; margin: 0; color: #7a5c52; }
+.dreams {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  font-size: 3.3cqw;
+  line-height: 1.45;
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 0.5cqw 3cqw;
+}
+.upi { font-size: 2.9cqw; margin: 0; color: #7a5c52; font-weight: 600; }
+
+@media print {
+  :host { padding: 0; display: block; }
+  .sheet-wrap { display: block; }
+  .sheet, .sheet.a5 { width: 100vw; height: 100vh; aspect-ratio: auto; border-radius: 0; box-shadow: none; }
+}

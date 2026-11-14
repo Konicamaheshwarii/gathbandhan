@@ -1,0 +1,148 @@
+@switch (store.state()) {
+  @case ('loading') {
+    <div class="empty"><span class="spinner" aria-hidden="true"></span> Opening the invitation…</div>
+  }
+  @case ('missing') {
+    <div class="card empty missing">
+      <span class="big" aria-hidden="true">🪔</span>
+      <h1>We could not find this wedding page</h1>
+      <p>The link may be incomplete. Ask the couple to share it again from their dashboard.</p>
+      @if (store.error()) { <p class="small">{{ store.error() }}</p> }
+      <a class="btn primary" routerLink="/">Go to Shagun</a>
+    </div>
+  }
+  @case ('ready') {
+    @if (store.wedding(); as w) {
+      @let t = store.totals()!;
+      <header class="hero cover" [class]="'hero cover cover-' + w.cover.preset" [class.photo]="!!w.cover.imageUrl"
+              [style.background-image]="w.cover.imageUrl ? 'url(' + w.cover.imageUrl + ')' : null">
+        <app-toran />
+        <div class="hero-inner">
+          <p class="eyebrow light">We are getting married</p>
+          <h1 class="names">{{ names().a }} <span class="amp">&</span> {{ names().b }}</h1>
+          <p class="when">{{ w.date | indianDate: 'long' }}</p>
+          <p class="where">{{ w.venue }}@if (w.city) {, {{ w.city }}}</p>
+          @if (countdown()) { <span class="countdown">{{ countdown() }}</span> }
+        </div>
+      </header>
+
+      <div class="layout">
+        <div class="main-col">
+          @if (w.demo) {
+            <p class="note demo-note" role="note">
+              <strong>This is a sample page.</strong> The UPI ID is not real, so please do not pay. Try the whole guest
+              flow anyway: "I've paid" only records it in this browser.
+            </p>
+          }
+
+          <section class="card total" aria-labelledby="total-title">
+            <h2 id="total-title" class="sr-only">Shagun so far</h2>
+            <div class="total-row">
+              <div>
+                <p class="raised num">{{ t.raised | inr }}</p>
+                <p class="muted small">blessed of {{ t.target | inr }} across {{ w.goals.length }} dreams</p>
+              </div>
+              <div class="stat">
+                <strong class="num">{{ t.contributors }}</strong>
+                <span class="muted small">{{ t.contributors === 1 ? 'guest' : 'guests' }}</span>
+              </div>
+            </div>
+            <div class="progress thick" role="progressbar" aria-label="Total shagun" [attr.aria-valuenow]="t.percent" aria-valuemin="0" aria-valuemax="100">
+              <span [style.width.%]="t.percent"></span>
+            </div>
+            <a class="btn primary block give-cta" [routerLink]="['/w', w.slug, 'give']">Give shagun 🪔</a>
+          </section>
+
+          @if (w.story) {
+            <section class="card story">
+              <h2>Our story</h2>
+              <p>{{ w.story }}</p>
+            </section>
+          }
+
+          <section aria-labelledby="goals-title">
+            <h2 id="goals-title" class="section-title">Our dreams</h2>
+            <div class="goals">
+              @for (g of t.goals; track g.goal.id) {
+                <article class="card goal" [class.funded]="g.funded">
+                  <div class="goal-head">
+                    @if (g.goal.imageUrl) {
+                      <img class="goal-img" [src]="g.goal.imageUrl" alt="" />
+                    } @else {
+                      <span class="goal-emoji" aria-hidden="true">{{ g.goal.emoji }}</span>
+                    }
+                    <div class="goal-text">
+                      <h3>{{ g.goal.title }}</h3>
+                      @if (g.goal.description) { <p class="muted small">{{ g.goal.description }}</p> }
+                    </div>
+                  </div>
+                  <div class="progress" [class.funded]="g.funded"><span [style.width.%]="g.percent"></span></div>
+                  <div class="goal-foot">
+                    <span class="small"><strong class="num">{{ g.raised | inr }}</strong><span class="muted"> of {{ g.goal.target | inr }}</span></span>
+                    @if (g.funded) {
+                      <span class="chip good">Funded 🎉</span>
+                    } @else {
+                      <span class="chip gold">{{ g.percent }}%</span>
+                    }
+                  </div>
+                  <a class="btn block" [routerLink]="['/w', w.slug, 'give']" [queryParams]="{ goal: g.goal.id }">
+                    {{ g.funded ? 'Add your blessing' : 'Bless this dream' }}
+                  </a>
+                </article>
+              }
+            </div>
+          </section>
+        </div>
+
+        <aside class="side-col">
+          <section class="card share" aria-labelledby="share-title">
+            <h2 id="share-title">Share the joy</h2>
+            <p class="muted small">Send this page to the family group, or keep a QR card at the shagun table.</p>
+            <a class="btn whatsapp block" [href]="whatsapp()" target="_blank" rel="noopener">
+              <svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true"><path fill="currentColor" d="M12 2a10 10 0 0 0-8.6 15.1L2 22l5-1.3A10 10 0 1 0 12 2zm5.3 14.2c-.2.6-1.3 1.2-1.8 1.2-.5.1-1 .2-3.3-.7-2.8-1.1-4.5-3.9-4.7-4.1-.1-.2-1.1-1.5-1.1-2.9s.7-2.1 1-2.3c.2-.3.5-.3.7-.3h.5c.2 0 .4 0 .6.5l.8 2c.1.2.1.4 0 .5l-.4.6-.4.4c-.1.2-.3.3-.1.6.2.3.8 1.3 1.7 2.1 1.2 1 2.1 1.3 2.4 1.5.3.1.5.1.6-.1l.9-1c.2-.3.4-.2.6-.1l1.9.9c.3.1.5.2.5.3.1.1.1.6-.2 1.2z"/></svg>
+              Share on WhatsApp
+            </a>
+            <div class="row share-row">
+              <button class="btn small" type="button" (click)="copyLink()">Copy link</button>
+              @if (canNativeShare) { <button class="btn small" type="button" (click)="nativeShare()">More…</button> }
+              <a class="btn small" [routerLink]="['/w', w.slug, 'card']">Venue QR card</a>
+            </div>
+          </section>
+
+          <section class="card wall" aria-labelledby="wall-title">
+            <div class="row">
+              <h2 id="wall-title">Blessing wall</h2>
+              <span class="live" title="Updates live"><span class="dot" aria-hidden="true"></span>Live</span>
+            </div>
+            @if (wall().length) {
+              <ul class="blessings" aria-live="polite">
+                @for (b of wall(); track b.id) {
+                  <li class="blessing">
+                    <p class="msg">“{{ b.message }}”</p>
+                    <p class="who small">
+                      <strong>{{ b.guestName }}</strong>
+                      <span class="muted"> · {{ goalTitles().get(b.goalId) ?? 'Shagun' }}@if (w.showAmounts) { · {{ b.amount | inr }}} · {{ b.createdAt | timeAgo }}</span>
+                    </p>
+                  </li>
+                }
+              </ul>
+              @if (store.blessings().length > wall().length) {
+                <button class="btn small block" type="button" (click)="showMore()">Show more blessings</button>
+              }
+            } @else {
+              <p class="muted">Be the first to leave a blessing.</p>
+            }
+          </section>
+
+          <p class="couple-link small muted center no-print">
+            Are you {{ names().a }} or {{ names().b }}? <a [routerLink]="['/w', w.slug, 'dashboard']">Open your dashboard</a>
+          </p>
+        </aside>
+      </div>
+
+      <div class="sticky-cta no-print">
+        <a class="btn primary block" [routerLink]="['/w', w.slug, 'give']">Give shagun 🪔</a>
+      </div>
+    }
+  }
+}

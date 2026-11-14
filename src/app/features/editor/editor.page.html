@@ -1,0 +1,260 @@
+<header class="head">
+  <div>
+    <p class="eyebrow">{{ slug() ? 'Edit your page' : 'New wedding page' }}</p>
+    <h1>{{ slug() ? 'Update your shagun page' : 'Create your shagun page' }}</h1>
+    <p class="muted">Takes about three minutes. Nothing is published until you share the link.</p>
+  </div>
+  @if (!slug()) {
+    <button class="btn small" type="button" (click)="fillSample()">Try with sample details</button>
+  }
+</header>
+
+@if (loading()) {
+  <div class="empty"><span class="spinner" aria-hidden="true"></span></div>
+} @else {
+  <form [formGroup]="form" (ngSubmit)="save()" class="editor" novalidate>
+    <!-- Couple -->
+    <section class="card stack">
+      <h2><span class="num-badge">1</span> The two of you</h2>
+      <div class="two">
+        <label>
+          Partner one
+          <input type="text" formControlName="partner1" autocomplete="off" placeholder="Riya Sharma" />
+          @if (form.controls.partner1.touched && form.controls.partner1.invalid) { <span class="error-text">Add a name.</span> }
+        </label>
+        <label>
+          Partner two
+          <input type="text" formControlName="partner2" autocomplete="off" placeholder="Arjun Mehta" />
+          @if (form.controls.partner2.touched && form.controls.partner2.invalid) { <span class="error-text">Add a name.</span> }
+        </label>
+      </div>
+      <div class="three">
+        <label>
+          Wedding date
+          <input type="date" formControlName="date" />
+          @if (form.controls.date.touched && form.controls.date.invalid) { <span class="error-text">Pick the date.</span> }
+        </label>
+        <label>
+          Venue
+          <input type="text" formControlName="venue" placeholder="Jagmandir Island Palace" />
+          @if (form.controls.venue.touched && form.controls.venue.invalid) { <span class="error-text">Add the venue.</span> }
+        </label>
+        <label>
+          City
+          <input type="text" formControlName="city" placeholder="Udaipur" />
+        </label>
+      </div>
+
+      <div class="stack cover-picker">
+        <span class="label">Cover</span>
+        <div class="covers" role="radiogroup" aria-label="Cover style">
+          @for (p of presets; track p) {
+            <button type="button" role="radio" class="cover-swatch" [class]="'cover-swatch cover-' + p"
+                    [attr.aria-checked]="!form.controls.coverImage.value && form.controls.preset.value === p"
+                    (click)="choosePreset(p)"><span>{{ p }}</span></button>
+          }
+          <label class="cover-swatch upload" [class.has-photo]="!!form.controls.coverImage.value"
+                 [style.background-image]="form.controls.coverImage.value ? 'url(' + form.controls.coverImage.value + ')' : null">
+            <input type="file" accept="image/*" class="sr-only" (change)="uploadCover($event)" />
+            <span>{{ form.controls.coverImage.value ? 'Change photo' : '+ Your photo' }}</span>
+          </label>
+        </div>
+        <span class="hint">Photos are resized on your device. Share links use the colour style so they stay short.</span>
+      </div>
+    </section>
+
+    <!-- Story -->
+    <section class="card stack">
+      <div class="row">
+        <h2><span class="num-badge">2</span> Your story</h2>
+        <span class="spacer"></span>
+        <button type="button" class="btn small ai-btn" (click)="storyHelperOpen.set(!storyHelperOpen())" [attr.aria-expanded]="storyHelperOpen()">
+          ✨ Write it with AI
+        </button>
+      </div>
+
+      @if (storyHelperOpen()) {
+        <div class="ai-panel stack">
+          <label>
+            How did you meet?
+            <input type="text" [value]="howWeMet()" (input)="howWeMet.set($any($event.target).value)"
+                   placeholder="we met on a delayed Pune–Delhi train, fighting over the last chai" />
+          </label>
+          <label>
+            Anything else? <span class="hint">(what you love, where you are moving, an inside joke)</span>
+            <input type="text" [value]="storyDetails()" (input)="storyDetails.set($any($event.target).value)" />
+          </label>
+          <div class="row">
+            <div class="row" role="radiogroup" aria-label="Tone">
+              @for (t of tones; track t) {
+                <button type="button" role="radio" class="toggle small-toggle" [attr.aria-checked]="tone() === t" (click)="tone.set(t)">{{ t }}</button>
+              }
+            </div>
+            <div class="row" role="radiogroup" aria-label="Language">
+              @for (l of languages; track l.id) {
+                <button type="button" role="radio" class="toggle small-toggle" [attr.aria-checked]="storyLanguage() === l.id" (click)="storyLanguage.set(l.id)">{{ l.label }}</button>
+              }
+            </div>
+          </div>
+          <div class="row">
+            <button type="button" class="btn primary small" (click)="writeStory()" [disabled]="storyBusy()">
+              @if (storyBusy()) { <span class="spinner" aria-hidden="true"></span> } Write our story
+            </button>
+            <span class="hint">{{ settings.isDemo() ? 'Demo mode: offline templates, no key needed.' : 'Uses your ' + settings.provider() + ' key.' }}</span>
+          </div>
+          @if (storyError()) { <p class="alert small">{{ storyError() }}</p> }
+        </div>
+      }
+
+      <label>
+        Shown at the top of your page
+        <textarea formControlName="story" rows="6" placeholder="A few lines about you two, and why you would love shagun towards your dreams instead of gifts."></textarea>
+        <span class="hint">{{ form.controls.story.value.length }}/1200</span>
+      </label>
+    </section>
+
+    <!-- Goals -->
+    <section class="card stack">
+      <div class="row">
+        <h2><span class="num-badge">3</span> Your dreams</h2>
+        <span class="spacer"></span>
+        <button type="button" class="btn small ai-btn" (click)="goalsHelperOpen.set(!goalsHelperOpen())" [attr.aria-expanded]="goalsHelperOpen()">
+          ✨ Suggest with AI
+        </button>
+      </div>
+      <p class="muted small">Two to five goals with honest targets. Guests can see how close each one is.</p>
+
+      @if (goalsHelperOpen()) {
+        <div class="ai-panel stack">
+          <label>
+            What are you saving for?
+            <textarea rows="2" [value]="plans()" (input)="plans.set($any($event.target).value)"
+                      placeholder="honeymoon in Europe, down payment for a flat in Pune, maybe a dog"></textarea>
+          </label>
+          <div class="two">
+            <label>
+              Guests (or families)
+              <input type="number" min="1" inputmode="numeric" [value]="guests()" (input)="guests.set(+$any($event.target).value || 0)" />
+            </label>
+            <label>
+              Typical shagun (₹)
+              <input type="number" min="1" inputmode="numeric" [value]="averageShagun()" (input)="averageShagun.set(+$any($event.target).value || 0)" />
+            </label>
+          </div>
+          <p class="small reach-line">{{ guests() }} × {{ averageShagun() | inr }} ≈ <strong>{{ expected() | inr }}</strong> you could expect in shagun.</p>
+          <div class="row">
+            <button type="button" class="btn primary small" (click)="suggestGoals()" [disabled]="suggestBusy()">
+              @if (suggestBusy()) { <span class="spinner" aria-hidden="true"></span> } Suggest dreams and amounts
+            </button>
+          </div>
+          @if (suggestError()) { <p class="alert small">{{ suggestError() }}</p> }
+          @if (suggestions(); as s) {
+            <ul class="suggestions">
+              @for (g of s.goals; track g.title) {
+                <li>
+                  <span class="s-emoji" aria-hidden="true">{{ g.emoji }}</span>
+                  <span class="s-text"><strong>{{ g.title }}</strong><span class="hint">{{ g.description }}</span></span>
+                  <span class="num s-amount">{{ g.target | inr }}</span>
+                  <button type="button" class="btn small" (click)="addGoal(g)">Add</button>
+                </li>
+              }
+            </ul>
+            @if (s.tip) { <p class="note small">{{ s.tip }}</p> }
+            <button type="button" class="btn small" (click)="useAllSuggestions()">Replace my dreams with these</button>
+          }
+        </div>
+      }
+
+      <ol class="goal-list" formArrayName="goals">
+        @for (g of goals.controls; track g.controls.id.value; let i = $index) {
+          <li class="goal-row" [formGroupName]="i">
+            <div class="goal-top">
+              <details class="emoji-picker">
+                <summary [attr.aria-label]="'Icon for dream ' + (i + 1)">
+                  @if (g.controls.imageUrl.value) { <img [src]="g.controls.imageUrl.value" alt="" /> } @else { {{ g.controls.emoji.value }} }
+                </summary>
+                <div class="emoji-grid">
+                  @for (e of emojis; track e) {
+                    <button type="button" (click)="g.controls.emoji.setValue(e); g.controls.imageUrl.setValue(''); $any($event.target).closest('details').open = false">{{ e }}</button>
+                  }
+                  <label class="photo-btn">
+                    <input type="file" accept="image/*" class="sr-only" (change)="uploadGoalImage(i, $event); $any($event.target).closest('details').open = false" />
+                    Photo
+                  </label>
+                </div>
+              </details>
+              <label class="grow">
+                <span class="sr-only">Dream {{ i + 1 }} title</span>
+                <input type="text" formControlName="title" placeholder="Honeymoon in Santorini" />
+              </label>
+              <label class="amount">
+                <span class="sr-only">Target in rupees</span>
+                <div class="rupee"><span aria-hidden="true">₹</span><input type="number" min="1000" step="1000" inputmode="numeric" formControlName="target" placeholder="3,00,000" /></div>
+              </label>
+            </div>
+            <div class="goal-bottom">
+              <input type="text" formControlName="description" class="desc" placeholder="One line guests will see (optional)" [attr.aria-label]="'Dream ' + (i + 1) + ' description'" />
+              <div class="row goal-tools">
+                <span class="hint num">{{ inr(g.controls.target.value) }}</span>
+                <span class="spacer"></span>
+                <button type="button" class="icon-btn" (click)="moveGoal(i, -1)" [disabled]="i === 0" [attr.aria-label]="'Move dream ' + (i + 1) + ' up'">↑</button>
+                <button type="button" class="icon-btn" (click)="moveGoal(i, 1)" [disabled]="i === goals.length - 1" [attr.aria-label]="'Move dream ' + (i + 1) + ' down'">↓</button>
+                <button type="button" class="icon-btn danger" (click)="removeGoal(i)" [attr.aria-label]="'Remove dream ' + (i + 1)">✕</button>
+              </div>
+            </div>
+            @if ((submitted() || g.touched) && g.invalid) {
+              <span class="error-text">
+                @if (g.controls.title.invalid) { Give this dream a title. }
+                @if (g.controls.target.invalid) { Set a target of at least ₹1,000. }
+              </span>
+            }
+          </li>
+        }
+      </ol>
+      <div class="row">
+        <button type="button" class="btn small" (click)="addGoal()" [disabled]="goals.length >= maxGoals">+ Add a dream</button>
+        <span class="spacer"></span>
+        <span class="small">Together: <strong class="num">{{ goalsTotal() | inr }}</strong>
+          @if (reach() > 0) { <span class="hint"> · your guests could cover about {{ reach() > 100 ? 'all' : reach() + '%' }}</span> }
+        </span>
+      </div>
+      @if (submitted() && goals.errors?.['minGoals']) { <span class="error-text">Add at least two dreams.</span> }
+    </section>
+
+    <!-- Payment -->
+    <section class="card stack">
+      <h2><span class="num-badge">4</span> Where shagun goes</h2>
+      <p class="muted small">Guests pay this UPI ID directly from their own app. Shagun never holds or sees the money.</p>
+      <div class="two">
+        <label>
+          UPI ID
+          <input type="text" formControlName="upiId" autocomplete="off" autocapitalize="off" spellcheck="false" placeholder="riya.arjun@okhdfcbank" />
+          @if (form.controls.upiId.touched && form.controls.upiId.invalid) { <span class="error-text">Use the format name&#64;bank, as shown in your UPI app.</span> }
+        </label>
+        <label>
+          Name on the account
+          <input type="text" formControlName="payeeName" placeholder="Riya Sharma" />
+          @if (form.controls.payeeName.touched && form.controls.payeeName.invalid) { <span class="error-text">Add the account holder's name.</span> }
+        </label>
+      </div>
+      <label class="check">
+        <input type="checkbox" formControlName="showAmounts" />
+        Show amounts on the blessing wall <span class="hint">(off by default: shagun is personal)</span>
+      </label>
+    </section>
+
+    @if (saveError()) { <p class="alert">{{ saveError() }}</p> }
+    @if (submitted() && form.invalid) { <p class="alert small" role="alert">Some details are missing. Check the fields marked in red.</p> }
+
+    <div class="actions">
+      @if (original() && !original()!.demo) {
+        <button type="button" class="btn ghost danger" (click)="deletePage()">Delete page</button>
+      }
+      <span class="spacer"></span>
+      @if (original(); as o) { <a class="btn" [routerLink]="['/w', o.slug, 'dashboard']">Cancel</a> }
+      <button type="submit" class="btn primary" [disabled]="saving()">
+        @if (saving()) { <span class="spinner" aria-hidden="true"></span> } {{ original() ? 'Save changes' : 'Create my page' }}
+      </button>
+    </div>
+  </form>
+}

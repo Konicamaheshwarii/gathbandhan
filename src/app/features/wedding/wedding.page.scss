@@ -1,0 +1,133 @@
+:host { display: block; padding-top: 0.25rem; }
+
+.hero {
+  border-radius: 28px;
+  overflow: hidden;
+  text-align: center;
+  padding-bottom: 4.5rem;
+}
+.hero-inner { padding: 1.25rem 1.25rem 0; }
+.eyebrow.light { color: #ffd88a; margin: 0.25rem 0 0.4rem; }
+.names {
+  font: 500 clamp(2.6rem, 11vw, 4.2rem)/1.02 var(--font-display);
+  margin: 0 0 0.75rem;
+  text-shadow: 0 2px 18px rgb(40 5 10 / 35%);
+}
+.amp { font-style: italic; color: #ffd88a; font-weight: 500; }
+.when { font: 500 1.1rem var(--font-display); margin: 0; }
+.where { margin: 0.15rem 0 0.9rem; opacity: 0.9; }
+.countdown {
+  display: inline-block;
+  border: 1px solid rgb(255 216 138 / 60%);
+  color: #ffe2a6;
+  border-radius: 999px;
+  padding: 0.2rem 0.85rem;
+  font-weight: 600;
+  font-size: 0.9rem;
+  background: rgb(0 0 0 / 12%);
+}
+
+.layout {
+  display: grid;
+  grid-template-columns: minmax(0, 1.6fr) minmax(0, 1fr);
+  gap: 1.25rem;
+  align-items: start;
+  margin-top: -3rem;
+  padding: 0 1rem;
+  position: relative;
+  z-index: 1;
+}
+.main-col, .side-col { display: grid; gap: 1.25rem; min-width: 0; }
+.side-col { position: sticky; top: 1rem; }
+
+.demo-note { margin: 0; background: var(--surface); }
+
+.total { display: grid; gap: 0.85rem; }
+.total-row { display: flex; justify-content: space-between; align-items: flex-end; gap: 1rem; p { margin: 0; } }
+.raised { font: 600 clamp(1.9rem, 7vw, 2.4rem)/1 var(--font-display); color: var(--accent); }
+.stat { display: grid; text-align: right; strong { font: 600 1.6rem/1 var(--font-display); } }
+.give-cta { font-size: 1.05rem; min-height: 50px; }
+
+.story p { white-space: pre-line; margin: 0; font-size: 1.04rem; }
+
+.section-title { margin: 0.25rem 0 0.75rem; }
+.goals { display: grid; gap: 1rem; grid-template-columns: repeat(auto-fill, minmax(min(100%, 260px), 1fr)); }
+.goal {
+  display: grid;
+  gap: 0.75rem;
+  align-content: start;
+  &.funded { border-color: color-mix(in srgb, var(--good) 45%, var(--border)); }
+}
+.goal-head { display: flex; gap: 0.8rem; align-items: flex-start; h3 { margin: 0 0 0.15rem; } p { margin: 0; } }
+.goal-emoji {
+  font-size: 1.7rem;
+  width: 3rem;
+  height: 3rem;
+  flex: none;
+  display: grid;
+  place-items: center;
+  border-radius: 14px;
+  background: var(--surface-2);
+}
+.goal-img { width: 3rem; height: 3rem; border-radius: 14px; object-fit: cover; flex: none; }
+.goal-foot { display: flex; justify-content: space-between; align-items: center; gap: 0.5rem; }
+
+.share { display: grid; gap: 0.75rem; p { margin: 0; } h2 { margin: 0; } }
+.share-row { > * { flex: 1 1 auto; white-space: nowrap; } }
+
+.wall h2 { margin: 0; }
+.live {
+  margin-left: auto;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: var(--good);
+}
+.dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--good);
+  animation: pulse 1.8s ease-in-out infinite;
+}
+@keyframes pulse { 50% { opacity: 0.35; } }
+.blessings { list-style: none; padding: 0; margin: 0.75rem 0; display: grid; gap: 0.6rem; }
+.blessing {
+  background: var(--surface-2);
+  border-radius: 14px;
+  padding: 0.75rem 0.9rem;
+  border-left: 3px solid var(--marigold);
+  animation: appear 0.35s ease-out;
+  p { margin: 0; }
+}
+@keyframes appear { from { opacity: 0; transform: translateY(-4px); } }
+.msg { font-size: 0.98rem; overflow-wrap: anywhere; }
+.who { margin-top: 0.25rem !important; }
+
+.couple-link { margin: 0; }
+
+.sticky-cta { display: none; }
+
+.missing { max-width: 32rem; margin: 2rem auto; }
+
+@media (max-width: 860px) {
+  :host { padding-bottom: 4.5rem; }
+  .hero { margin: 0 -16px; border-radius: 0 0 28px 28px; }
+  .layout { grid-template-columns: minmax(0, 1fr); padding: 0; }
+  .side-col { position: static; }
+  .sticky-cta {
+    display: block;
+    position: fixed;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    z-index: 20;
+    padding: 0.65rem 16px calc(0.65rem + env(safe-area-inset-bottom));
+    background: color-mix(in srgb, var(--bg) 88%, transparent);
+    backdrop-filter: blur(8px);
+    border-top: 1px solid var(--border);
+    .btn { min-height: 50px; font-size: 1.05rem; }
+  }
+}

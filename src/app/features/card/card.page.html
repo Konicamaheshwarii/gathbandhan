@@ -1,0 +1,37 @@
+@if (store.wedding(); as w) {
+  <div class="controls no-print">
+    <a class="back small" [routerLink]="['/w', w.slug]">← Back to the page</a>
+    <h1>Venue QR card</h1>
+    <p class="muted">Print it and keep it at the shagun table or the entrance. Guests scan it to open your page and give by UPI.</p>
+    <div class="row">
+      <div class="row" role="radiogroup" aria-label="Paper size">
+        @for (s of sizes; track s) {
+          <button type="button" role="radio" class="toggle" [attr.aria-checked]="size() === s" (click)="size.set(s)">
+            {{ s }} <span class="hint">{{ s === 'A6' ? '10.5 × 14.8 cm' : '14.8 × 21 cm' }}</span>
+          </button>
+        }
+      </div>
+      <button class="btn primary" type="button" (click)="print()">Print card</button>
+    </div>
+  </div>
+
+  <div class="sheet-wrap">
+    <article class="sheet" [class.a5]="size() === 'A5'" [class]="'sheet cover-' + w.cover.preset">
+      <app-toran />
+      <div class="sheet-body">
+        <p class="kicker">With your blessings</p>
+        <h2 class="names">{{ names() }}</h2>
+        <p class="date">{{ w.date | indianDate: 'long' }}</p>
+        <div class="panel">
+          <p class="ask">Instead of gifts, bless our dreams with shagun</p>
+          <div class="qr"><app-qr-code [value]="store.shareUrl()" [label]="'QR code for ' + names() + ' wedding page'" /></div>
+          <p class="scan">Scan with your phone camera</p>
+          <ul class="dreams">
+            @for (g of w.goals; track g.id) { <li><span aria-hidden="true">{{ g.emoji }}</span> {{ g.title }}</li> }
+          </ul>
+          <p class="upi">Pay by any UPI app · straight to the couple</p>
+        </div>
+      </div>
+    </article>
+  </div>
+}
