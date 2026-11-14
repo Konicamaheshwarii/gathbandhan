@@ -63,7 +63,7 @@ export class App {
     { initialValue: '' },
   );
   /** Guests arriving from WhatsApp see the wedding, not the couple's tools. */
-  protected readonly guestView = computed(() => /^\/w\/[^/]+(\/give|\/rsvp)?(\?|$)/.test(this.url()));
+  protected readonly guestView = computed(() => /^\/(w\/[^/]+(\/give|\/rsvp)?|i\/.+)(\?|$)/.test(this.url()));
   protected readonly providerLabel = computed(
     () => PROVIDERS.find((p) => p.id === this.settings.provider())?.label.split(' (')[0] ?? '');
 }

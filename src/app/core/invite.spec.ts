@@ -35,7 +35,7 @@ describe('invite text', () => {
     expect(localEventName({ ...e, name: 'Mehndi by the lake' }, 'gujarati')).toBe('Mehndi by the lake');
     expect(localDate('2026-12-12', 'english')).toContain('December');
     expect(localDate('2026-12-12', 'hindi')).toContain('दिसंबर');
-    expect(nameList('Rohan\nIshita, Kabir\n\n')).toEqual(['Rohan', 'Ishita', 'Kabir']);
+    expect(nameList('Rohan\nIshita, Kabir\n\n')).toEqual(['Rohan', 'Ishita, Kabir']);
   });
 
   it('picks a design from the city, venue and wishes', () => {

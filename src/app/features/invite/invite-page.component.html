@@ -1,0 +1,105 @@
+@let d = design();
+@let w = wedding();
+@let p = page();
+@let l = labels();
+<article class="page" [class]="'page tpl-' + d.template + ' kind-' + p.kind" [attr.lang]="d.language === 'hindi' ? 'hi' : d.language === 'gujarati' ? 'gu' : 'en'">
+  @if (aiBackground()) {
+    <img class="ai-bg" [src]="aiBackground()" alt="" crossorigin="anonymous" (error)="hideImage($event)" />
+  }
+  <div class="frame" aria-hidden="true"><span class="corner tl"></span><span class="corner tr"></span><span class="corner bl"></span><span class="corner br"></span></div>
+  @if (d.template === 'rajasthani') { <div class="toran" aria-hidden="true"></div> }
+
+  <div class="content">
+    @switch (p.kind) {
+      @case ('cover') {
+        <p class="invocation">{{ d.text.invocation }}</p>
+        <app-invite-motif class="motif" [class.small]="!!d.coverPhoto" [template]="d.template" [monogram]="monogram()" [primary]="d.palette.primary" [accent]="d.palette.accent" />
+        @if (hasShlok()) { <p class="shlok">{{ d.text.shlok }}</p> }
+        <h1 class="title">{{ d.text.title }}</h1>
+        @if (d.coverPhoto) {
+          <div class="photo"><img [src]="d.coverPhoto" alt="" (error)="hideImage($event)" /></div>
+        }
+        <p class="names">{{ names().a }} <span class="amp">{{ withWord() }}</span> {{ names().b }}</p>
+        <p class="date">{{ date() }}</p>
+        @if (w.city) { <p class="place">{{ w.city }}</p> }
+      }
+
+      @case ('invitation') {
+        <app-invite-motif class="motif tiny" [template]="d.template" [monogram]="monogram()" [primary]="d.palette.primary" [accent]="d.palette.accent" />
+        @if (greeting()) { <p class="dear">{{ l.dear }} <strong>{{ greeting() }}</strong>,</p> }
+        <p class="body">{{ d.text.invitation }}</p>
+        <div class="couple">
+          <p class="name">{{ w.partner1 }}</p>
+          <p class="with">{{ withWord() }}</p>
+          <p class="name">{{ w.partner2 }}</p>
+        </div>
+        <div class="when">
+          <p>{{ date() }}</p>
+          @if (mainEvent(); as e) { <p>{{ eventTime(e.time, d.language) }}</p> }
+          <p class="muted">{{ place() }}</p>
+        </div>
+      }
+
+      @case ('families') {
+        <h2 class="heading">{{ l.family }}</h2>
+        @if (d.grandparents.bride || d.grandparents.groom) {
+          <section class="block">
+            <h3>{{ l.blessings }}</h3>
+            @if (d.grandparents.bride) { <p>{{ d.grandparents.bride }}</p> }
+            @if (d.grandparents.groom) { <p>{{ d.grandparents.groom }}</p> }
+          </section>
+        }
+        @if (w.families?.bride || w.families?.groom) {
+          <div class="sides">
+            @if (w.families?.bride) { <section class="block"><h3>{{ l.brideSide }}</h3><p>{{ w.families?.bride }}</p></section> }
+            @if (w.families?.groom) { <section class="block"><h3>{{ l.groomSide }}</h3><p>{{ w.families?.groom }}</p></section> }
+          </div>
+        }
+        @if (swagat().length) {
+          <section class="block list"><h3>{{ l.swagatotsuk }}</h3>@for (n of swagat(); track $index) { <p>{{ n }}</p> }</section>
+        }
+        @if (darshan().length) {
+          <section class="block list"><h3>{{ l.darshanabhilashi }}</h3>@for (n of darshan(); track $index) { <p>{{ n }}</p> }</section>
+        }
+      }
+
+      @case ('events') {
+        @if (p.kind === 'events') {
+          <h2 class="heading">{{ l.functions }}</h2>
+          <ol class="events">
+            @for (e of p.events; track e.id) {
+              <li class="event">
+                <span class="emoji" aria-hidden="true">{{ meta[e.kind].emoji }}</span>
+                <div>
+                  <h3>{{ eventName(e, d.language) }}</h3>
+                  <p class="em">{{ eventDate(e.date, d.language) }} · {{ eventTime(e.time, d.language) }}</p>
+                  <p>{{ e.venue }}</p>
+                  @if (e.dressCode) { <p class="dress">{{ l.dress }}: {{ e.dressCode }}</p> }
+                </div>
+              </li>
+            }
+          </ol>
+          @if (p.parts > 1) { <p class="part">{{ p.part }} / {{ p.parts }}</p> }
+        }
+      }
+
+      @case ('final') {
+        <app-invite-motif class="motif tiny" [template]="d.template" [monogram]="monogram()" [primary]="d.palette.primary" [accent]="d.palette.accent" />
+        <p class="closing">{{ d.text.closing }}</p>
+        <div class="qrs">
+          @if (rsvpUrl()) {
+            <figure><div class="qr"><app-qr-code [value]="rsvpUrl()" [label]="l.rsvp" /></div><figcaption>{{ l.rsvp }}</figcaption></figure>
+          }
+          @if (giveUrl()) {
+            <figure><div class="qr"><app-qr-code [value]="giveUrl()" [label]="l.shagun" /></div><figcaption>{{ l.shagun }}</figcaption></figure>
+          }
+          @if (mapUrl()) {
+            <figure><div class="qr"><app-qr-code [value]="mapUrl()" [label]="l.venue" /></div><figcaption>{{ l.venue }}</figcaption></figure>
+          }
+        </div>
+        <p class="scan">{{ l.scan }}</p>
+        <p class="sign">{{ names().a }} {{ withWord() }} {{ names().b }} · {{ date() }}</p>
+      }
+    }
+  </div>
+</article>

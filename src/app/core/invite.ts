@@ -256,7 +256,7 @@ export function invitePages(w: Wedding, design: InviteDesign): InvitePage[] {
 }
 
 export function nameList(text: string): string[] {
-  return (text ?? '').split(/\r?\n|,/).map((s) => s.trim()).filter(Boolean).slice(0, 24);
+  return (text ?? '').split(/\r?\n/).map((s) => s.trim()).filter(Boolean).slice(0, 24);
 }
 
 // ---------- AI design picks (offline rules, also the fallback for real models) ----------

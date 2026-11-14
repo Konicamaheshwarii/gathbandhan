@@ -1,0 +1,153 @@
+@if (store.state() === 'missing') {
+  <div class="card empty"><span class="big" aria-hidden="true">🪔</span><h1>No wedding page here</h1><a class="btn primary" routerLink="/create">Create your page</a></div>
+} @else if (store.state() === 'ready' && !store.owner()) {
+  <div class="card empty"><span class="big" aria-hidden="true">🔒</span><h1>Only the couple can design the invite</h1>
+    <a class="btn primary" routerLink="/login" [queryParams]="{ next: '/w/' + slug() + '/invite' }">Sign in</a></div>
+} @else if (store.wedding(); as w) {
+  @if (design(); as d) {
+    <header class="head">
+      <div>
+        <p class="eyebrow">E-invite · digital kankotri</p>
+        <h1>Design your invitation</h1>
+        <p class="muted small">Pick a style, let AI write the words in your language, then send each guest their own link or download it for WhatsApp.</p>
+      </div>
+      <div class="row head-actions">
+        <a class="btn small" [routerLink]="['/w', w.slug, 'dashboard']">Dashboard</a>
+        <a class="btn small" [routerLink]="['/i', w.slug]" target="_blank">Open web invite ↗</a>
+        <button class="btn small primary" type="button" (click)="save()" [disabled]="saving() || !dirty()">
+          @if (saving()) { <span class="spinner" aria-hidden="true"></span> } {{ dirty() ? 'Save invite' : 'Saved ✓' }}
+        </button>
+      </div>
+    </header>
+
+    <div class="layout">
+      <div class="controls">
+        <!-- AI design picks -->
+        <section class="card stack">
+          <h2>✨ AI design picks</h2>
+          <label>
+            Tell us about your wedding <span class="hint">(optional)</span>
+            <input type="text" [value]="wishes()" (input)="wishes.set($any($event.target).value)" placeholder="traditional Gujarati, family from Surat, red and gold" />
+          </label>
+          <button class="btn small" type="button" (click)="suggestDesign()" [disabled]="pickBusy()">
+            @if (pickBusy()) { <span class="spinner" aria-hidden="true"></span> } Suggest a design
+          </button>
+          @if (pick(); as p) {
+            <div class="pick">
+              <span class="swatches" aria-hidden="true"><i [style.background]="p.palette.primary"></i><i [style.background]="p.palette.accent"></i><i [style.background]="p.palette.paper"></i></span>
+              <div>
+                <p class="small"><strong>{{ templateName(p.template) }}</strong> · {{ p.tone }} · {{ languageLabel(p.language) }}</p>
+                <p class="small muted">{{ p.reason }}</p>
+                <p class="hint">Suggested by {{ p.via }}</p>
+              </div>
+              <button class="btn small primary" type="button" (click)="applyPick()">Apply</button>
+            </div>
+          }
+          <p class="hint">{{ settings.aiHint() }}</p>
+        </section>
+
+        <!-- Templates -->
+        <section class="card stack">
+          <h2>Style</h2>
+          <div class="templates" role="radiogroup" aria-label="Invite style">
+            @for (t of templates; track t.id) {
+              <button type="button" role="radio" class="tpl" [attr.aria-checked]="d.template === t.id" (click)="chooseTemplate(t.id)">
+                <span class="mini" [style.background]="t.palette.paper" [style.border-color]="t.palette.accent" [style.color]="t.palette.primary">
+                  <span class="mini-frame" [style.border-color]="t.palette.primary"></span>
+                  <b>{{ couple() }}</b>
+                </span>
+                <span class="tpl-name">{{ t.name }}</span>
+                <span class="hint">{{ t.blurb }}</span>
+              </button>
+            }
+          </div>
+        </section>
+
+        <!-- Words -->
+        <section class="card stack">
+          <div class="row"><h2>Words</h2><span class="spacer"></span>
+            <button class="btn small ai-btn" type="button" (click)="writeWithAi()" [disabled]="textBusy()">
+              @if (textBusy()) { <span class="spinner" aria-hidden="true"></span> } ✨ Write with AI
+            </button>
+          </div>
+          <div class="row" role="radiogroup" aria-label="Language">
+            @for (l of languages; track l.id) {
+              <button type="button" role="radio" class="toggle small-toggle" [attr.aria-checked]="d.language === l.id" (click)="setVoice(l.id, d.tone)">{{ l.label }}</button>
+            }
+          </div>
+          <div class="row" role="radiogroup" aria-label="Tone">
+            @for (t of tones; track t) {
+              <button type="button" role="radio" class="toggle small-toggle" [attr.aria-checked]="d.tone === t" (click)="setVoice(d.language, t)">{{ t }}</button>
+            }
+          </div>
+          @if (textVia()) { <p class="hint">Written by {{ textVia() }}. Edit anything below.</p> }
+          <label>Opening line <input type="text" [value]="d.text.invocation" (input)="patchText({ invocation: $any($event.target).value })" /></label>
+          <label class="check"><input type="checkbox" [checked]="d.showShlok" (change)="patch({ showShlok: $any($event.target).checked })" /> Show the Ganesh shlok on the cover <span class="hint">(traditional styles)</span></label>
+          <label>Title <input type="text" [value]="d.text.title" (input)="patchText({ title: $any($event.target).value })" /></label>
+          <label>Invitation <textarea rows="4" [value]="d.text.invitation" (input)="patchText({ invitation: $any($event.target).value })"></textarea></label>
+          <label>Closing line <input type="text" [value]="d.text.closing" (input)="patchText({ closing: $any($event.target).value })" /></label>
+        </section>
+
+        <!-- Families -->
+        <section class="card stack">
+          <h2>Families</h2>
+          <p class="hint">Parents' names come from <a [routerLink]="['/w', w.slug, 'edit']">your page details</a>.</p>
+          <label>Bride's grandparents <input type="text" [value]="d.grandparents.bride ?? ''" (input)="setGrandparent('bride', $any($event.target).value)" /></label>
+          <label>Groom's grandparents <input type="text" [value]="d.grandparents.groom ?? ''" (input)="setGrandparent('groom', $any($event.target).value)" /></label>
+          <label>Swagatotsuk <span class="hint">(eager to welcome you; one name per line)</span>
+            <textarea rows="3" [value]="d.swagatotsuk" (input)="patch({ swagatotsuk: $any($event.target).value })"></textarea></label>
+          <label>Darshanabhilashi <span class="hint">(longing to see you; one per line)</span>
+            <textarea rows="2" [value]="d.darshanabhilashi" (input)="patch({ darshanabhilashi: $any($event.target).value })"></textarea></label>
+        </section>
+
+        <!-- Look -->
+        <section class="card stack">
+          <h2>Colours and photo</h2>
+          <div class="row colours">
+            <label>Ink <input type="color" [value]="d.palette.primary" (input)="setColour('primary', $any($event.target).value)" /></label>
+            <label>Gold <input type="color" [value]="d.palette.accent" (input)="setColour('accent', $any($event.target).value)" /></label>
+            <label>Paper <input type="color" [value]="d.palette.paper" (input)="setColour('paper', $any($event.target).value)" /></label>
+            <button class="btn small ghost" type="button" (click)="resetColours()">Reset</button>
+          </div>
+          <div class="photos" role="radiogroup" aria-label="Cover photo">
+            <button type="button" role="radio" class="ph none" [attr.aria-checked]="!d.coverPhoto" (click)="patch({ coverPhoto: '' })">No photo</button>
+            @for (url of photos(); track url) {
+              <button type="button" role="radio" class="ph" [attr.aria-checked]="d.coverPhoto === url" (click)="patch({ coverPhoto: url })"><img [src]="url" alt="" /></button>
+            }
+          </div>
+          <label class="check">
+            <input type="checkbox" [checked]="d.aiBackground" [disabled]="!settings.settings().aiImages && !d.aiBackground" (change)="patch({ aiBackground: $any($event.target).checked })" />
+            AI-made decorative background <span class="hint">(beta, made by the free Pollinations.ai image service; the drawn motifs stay underneath)</span>
+          </label>
+          @if (!settings.settings().aiImages) { <p class="hint">Turn on AI images in <a routerLink="/settings">Settings</a> to use this.</p> }
+        </section>
+      </div>
+
+      <div class="preview">
+        <div class="row export">
+          <strong>{{ pages().length }} pages</strong>
+          <span class="spacer"></span>
+          <button class="btn small" type="button" (click)="downloadAllPng()" [disabled]="!!exporting()">PNG for WhatsApp</button>
+          <button class="btn small" type="button" (click)="downloadPdf()" [disabled]="!!exporting()">PDF</button>
+          <a class="btn small primary" [routerLink]="['/w', w.slug, 'guests']">Send to guests →</a>
+        </div>
+        @if (exporting()) { <p class="note small" role="status"><span class="spinner" aria-hidden="true"></span> Preparing {{ exporting() }} at 1080 × 1920…</p> }
+        <div class="pages">
+          @for (p of pages(); track $index; let i = $index) {
+            <figure class="pg" #pageEl>
+              <app-invite-page [wedding]="w" [design]="d" [page]="p" [greeting]="personal() && i === 1 ? 'Sharma Parivar' : null" [rsvpUrl]="rsvpUrl()" [giveUrl]="giveUrl()" />
+              <figcaption class="row">
+                <span class="hint">{{ i + 1 }}. {{ p.kind }}</span><span class="spacer"></span>
+                <button class="btn small ghost" type="button" (click)="downloadPng(i)" [disabled]="!!exporting()">PNG</button>
+              </figcaption>
+            </figure>
+          }
+        </div>
+        <label class="check small"><input type="checkbox" [checked]="personal()" (change)="personal.set($any($event.target).checked)" /> Preview a personal invite ("Dear Sharma Parivar")</label>
+        <p class="hint">Downloads match the preview, so keep this off for an invite you post to a group. Each guest's own link greets them by name automatically.</p>
+      </div>
+    </div>
+  }
+} @else {
+  <div class="empty"><span class="spinner" aria-hidden="true"></span></div>
+}

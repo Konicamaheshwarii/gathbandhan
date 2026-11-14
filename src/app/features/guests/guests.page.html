@@ -1,0 +1,138 @@
+@if (store.state() === 'missing') {
+  <div class="card empty"><span class="big" aria-hidden="true">🪔</span><h1>No wedding page here</h1><a class="btn primary" routerLink="/create">Create your page</a></div>
+} @else if (store.state() === 'ready' && !store.owner()) {
+  <div class="card empty"><span class="big" aria-hidden="true">🔒</span><h1>Only the couple can see the guest list</h1>
+    <a class="btn primary" routerLink="/login" [queryParams]="{ next: '/w/' + slug() + '/guests' }">Sign in</a></div>
+} @else if (store.wedding(); as w) {
+  <header class="head">
+    <div>
+      <p class="eyebrow">Guests and invites</p>
+      <h1>Send your invitation</h1>
+      <p class="muted small">Each guest gets their own link that greets them by name. You press send in WhatsApp yourself; nothing is sent automatically.</p>
+    </div>
+    <div class="row">
+      <a class="btn small" [routerLink]="['/w', w.slug, 'invite']">Edit invite</a>
+      <a class="btn small" [routerLink]="['/w', w.slug, 'dashboard']">Dashboard</a>
+    </div>
+  </header>
+
+  @if (!store.backend) {
+    <p class="note small" role="note">Demo mode: "Opened" only shows for links opened in this browser. With the online backend you see opens from every phone.</p>
+  }
+
+  <section class="funnel" aria-label="Invite progress">
+    @for (s of statuses; track s.id) {
+      <button type="button" class="stage" [class]="'stage st-' + s.id" [attr.aria-pressed]="filter() === s.id" (click)="filter.set(filter() === s.id ? 'all' : s.id)">
+        <strong class="num">{{ counts()[s.id] }}</strong><span>{{ s.label }}</span>
+      </button>
+    }
+  </section>
+
+  <div class="layout">
+    <div class="side-col">
+      @if (current(); as g) {
+        <section class="card queue" aria-live="polite">
+          <p class="eyebrow">Sending {{ queueIndex() + 1 }} of {{ queue().length }}</p>
+          <h2>{{ g.greeting || g.name }}</h2>
+          <p class="hint">{{ g.name }} · +{{ g.phone }}</p>
+          <pre class="preview-msg">{{ message(g) }}</pre>
+          <button class="btn whatsapp block" type="button" (click)="sendCurrent()">Open WhatsApp for {{ g.name }}</button>
+          <div class="row">
+            <button class="btn small ghost" type="button" (click)="advance()">Skip</button>
+            <span class="spacer"></span>
+            <button class="btn small ghost" type="button" (click)="queue.set([])">Stop</button>
+          </div>
+        </section>
+      } @else {
+        <section class="card stack">
+          <h2>Send in batches</h2>
+          <p class="small muted">Opens WhatsApp for the next {{ 10 }} guests who have a number and have not been sent the invite, one at a time.</p>
+          <button class="btn whatsapp block" type="button" (click)="startQueue()" [disabled]="!counts()['not-sent']">Send next 10</button>
+        </section>
+      }
+
+      <section class="card stack">
+        <div class="row"><h2>Message</h2><span class="spacer"></span>
+          <button class="btn small ai-btn" type="button" (click)="writeWithAi()" [disabled]="writing()">
+            @if (writing()) { <span class="spinner" aria-hidden="true"></span> } ✨ Rewrite with AI
+          </button>
+        </div>
+        <div class="row" role="radiogroup" aria-label="Tone">
+          @for (t of tones; track t) {
+            <button type="button" role="radio" class="toggle small-toggle" [attr.aria-checked]="tone() === t" (click)="tone.set(t)">{{ t }}</button>
+          }
+        </div>
+        <textarea rows="8" [value]="template()" (input)="template.set($any($event.target).value)" aria-label="Invite message"></textarea>
+        <p class="hint"><code>{{ '{name}' }}</code> becomes each guest's greeting and <code>{{ '{link}' }}</code> their personal invite link.
+          @if (writtenBy()) { Written by {{ writtenBy() }}. }</p>
+        <p class="hint">{{ settings.aiHint() }}</p>
+        <button class="btn small ghost" type="button" (click)="resetTemplate()">Use the standard message</button>
+      </section>
+
+      <section class="card stack">
+        <h2>Add guests</h2>
+        <form class="stack" (submit)="$event.preventDefault(); addOne()">
+          <label>Name <input type="text" [value]="name()" (input)="name.set($any($event.target).value)" placeholder="Rakesh Sharma" /></label>
+          <label>Greet them as <span class="hint">(optional)</span> <input type="text" [value]="greeting()" (input)="greeting.set($any($event.target).value)" placeholder="Sharma Parivar" /></label>
+          <label>WhatsApp number <input type="tel" inputmode="tel" [value]="phone()" (input)="phone.set($any($event.target).value)" placeholder="98765 43210" /></label>
+          <div class="row" role="radiogroup" aria-label="Side">
+            @for (s of sides; track s.id) {
+              <button type="button" role="radio" class="toggle small-toggle" [attr.aria-checked]="side() === s.id" (click)="side.set(side() === s.id ? null : s.id)">{{ s.label }}</button>
+            }
+          </div>
+          <label>Group <span class="hint">(e.g. Mama's family, Office)</span>
+            <input type="text" [value]="groupName()" (input)="groupName.set($any($event.target).value)" list="guest-groups" /></label>
+          <datalist id="guest-groups">@for (g of groups(); track g) { <option [value]="g"></option> }</datalist>
+          <button class="btn primary" type="submit">Add guest</button>
+        </form>
+        <div class="row">
+          <button class="btn small" type="button" (click)="showImport.set(!showImport())" [attr.aria-expanded]="showImport()">Paste a list</button>
+          <label class="btn small file">Import CSV<input type="file" accept=".csv,text/csv,text/plain" class="sr-only" (change)="importFile($event)" /></label>
+          @if (canPickContacts) { <button class="btn small" type="button" (click)="pickContacts()">From phone contacts</button> }
+        </div>
+        @if (showImport()) {
+          <label>One guest per line: name, phone, side, group
+            <textarea rows="5" [value]="pasted()" (input)="pasted.set($any($event.target).value)" placeholder="Sunita Mausi, 98220 12345, bride, Mummy's side&#10;Gupta Uncle +91 98110 66666"></textarea></label>
+          <button class="btn small primary" type="button" (click)="importText(pasted())">Add these guests</button>
+        }
+      </section>
+    </div>
+
+    <section class="card list" aria-labelledby="list-h">
+      <div class="row list-head">
+        <h2 id="list-h">Guest list <span class="hint">({{ visible().length }} of {{ counts().all }})</span></h2>
+        <span class="spacer"></span>
+        <select [value]="group()" (change)="group.set($any($event.target).value)" aria-label="Filter by group">
+          <option value="">All groups</option>
+          @for (g of groups(); track g) { <option [value]="g">{{ g }}</option> }
+        </select>
+        <input type="search" placeholder="Search" aria-label="Search guests" [value]="query()" (input)="query.set($any($event.target).value)" />
+      </div>
+      @if (visible().length) {
+        <ul class="rows">
+          @for (g of visible(); track g.id) {
+            @let st = status(g);
+            <li class="guest">
+              <div class="who">
+                <strong>{{ g.greeting || g.name }}</strong>
+                <span class="hint">@if (g.greeting) { {{ g.name }} · }{{ g.group || 'No group' }}@if (g.side) { · {{ g.side === 'bride' ? "Bride's side" : "Groom's side" }}}</span>
+              </div>
+              <span class="chip st" [class]="'chip st st-' + st">{{ statusLabel(st) }}@if (g.openedAt && st === 'opened') { · {{ g.openedAt | timeAgo }}}</span>
+              <div class="acts">
+                @if (g.phone) {
+                  <a class="btn small whatsapp" [href]="whatsapp(g)" target="_blank" rel="noopener" (click)="markSent(g)">{{ g.sentAt ? 'Resend' : 'Send' }}</a>
+                }
+                <button class="btn small" type="button" (click)="copyLink(g)">Link</button>
+                <button class="btn small ghost danger" type="button" (click)="remove(g)" [attr.aria-label]="'Remove ' + g.name">✕</button>
+              </div>
+            </li>
+          }
+        </ul>
+      } @else {
+        <div class="empty"><span class="big" aria-hidden="true">💌</span>@if (counts().all) { Nobody matches. } @else { Add your first guests on the left. }</div>
+      }
+    </section>
+  </div>
+} @else {
+  <div class="empty"><span class="spinner" aria-hidden="true"></span></div>
+}

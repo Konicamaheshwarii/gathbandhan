@@ -1,0 +1,41 @@
+@if (store.state() === 'missing') {
+  <div class="card empty missing">
+    <span class="big" aria-hidden="true">💌</span>
+    <h1>We could not find this invitation</h1>
+    <p>The link may be incomplete. Ask the family to send it again.</p>
+    <a class="btn primary" routerLink="/">Go to Shagun</a>
+  </div>
+} @else if (store.wedding(); as w) {
+  @let d = design()!;
+  <div class="stage" [style.background]="backdrop()">
+    @if (greeting()) {
+      <p class="hello">Namaste, <strong>{{ greeting() }}</strong>. You are invited 🙏</p>
+    } @else {
+      <p class="hello">{{ couple() }} invite you to their wedding</p>
+    }
+    <p class="hint-scroll" aria-hidden="true">Scroll to open ↓</p>
+
+    <div class="book">
+      @for (p of pages(); track $index; let i = $index) {
+        <section #sheet class="sheet" [style.--i]="i" [attr.aria-label]="'Page ' + (i + 1) + ' of ' + pages().length">
+          <app-invite-page [wedding]="w" [design]="d" [page]="p" [greeting]="greeting()" [rsvpUrl]="rsvpUrl()" [giveUrl]="giveUrl()" />
+        </section>
+      }
+    </div>
+
+    <p class="made small">Made with <a routerLink="/">Shagun</a>. Shagun goes straight to the couple by UPI.</p>
+  </div>
+
+  <nav class="actions" aria-label="Invitation actions">
+    <a class="act primary" [routerLink]="['/w', w.slug, 'rsvp']"><span aria-hidden="true">✅</span>RSVP</a>
+    <a class="act" [routerLink]="['/w', w.slug, 'give']"><span aria-hidden="true">🪔</span>Shagun</a>
+    <button class="act" type="button" (click)="addToCalendar()"><span aria-hidden="true">📅</span>Calendar</button>
+    <button class="act" type="button" (click)="share()"><span aria-hidden="true">📤</span>Share</button>
+    <button class="act" type="button" (click)="toggleMusic()" [attr.aria-pressed]="music()" [title]="music() ? 'Stop the shehnai' : 'Play a soft shehnai'">
+      <span aria-hidden="true">{{ music() ? '🔊' : '🔇' }}</span>Shehnai
+    </button>
+    <a class="act" [routerLink]="['/w', w.slug]"><span aria-hidden="true">💛</span>Wishlist</a>
+  </nav>
+} @else {
+  <div class="empty"><span class="spinner" aria-hidden="true"></span> Opening the invitation…</div>
+}

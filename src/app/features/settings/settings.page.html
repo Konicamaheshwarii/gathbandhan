@@ -21,7 +21,7 @@
     <li [class.on]="!!real()"><strong>1. Your own key</strong> (Gemini or Groq, optional)</li>
     <li [class.on]="store.provider() !== 'demo'"><strong>2. Chrome's on-device AI</strong> (Gemini Nano, free, private):
       {{ chrome() === 'checking' ? 'checking…' : chrome() === 'yes' ? 'ready in this browser' : 'not available in this browser' }}</li>
-    <li [class.on]="store.provider() !== 'demo' && store.settings().allowCloudAi"><strong>3. Pollinations.ai</strong> (free, no key; text is sent to that service)</li>
+    <li [class.on]="store.provider() !== 'demo' && store.settings().allowCloudAi"><strong>3. Pollinations.ai</strong> (free, no key; your text is sent to that service; about one reply every 45 seconds, and only on the published site)</li>
     <li class="on"><strong>4. Offline templates</strong> (always works)</li>
   </ol>
   <p class="hint">Shagun uses the first one that answers. If one is slow or fails, the next one takes over.</p>

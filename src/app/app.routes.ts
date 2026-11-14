@@ -11,6 +11,10 @@ export const routes: Routes = [
   { path: 'w/:slug/card', title: 'Venue QR card · Shagun', loadComponent: () => import('./features/card/card.page').then((m) => m.CardPage) },
   { path: 'w/:slug/dashboard', title: 'Dashboard · Shagun', canActivate: [requireSignIn], loadComponent: () => import('./features/dashboard/dashboard.page').then((m) => m.DashboardPage) },
   { path: 'w/:slug/edit', title: 'Edit your page · Shagun', canActivate: [requireSignIn], loadComponent: () => import('./features/editor/editor.page').then((m) => m.EditorPage) },
+  { path: 'w/:slug/invite', title: 'Design your invite · Shagun', canActivate: [requireSignIn], loadComponent: () => import('./features/invite/invite-designer.page').then((m) => m.InviteDesignerPage) },
+  { path: 'w/:slug/guests', title: 'Guests and invites · Shagun', canActivate: [requireSignIn], loadComponent: () => import('./features/guests/guests.page').then((m) => m.GuestsPage) },
+  { path: 'i/:slug', title: "You're invited · Shagun", loadComponent: () => import('./features/invite/invite-view.page').then((m) => m.InviteViewPage) },
+  { path: 'i/:slug/:token', title: "You're invited · Shagun", loadComponent: () => import('./features/invite/invite-view.page').then((m) => m.InviteViewPage) },
   { path: 'settings', title: 'Settings · Shagun', loadComponent: () => import('./features/settings/settings.page').then((m) => m.SettingsPage) },
   { path: '**', redirectTo: '' },
 ];

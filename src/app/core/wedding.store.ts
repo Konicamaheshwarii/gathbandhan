@@ -1,7 +1,8 @@
 import { DestroyRef, Injectable, computed, inject, signal } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { WeddingRepository } from './data/wedding.repository';
-import { Contribution, NewContribution, NewRsvp, PublicActivity, Rsvp, WallEntry, Wedding } from './models';
+import { recalledGuestToken } from './guests';
+import { Contribution, Guest, GuestMark, NewContribution, NewRsvp, PublicActivity, Rsvp, WallEntry, Wedding } from './models';
 import { computeTotals, totalsFromActivity } from './totals';
 import { decodeWedding, encodeWedding, weddingUrl } from './wedding-link';
 
@@ -36,6 +37,7 @@ export class WeddingStore {
   readonly owner = signal(false);
   readonly contributions = signal<Contribution[]>([]);
   readonly rsvps = signal<Rsvp[]>([]);
+  readonly guests = signal<Guest[]>([]);
   readonly activity = signal<PublicActivity>(EMPTY_ACTIVITY);
   readonly error = signal<string | null>(null);
   /** Public link: just `#/w/slug` with the backend; in demo mode it carries the wedding page. */
@@ -108,6 +110,7 @@ export class WeddingStore {
     const w = this.wedding();
     if (!w) throw new Error('Wedding not loaded.');
     const saved = await this.repo.addContribution({ ...input, weddingId: w.id });
+    await this.markGuest('gave');
     await this.refresh();
     return saved;
   }
@@ -115,7 +118,26 @@ export class WeddingStore {
   async rsvp(input: Omit<NewRsvp, 'weddingId'>): Promise<Rsvp> {
     const w = this.wedding();
     if (!w) throw new Error('Wedding not loaded.');
-    return this.repo.addRsvp({ ...input, weddingId: w.id });
+    const saved = await this.repo.addRsvp({ ...input, weddingId: w.id });
+    await this.markGuest('rsvp');
+    return saved;
+  }
+
+  /** Ticks off the guest whose personal invite was opened in this browser (best effort). */
+  private async markGuest(mark: GuestMark): Promise<void> {
+    const w = this.wedding();
+    const token = w ? recalledGuestToken(w.id) : null;
+    if (w && token) await this.repo.markGuest(w.id, token, mark).catch(() => undefined);
+  }
+
+  async saveGuests(guests: Guest[]): Promise<void> {
+    await this.repo.saveGuests(guests);
+    await this.refresh();
+  }
+
+  async removeGuest(g: Guest): Promise<void> {
+    await this.repo.deleteGuest(g.id);
+    await this.refresh();
   }
 
   /** Saves the whole wedding (goal updates, photos) and reloads it. */
@@ -147,9 +169,12 @@ export class WeddingStore {
     const owner = await this.repo.isOwner(w.id).catch(() => false);
     this.owner.set(owner);
     if (this.manageMode && owner) {
-      const [contributions, rsvps] = await Promise.all([this.repo.listContributions(w.id), this.repo.listRsvps(w.id)]);
+      const [contributions, rsvps, guests] = await Promise.all([
+        this.repo.listContributions(w.id), this.repo.listRsvps(w.id), this.repo.listGuests(w.id),
+      ]);
       this.contributions.set(contributions);
       this.rsvps.set(rsvps);
+      this.guests.set(guests);
     } else {
       this.activity.set(await this.repo.getPublicActivity(w.id));
     }

@@ -2,7 +2,7 @@ import { ChromeAiProvider, LanguageModelApi, chromeSupports } from './chrome-ai.
 import { DemoProvider } from './demo.provider';
 import { LlmChain, Tier, withTimeout } from './llm-chain';
 import { LlmError, LlmProvider, LlmRequest } from './llm-provider';
-import { POLLINATIONS_TEXT_URL, PollinationsProvider, aiImageUrl } from './pollinations.provider';
+import { POLLINATIONS_TEXT_URL, PollinationsProvider, aiImageUrl, resetPollinationsCooldown } from './pollinations.provider';
 
 const req: LlmRequest = { task: 'thanks', system: 's', prompt: 'p', language: 'english' };
 
@@ -119,7 +119,9 @@ describe('Chrome built-in AI provider', () => {
 });
 
 describe('Pollinations provider', () => {
-  it('posts an OpenAI-style request with no key and reads the reply', async () => {
+  beforeEach(() => resetPollinationsCooldown());
+
+  it('posts a keyless chat request and reads the reply', async () => {
     const fetchSpy = jasmine.createSpy('fetch').and.resolveTo(new Response(JSON.stringify({ choices: [{ message: { content: 'Namaste!' } }] })));
     const text = await new PollinationsProvider(fetchSpy).complete({ ...req, json: true });
     expect(text).toBe('Namaste!');
@@ -131,9 +133,24 @@ describe('Pollinations provider', () => {
     expect(init.headers.Authorization).toBeUndefined();
   });
 
-  it('turns outages into errors the chain can step past', async () => {
-    const down = new PollinationsProvider(async () => new Response('busy', { status: 503 }));
-    await expectAsync(down.complete(req)).toBeRejectedWithError(/busy/);
+  it('respects the free tier limit without waiting on the network', async () => {
+    let now = 1_000_000;
+    const fetchSpy = jasmine.createSpy('fetch').and.callFake(async () => new Response('ok'));
+    const p = new PollinationsProvider(fetchSpy, () => now);
+    expect(await p.complete(req)).toBe('ok');
+    await expectAsync(p.complete(req)).toBeRejectedWithError(/one reply every 45 seconds/);
+    expect(fetchSpy).toHaveBeenCalledTimes(1);
+    now += 46_000;
+    expect(await p.complete(req)).toBe('ok');
+  });
+
+  it('turns outages and limits into errors the chain can step past', async () => {
+    const limited = new PollinationsProvider(async () => new Response('{}', { status: 402, headers: { 'Retry-After': '25' } }));
+    await expectAsync(limited.complete(req)).toBeRejectedWithError(/busy.*25 s/);
+    resetPollinationsCooldown();
+    const down = new PollinationsProvider(async () => new Response('nope', { status: 403 }));
+    await expectAsync(down.complete(req)).toBeRejectedWithError(/not available here/);
+    resetPollinationsCooldown();
     const offline = new PollinationsProvider(async () => { throw new TypeError('Failed to fetch'); });
     await expectAsync(offline.complete(req)).toBeRejectedWithError(/could not be reached/);
   });
