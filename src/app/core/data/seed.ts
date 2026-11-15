@@ -2,7 +2,7 @@ import { defaultInvite } from '../invite';
 import { Contribution, Guest, Rsvp, Side, Wedding } from '../models';
 
 /** Bump to re-seed browsers that already have an older copy of the sample. */
-export const DEMO_SEED_VERSION = 4;
+export const DEMO_SEED_VERSION = 5;
 export const DEMO_SLUG = 'riya-weds-arjun';
 export const DEMO_ID = 'w-demo';
 const HOUR = 3_600_000;

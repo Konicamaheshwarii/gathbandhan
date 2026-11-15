@@ -2,7 +2,7 @@ import { ChangeDetectionStrategy, Component, computed, effect, inject, input, si
 import { RouterLink } from '@angular/router';
 import { AiService } from '../../core/ai/ai.service';
 import { guestGreeting, guestStatus, inviteUrl, inviteWhatsappText, mergeGuests, parseGuestList } from '../../core/guests';
-import { defaultInvite } from '../../core/invite';
+import { defaultInvite, migrateInvite } from '../../core/invite';
 import { TIER_LABELS } from '../../core/llm/llm-chain';
 import { GUEST_STATUS, Guest, GuestStatus, INVITE_TONES, InviteTone, SIDES, Side } from '../../core/models';
 import { normalizeIndianPhone, whatsappUrl } from '../../core/share';
@@ -73,7 +73,7 @@ export class GuestsPage {
 
   protected readonly design = computed(() => {
     const w = this.store.wedding();
-    return w ? w.invite ?? defaultInvite(w) : null;
+    return w ? (w.invite ? migrateInvite(w.invite) : defaultInvite(w)) : null;
   });
   protected readonly counts = computed(() => {
     const c: Record<GuestStatus | 'all', number> = { all: 0, 'not-sent': 0, sent: 0, opened: 0, rsvp: 0, gave: 0 };

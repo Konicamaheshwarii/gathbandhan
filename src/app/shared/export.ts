@@ -6,14 +6,16 @@ export const EXPORT_HEIGHT = 1920;
 /** 1x1 transparent PNG used when an image (for example an AI background) cannot be fetched. */
 const PLACEHOLDER = 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNkYAAAAAYAAjCB0C8AAAAASUVORK5CYII=';
 
-let fontCss: Promise<string> | null = null;
+/** Embedded font CSS per template and language: each style brings its own fonts. */
+const fontCss = new Map<string, Promise<string>>();
 
 /** Draws a page element at WhatsApp-story size (1080×1920). html-to-image is loaded only when needed. */
 export async function renderPage(node: HTMLElement): Promise<HTMLCanvasElement> {
   const { toCanvas, getFontEmbedCSS } = await import('html-to-image');
   await document.fonts?.ready;
-  fontCss ??= getFontEmbedCSS(node).catch(() => '');
-  const css = await fontCss;
+  const key = node.dataset['fontKey'] ?? '';
+  if (!fontCss.has(key)) fontCss.set(key, getFontEmbedCSS(node).catch(() => ''));
+  const css = await fontCss.get(key)!;
   const width = node.offsetWidth;
   // Exactly 9:16, so the PNG is 1080 x 1920 whatever the on-screen size rounds to.
   const height = (width * EXPORT_HEIGHT) / EXPORT_WIDTH;

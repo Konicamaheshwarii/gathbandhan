@@ -207,7 +207,8 @@ export interface WeddingTotals {
 
 // ---------- e-invite (digital kankotri) ----------
 
-export const INVITE_TEMPLATES = ['ganesh', 'rajasthani', 'gujarati', 'south', 'royal', 'minimal'] as const;
+/** Saved designs keep these ids; the four newest styles were added after the first six. */
+export const INVITE_TEMPLATES = ['ganesh', 'rajasthani', 'gujarati', 'south', 'royal', 'minimal', 'floral', 'mehndi', 'photo', 'phulkari'] as const;
 export type InviteTemplate = (typeof INVITE_TEMPLATES)[number];
 
 export type InviteLanguage = 'english' | 'hindi' | 'gujarati' | 'hinglish';

@@ -6,7 +6,7 @@ import { sortEvents, weddingIcs } from '../../core/calendar';
 import { downloadText } from '../../core/csv';
 import { WeddingRepository } from '../../core/data/wedding.repository';
 import { inviteUrl, isGuestToken, rememberGuestToken } from '../../core/guests';
-import { defaultInvite, invitePages, templateMeta } from '../../core/invite';
+import { defaultInvite, invitePages, migrateInvite, templateMeta } from '../../core/invite';
 import { firstName } from '../../core/util';
 import { WeddingStore } from '../../core/wedding.store';
 import { appBaseUrl, weddingUrl } from '../../core/wedding-link';
@@ -41,7 +41,7 @@ export class InviteViewPage {
   protected readonly music = signal(false);
   protected readonly design = computed(() => {
     const w = this.store.wedding();
-    return w ? w.invite ?? defaultInvite(w) : null;
+    return w ? (w.invite ? migrateInvite(w.invite) : defaultInvite(w)) : null;
   });
   protected readonly pages = computed(() => {
     const w = this.store.wedding();
@@ -70,7 +70,7 @@ export class InviteViewPage {
     });
     effect(() => {
       const d = this.design();
-      if (d) void ensureInviteFonts(d.language);
+      if (d) void ensureInviteFonts(d.language, d.template);
     });
     // Pages "turn in" as they scroll into view.
     afterRenderEffect(() => {

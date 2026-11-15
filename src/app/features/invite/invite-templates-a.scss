@@ -1,0 +1,105 @@
+// Per-style layouts, split across files to keep each stylesheet small. Sizes in cqw (see invite-page.component.scss).
+
+// =====================================================================
+// 1. Shree Ganesh classic: centred stack inside a double-ruled frame
+// =====================================================================
+.tpl-ganesh {
+  background: radial-gradient(120% 70% at 50% 0%, color-mix(in srgb, var(--i-accent) 16%, var(--i-paper)), var(--i-paper) 62%);
+  .content { inset: 15cqw 15cqw; gap: 1.8cqw; }
+  .hero { width: 24cqw; }
+  .rule { width: 50cqw; }
+  .title { font-size: 9cqw; font-weight: 700; }
+  .names { color: var(--i-primary); font-size: min(11.5cqw, calc(80cqw / var(--name-len, 5))); }
+  .medallion {
+    width: 24cqw; aspect-ratio: 1; border-radius: 50%; overflow: hidden; flex: none;
+    border: 0.7cqw solid var(--i-accent); box-shadow: 0 0 0 0.5cqw var(--i-paper), 0 0 0 0.9cqw var(--i-primary);
+    img { width: 100%; height: 100%; object-fit: cover; display: block; }
+  }
+  .date { font-size: 4.4cqw; }
+  .heading { font-size: 8cqw; }
+}
+
+// =====================================================================
+// 2. Rajasthani jharokha: everything inside the haveli doorway
+// =====================================================================
+.tpl-rajasthani {
+  &.kind-cover .content { inset: 29cqw 18cqw 31cqw; justify-content: flex-start; gap: 1.8cqw; }
+  .content { inset: 26cqw 18cqw 10cqw; }
+  .invocation { font-size: 3.2cqw; }
+  .hero { width: 50cqw; }
+  .window {
+    width: 34cqw; aspect-ratio: 4 / 5; flex: none; overflow: hidden;
+    border-radius: 17cqw 17cqw 1cqw 1cqw; border: 0.8cqw solid var(--i-accent); box-shadow: 0 0 0 0.6cqw var(--i-primary);
+    img { width: 100%; height: 100%; object-fit: cover; display: block; }
+  }
+  .title { font-size: 8.6cqw; font-weight: 400; }
+  .names { color: var(--i-primary); font-size: min(11cqw, calc(76cqw / var(--name-len, 5))); }
+  .amp { font-style: normal; color: color-mix(in srgb, var(--i-accent) 70%, var(--i-ink)); }
+  .date { background: var(--i-primary); color: var(--i-paper); padding: 1cqw 4cqw; border-radius: 99px; font-size: 3.6cqw; }
+  .heading, .title, .closing, .couple .name { font-weight: 400; }
+  .emblem { width: 34cqw; }
+  .emoji { border-radius: 50% 50% 0.8cqw 0.8cqw; background: var(--i-accent); border-color: var(--i-primary); }
+}
+
+// =====================================================================
+// 3. Gujarati kankotri: a framed panel on bandhani with a ribbon title
+// =====================================================================
+.tpl-gujarati {
+  .content { inset: 28cqw 19cqw 22cqw; gap: 2.4cqw; }
+  &:not(.kind-cover) .content { inset: 25cqw 19cqw 21cqw; }
+  .title.ribbon {
+    align-self: stretch; margin-inline: -6cqw; padding: 1.8cqw 6cqw;
+    background: var(--i-accent); color: #fffaf0; font-size: 8cqw;
+    clip-path: polygon(0 0, 100% 0, 95% 50%, 100% 100%, 0 100%, 5% 50%);
+  }
+  .names { color: var(--i-primary); font-weight: 700; font-size: min(11cqw, calc(66cqw / var(--name-len, 5))); }
+  .amp { color: var(--i-accent); font-style: normal; font-weight: 500; }
+  .date-box {
+    display: grid; gap: 0.8cqw; padding: 2cqw 4cqw; border: 0.5cqw solid var(--i-primary); border-radius: 1cqw;
+    outline: 0.3cqw dashed var(--i-accent); outline-offset: 0.9cqw;
+  }
+  .date { font-size: 3.8cqw; }
+  .heading { font-weight: 700; }
+  .emoji { border-radius: 1cqw; transform: rotate(45deg); background: var(--i-primary); border-color: var(--i-accent); .ico { transform: rotate(-45deg); } }
+}
+
+// =====================================================================
+// 4. South Indian temple: under the gopuram, between temple bands
+// =====================================================================
+.tpl-south {
+  &.kind-cover .content { inset: 61cqw 16cqw 31cqw; gap: 2cqw; }
+  .content { inset: 34cqw 16cqw 24cqw; }
+  .invocation { font-size: 3.1cqw; }
+  .title, .heading { font-weight: 400; text-transform: uppercase; letter-spacing: 0.1em; }
+  .title { font-size: 6.6cqw; }
+  .names { color: var(--i-primary); font-size: min(11cqw, calc(70cqw / var(--name-len, 5))); }
+  .amp { font-family: var(--i-body); font-style: normal; text-transform: uppercase; letter-spacing: 0.2em; font-size: 0.3em; color: var(--i-ink); }
+  .when-row { display: grid; gap: 0.6cqw; padding: 1.6cqw 0; border-block: 0.4cqw solid var(--i-accent); width: 100%; }
+  .date { font-size: 3.9cqw; }
+  .event { padding-bottom: 2.4cqw; border-bottom: 0.4cqw dotted var(--i-accent); }
+  .emoji { border-radius: 0; border-width: 0 0 0.6cqw; background: none; }
+}
+
+// =====================================================================
+// 5. Royal monogram: the crest, Cinzel capitals and gold on maroon
+// =====================================================================
+.tpl-royal {
+  background: radial-gradient(90% 60% at 50% 40%, color-mix(in srgb, var(--i-paper) 82%, #fff) 0%, var(--i-paper) 70%);
+  &.kind-cover .content { inset: 16cqw 15cqw 32cqw; gap: 2cqw; }
+  .content { inset: 20cqw 16cqw 18cqw; }
+  .crest { width: 34cqw; }
+  .emblem { width: 20cqw; }
+  .invocation { font-family: var(--i-display); text-transform: uppercase; letter-spacing: 0.24em; font-size: 2.6cqw; font-weight: 500; color: var(--i-accent); }
+  .title { text-transform: uppercase; letter-spacing: 0.14em; font-size: 6.2cqw; font-weight: 500; }
+  .names { color: var(--i-accent); font-style: italic; font-weight: 500; font-size: min(13cqw, calc(90cqw / var(--name-len, 5))); }
+  .amp { color: var(--i-primary); }
+  .date { font-family: var(--i-display); letter-spacing: 0.1em; font-size: 3.4cqw; font-weight: 500; padding: 1.2cqw 2cqw; border-block: 0.3cqw solid var(--i-primary); }
+  .place { color: var(--i-accent); letter-spacing: 0.3em; font-size: 3cqw; }
+  .heading { text-transform: uppercase; letter-spacing: 0.12em; font-size: 6.4cqw; font-weight: 500; }
+  .body, .couple .name { font-family: var(--i-script); }
+  .body { font-size: 5cqw; }
+  .couple .name { color: var(--i-accent); font-style: italic; }
+  .event h3 { font-family: var(--i-display); letter-spacing: 0.06em; font-size: 4.6cqw; }
+  .emoji { border-color: var(--i-primary); background: none; }
+}
+

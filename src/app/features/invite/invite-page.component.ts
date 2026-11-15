@@ -1,22 +1,29 @@
-import { ChangeDetectionStrategy, Component, computed, input } from '@angular/core';
+import { ChangeDetectionStrategy, Component, computed, effect, input } from '@angular/core';
 import { eventLocation, mapsUrl, sortEvents } from '../../core/calendar';
 import { LABELS, InvitePage, inkFor, localDate, localEventName, localTime, nameList, templateMeta } from '../../core/invite';
 import { aiImageUrl } from '../../core/llm/pollinations.provider';
-import { EVENT_META, InviteDesign, Wedding } from '../../core/models';
+import { EVENT_META, InviteDesign, InviteTemplate, Wedding } from '../../core/models';
 import { firstName, hashString } from '../../core/util';
 import { QrCodeComponent } from '../../shared/qr-code.component';
-import { INVITE_FONTS } from '../../shared/invite-fonts';
-import { InviteMotifComponent } from './invite-motif.component';
+import { ensureInviteFonts, inviteFontVars } from '../../shared/invite-fonts';
+import { InviteArtComponent } from './invite-art.component';
+import { InviteMotifComponent, MotifName } from './invite-motif.component';
 
 const WITH: Record<string, string> = { english: '&', hinglish: '&', hindi: 'संग', gujarati: 'સંગ' };
+
+/** The small emblem each style puts on its inner pages (the photo style uses the photo instead). */
+const EMBLEM: Record<InviteTemplate, MotifName | null> = {
+  ganesh: 'ganesh', rajasthani: 'peacocks', gujarati: null, south: 'kolam', royal: 'crest',
+  minimal: 'knot', floral: 'rose', mehndi: 'mandala', photo: null, phulkari: 'dhol',
+};
 
 /** One page of the digital kankotri. Everything is sized in container units, so any width works. */
 @Component({
   selector: 'app-invite-page',
-  imports: [InviteMotifComponent, QrCodeComponent],
+  imports: [InviteArtComponent, InviteMotifComponent, QrCodeComponent],
   changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './invite-page.component.html',
-  styleUrl: './invite-page.component.scss',
+  styleUrls: ['./invite-page.component.scss', './invite-templates-a.scss', './invite-templates-b.scss'],
   host: { '[style]': 'vars()' },
 })
 export class InvitePageComponent {
@@ -31,7 +38,10 @@ export class InvitePageComponent {
   protected readonly meta = EVENT_META;
   protected readonly labels = computed(() => LABELS[this.design().language]);
   protected readonly names = computed(() => ({ a: firstName(this.wedding().partner1), b: firstName(this.wedding().partner2) }));
-  protected readonly monogram = computed(() => `${this.names().a[0] ?? ''} & ${this.names().b[0] ?? ''}`);
+  protected readonly initials = computed((): [string, string] => [this.names().a[0] ?? '', this.names().b[0] ?? '']);
+  protected readonly emblem = computed(() => EMBLEM[this.design().template] ?? null);
+  /** Only some styles put the couple's photo on the cover; the others keep their artwork. */
+  protected readonly showPhoto = computed(() => !!this.design().coverPhoto && templateMeta(this.design().template).photo);
   protected readonly withWord = computed(() => WITH[this.design().language]);
   protected readonly date = computed(() => localDate(this.wedding().date, this.design().language));
   protected readonly mainEvent = computed(() => sortEvents(this.wedding().events).find((e) => e.kind === 'wedding') ?? null);
@@ -55,7 +65,7 @@ export class InvitePageComponent {
 
   protected readonly vars = computed(() => {
     const d = this.design();
-    const fonts = INVITE_FONTS[d.language];
+    const fonts = inviteFontVars(d.template, d.language);
     return {
       '--i-primary': d.palette.primary,
       '--i-accent': d.palette.accent,
@@ -63,8 +73,15 @@ export class InvitePageComponent {
       '--i-ink': inkFor(d.palette),
       '--i-display': fonts.display,
       '--i-body': fonts.body,
+      '--i-script': fonts.script,
+      // Long first names get smaller type instead of overflowing the page.
+      '--name-len': Math.max(4, this.names().a.length, this.names().b.length),
     };
   });
+
+  constructor() {
+    effect(() => void ensureInviteFonts(this.design().language, this.design().template));
+  }
 
   protected eventName = localEventName;
   protected eventTime = localTime;

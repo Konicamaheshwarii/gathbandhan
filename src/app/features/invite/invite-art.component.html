@@ -1,0 +1,440 @@
+@let k = c();
+@switch (template()) {
+  <!-- 1. Shree Ganesh classic: a double-ruled frame with lotus corners and a dotted kumkum line -->
+  @case ('ganesh') {
+    <svg viewBox="0 0 900 1600" aria-hidden="true">
+      <g fill="none">
+        <rect x="30" y="30" width="840" height="1540" [attr.stroke]="k.p" stroke-width="12" />
+        <rect x="54" y="54" width="792" height="1492" [attr.stroke]="k.a" stroke-width="3" />
+        <rect x="66" y="66" width="768" height="1468" [attr.stroke]="k.p" stroke-width="1.5" />
+        <rect x="90" y="90" width="720" height="1420" [attr.stroke]="k.p" stroke-width="5" stroke-dasharray="0 17" stroke-linecap="round" opacity="0.55" />
+      </g>
+      @for (cn of corners; track cn.id) {
+        <g [attr.transform]="cn.t">
+          <path d="M100 66 C150 66 176 84 220 72 C200 96 160 100 120 92 M66 100 C66 150 84 176 72 220 C96 200 100 160 92 120" fill="none" [attr.stroke]="k.a" stroke-width="3" stroke-linecap="round" />
+          <path d="M214 74 q18 -10 34 2 q-16 10 -34 -2z M74 214 q-10 18 2 34 q10 -16 -2 -34z" [attr.fill]="k.a" />
+          <circle cx="66" cy="66" r="40" [attr.fill]="k.p" />
+          <circle cx="66" cy="66" r="30" [attr.fill]="k.paper" [attr.stroke]="k.a" stroke-width="3" />
+          @for (r of petals8; track r) {
+            <ellipse cx="66" cy="50" rx="5" ry="12" [attr.fill]="k.p" [attr.transform]="rot(r, 66, 66)" />
+          }
+          <circle cx="66" cy="66" r="6" [attr.fill]="k.a" />
+        </g>
+      }
+      <g [attr.fill]="k.p">
+        <path d="M450 22 C430 40 430 58 450 76 C470 58 470 40 450 22Z" /><path d="M450 76 C420 62 400 66 392 54 C410 50 432 56 450 76Z M450 76 C480 62 500 66 508 54 C490 50 468 56 450 76Z" [attr.fill]="k.a" />
+        <path d="M450 1578 C430 1560 430 1542 450 1524 C470 1542 470 1560 450 1578Z" /><path d="M450 1524 C420 1538 400 1534 392 1546 C410 1550 432 1544 450 1524Z M450 1524 C480 1538 500 1534 508 1546 C490 1550 468 1544 450 1524Z" [attr.fill]="k.a" />
+        <path d="M30 770 L52 800 L30 830 L8 800Z M870 770 L892 800 L870 830 L848 800Z" />
+      </g>
+    </svg>
+  }
+
+  <!-- 2. Rajasthani jharokha: a rani-pink wall, a cusped haveli doorway, a marigold toran, elephants -->
+  @case ('rajasthani') {
+    <svg viewBox="0 0 900 1600" aria-hidden="true">
+      <defs>
+        <pattern [attr.id]="id + '-wall'" width="72" height="72" patternUnits="userSpaceOnUse">
+          <rect width="72" height="72" [attr.fill]="k.p" />
+          @for (r of wallFlowers; track r) { <ellipse cx="36" cy="25" rx="4.5" ry="10" [attr.fill]="k.a" opacity="0.7" [attr.transform]="rot(r, 36, 36)" /> }
+          <circle cx="36" cy="36" r="4.5" [attr.fill]="k.paper" />
+          <circle cx="0" cy="0" r="3" [attr.fill]="k.a" opacity="0.6" /><circle cx="72" cy="0" r="3" [attr.fill]="k.a" opacity="0.6" />
+          <circle cx="0" cy="72" r="3" [attr.fill]="k.a" opacity="0.6" /><circle cx="72" cy="72" r="3" [attr.fill]="k.a" opacity="0.6" />
+        </pattern>
+      </defs>
+      <rect width="900" height="1600" [attr.fill]="url('wall')" />
+      @let dr = door();
+      <path [attr.d]="dr[0]" [attr.fill]="k.a" />
+      <path [attr.d]="dr[1]" [attr.fill]="k.pDark" />
+      <path [attr.d]="dr[2]" [attr.fill]="k.paper" />
+      <path [attr.d]="dr[3]" fill="none" [attr.stroke]="k.a" stroke-width="4" />
+      <path [attr.d]="dr[3]" fill="none" [attr.stroke]="k.p" stroke-width="5" stroke-dasharray="0 16" stroke-linecap="round" transform="translate(450 800) scale(0.965) translate(-450 -800)" opacity="0.7" />
+      <!-- pillar capitals -->
+      @for (x of [78, 822]; track x) {
+        <g [attr.transform]="'translate(' + x + ' ' + (cover() ? 560 : 400) + ')'">
+          <rect x="-26" y="-6" width="52" height="16" rx="4" [attr.fill]="k.a" [attr.stroke]="k.pDark" stroke-width="3" />
+          <path d="M-18 10 Q0 40 18 10Z" [attr.fill]="k.pDark" />
+          <circle cx="0" cy="-16" r="10" [attr.fill]="k.a" [attr.stroke]="k.pDark" stroke-width="3" />
+        </g>
+      }
+      <!-- toran -->
+      <path d="M0 26 Q450 70 900 26" fill="none" [attr.stroke]="k.pDark" stroke-width="5" />
+      @for (x of toran; track x; let i = $index) {
+        @let sag = 26 + 44 * (1 - ((x - 450) / 450) * ((x - 450) / 450));
+        @if (i % 2 === 0) {
+          <g [attr.transform]="'translate(' + x + ' ' + sag + ')'">
+            <circle cx="0" cy="14" r="14" fill="#f08a12" /><circle cx="0" cy="14" r="6" fill="#ffc94a" />
+            <circle cx="0" cy="40" r="13" fill="#ffb21f" /><circle cx="0" cy="40" r="5" fill="#f08a12" />
+            <circle cx="0" cy="64" r="11" fill="#f08a12" /><circle cx="0" cy="64" r="4" fill="#ffd166" />
+          </g>
+        } @else {
+          <path [attr.transform]="'translate(' + x + ' ' + sag + ')'" d="M0 0 C16 18 12 48 0 66 C-12 48 -16 18 0 0Z" fill="#3f7d3a" />
+        }
+      }
+      @if (cover()) {
+        @for (side of [1, -1]; track side) {
+          <g [attr.transform]="side === 1 ? 'translate(118 1356) scale(1.22)' : 'translate(782 1356) scale(-1.22 1.22)'">
+            <path d="M14 60 C14 34 38 26 66 26 L106 26 C128 26 140 40 140 60 L140 104 L14 104Z" [attr.fill]="k.p" />
+            <rect x="20" y="98" width="20" height="44" rx="5" [attr.fill]="k.p" /><rect x="46" y="98" width="18" height="44" rx="5" [attr.fill]="k.pDark" />
+            <rect x="98" y="98" width="20" height="44" rx="5" [attr.fill]="k.p" /><rect x="122" y="98" width="18" height="44" rx="5" [attr.fill]="k.pDark" />
+            <circle cx="146" cy="52" r="30" [attr.fill]="k.p" />
+            <path d="M168 62 C184 84 184 112 170 132 C164 140 152 136 156 128 C168 110 166 92 152 76Z" [attr.fill]="k.p" />
+            <path d="M138 30 C110 34 110 74 132 84 C142 74 146 46 138 30Z" [attr.fill]="k.pLight" />
+            <circle cx="156" cy="44" r="3.5" [attr.fill]="k.paper" />
+            <path d="M162 78 C170 90 182 92 190 86" fill="none" [attr.stroke]="k.paper" stroke-width="5" stroke-linecap="round" />
+            <path d="M14 58 C4 70 2 86 8 96" fill="none" [attr.stroke]="k.p" stroke-width="5" stroke-linecap="round" />
+            <path d="M44 22 L112 22 L106 86 L50 86Z" [attr.fill]="k.a" [attr.stroke]="k.pDark" stroke-width="3" />
+            <path d="M54 30 L102 30 L98 78 L58 78Z" fill="none" [attr.stroke]="k.p" stroke-width="2.5" stroke-dasharray="4 4" />
+            @for (fx of [52, 62, 72, 82, 92, 102]; track fx) { <circle [attr.cx]="fx" cy="92" r="4" [attr.fill]="k.a" /> }
+            <path d="M140 22 L152 10 L164 22 L152 34Z" [attr.fill]="k.a" />
+          </g>
+        }
+      }
+    </svg>
+  }
+
+  <!-- 3. Gujarati kankotri: bandhani dots all over, mirror-work, a framed panel and a kalash -->
+  @case ('gujarati') {
+    <svg viewBox="0 0 900 1600" aria-hidden="true">
+      <defs>
+        <pattern [attr.id]="id + '-band'" width="56" height="56" patternUnits="userSpaceOnUse">
+          <rect width="56" height="56" [attr.fill]="k.p" />
+          <g fill="#fff4dc"><circle cx="14" cy="9" r="2.6" /><circle cx="14" cy="19" r="2.6" /><circle cx="9" cy="14" r="2.6" /><circle cx="19" cy="14" r="2.6" /></g>
+          <circle cx="14" cy="14" r="2" fill="#ffd23f" />
+          <g fill="#ffd23f"><circle cx="42" cy="37" r="2.6" /><circle cx="42" cy="47" r="2.6" /><circle cx="37" cy="42" r="2.6" /><circle cx="47" cy="42" r="2.6" /></g>
+          <circle cx="42" cy="42" r="2" fill="#fff4dc" />
+        </pattern>
+        <radialGradient [attr.id]="id + '-mirror'" cx="0.35" cy="0.35" r="0.75">
+          <stop offset="0" stop-color="#ffffff" /><stop offset="0.5" stop-color="#d9e1e6" /><stop offset="1" stop-color="#8d9ba4" />
+        </radialGradient>
+      </defs>
+      <rect width="900" height="1600" [attr.fill]="url('band')" />
+      <rect x="86" y="146" width="728" height="1338" rx="18" fill="none" [attr.stroke]="k.a" stroke-width="12" stroke-dasharray="0 24" stroke-linecap="round" />
+      <rect x="104" y="164" width="692" height="1302" rx="10" [attr.fill]="k.paper" [attr.stroke]="k.a" stroke-width="14" />
+      <rect x="124" y="184" width="652" height="1262" rx="4" fill="none" [attr.stroke]="k.p" stroke-width="3" />
+      <rect x="134" y="194" width="632" height="1242" rx="2" fill="none" [attr.stroke]="k.a" stroke-width="1.5" />
+      @for (y of mirrorsY; track y) {
+        @for (x of [52, 848]; track x) {
+          <g [attr.transform]="'translate(' + x + ' ' + y + ')'">
+            @for (r of petals8; track r) { <ellipse cx="0" cy="-30" rx="6" ry="13" [attr.fill]="k.a" [attr.transform]="rot(r)" /> }
+            <circle r="22" fill="#ffd23f" /><circle r="17" [attr.fill]="url('mirror')" [attr.stroke]="k.a" stroke-width="2" />
+          </g>
+        }
+      }
+      @for (x of mirrorsX; track x) {
+        <g [attr.transform]="'translate(' + x + ' 1542)'">
+          @for (r of petals8; track r) { <ellipse cx="0" cy="-26" rx="5" ry="11" [attr.fill]="k.a" [attr.transform]="rot(r)" /> }
+          <circle r="19" fill="#ffd23f" /><circle r="14" [attr.fill]="url('mirror')" />
+        </g>
+      }
+      <!-- kalash sitting on the top border -->
+      <g [attr.transform]="cover() ? 'translate(450 176) scale(1.05)' : 'translate(450 176) scale(0.72)'">
+        <rect x="-150" y="-30" width="300" height="34" rx="6" [attr.fill]="k.paper" [attr.stroke]="k.a" stroke-width="4" />
+        @for (a of kalashLeaves; track a) {
+          <path d="M0 0 C16 -22 16 -60 0 -84 C-16 -60 -16 -22 0 0Z" [attr.fill]="k.a" [attr.stroke]="k.paper" stroke-width="2" [attr.transform]="'translate(0 -96) ' + rot(a)" />
+        }
+        <ellipse cx="0" cy="-130" rx="26" ry="32" fill="#8a5a2b" /><path d="M-8 -160 q8 -18 16 0" fill="none" stroke="#5c3a1a" stroke-width="4" />
+        <path d="M-14 -138 l28 0 M-16 -126 l32 0" stroke="#5c3a1a" stroke-width="2" />
+        <rect x="-42" y="-104" width="84" height="16" rx="8" [attr.fill]="k.p" />
+        <path d="M-32 -88 L32 -88 L26 -70 L-26 -70Z" [attr.fill]="k.pDark" />
+        <path d="M-26 -70 C-84 -60 -84 26 -36 30 L36 30 C84 26 84 -60 26 -70Z" [attr.fill]="k.p" [attr.stroke]="k.pDark" stroke-width="3" />
+        <path d="M-64 -24 Q0 -6 64 -24" fill="none" [attr.stroke]="k.a" stroke-width="8" />
+        <path d="M-60 -4 Q0 12 60 -4" fill="none" stroke="#ffd23f" stroke-width="4" stroke-dasharray="2 9" stroke-linecap="round" />
+        <circle cx="0" cy="-40" r="9" fill="#ffd23f" />
+        <path d="M-30 -80 L30 -80" stroke="#ffd23f" stroke-width="3" />
+      </g>
+    </svg>
+  }
+
+  <!-- 4. South Indian temple: saree temple borders, gopuram, thoranam, bands, banana leaves, kolam -->
+  @case ('south') {
+    <svg viewBox="0 0 900 1600" aria-hidden="true">
+      <defs>
+        <linearGradient [attr.id]="id + '-leaf'" x1="0" y1="0" x2="1" y2="0">
+          <stop offset="0" [attr.stop-color]="k.pLight" /><stop offset="0.5" stop-color="#3f8f4a" /><stop offset="1" [attr.stop-color]="k.p" />
+        </linearGradient>
+      </defs>
+      @for (side of [0, 1]; track side) {
+        <g [attr.transform]="side ? 'translate(900 0) scale(-1 1)' : ''">
+          <rect x="0" y="0" width="80" height="1600" [attr.fill]="k.p" />
+          <path d="M70 0 V1600" [attr.stroke]="k.a" stroke-width="5" />
+          <path d="M20 0 V1600" [attr.stroke]="k.a" stroke-width="2" />
+          @for (y of teeth; track y) {
+            <path [attr.d]="'M80 ' + y + ' L112 ' + (y + 22) + ' L80 ' + (y + 44) + 'Z'" [attr.fill]="k.a" />
+            <circle cx="45" [attr.cy]="y + 22" r="6" [attr.fill]="k.a" />
+          }
+        </g>
+      }
+      <!-- thoranam of mango leaves -->
+      <path d="M112 30 Q450 64 788 30" fill="none" [attr.stroke]="k.a" stroke-width="4" />
+      @for (x of thoranam; track x; let i = $index) {
+        @let sag = 30 + 34 * (1 - ((x - 450) / 350) * ((x - 450) / 350));
+        @if (i % 3 === 1) {
+          <circle [attr.cx]="x" [attr.cy]="sag + 12" r="10" [attr.fill]="k.a" />
+        } @else {
+          <path [attr.transform]="'translate(' + x + ' ' + sag + ')'" d="M0 0 C14 16 12 52 0 76 C-12 52 -14 16 0 0Z" [attr.fill]="k.p" [attr.stroke]="k.a" stroke-width="1.5" />
+        }
+      }
+      <!-- gopuram -->
+      @let g = gopuram();
+      <g [attr.fill]="k.p" [attr.stroke]="k.a" stroke-width="3" stroke-linejoin="round">
+        @for (t of g; track $index) {
+          <rect [attr.x]="t[0]" [attr.y]="t[2]" [attr.width]="t[1] - t[0]" [attr.height]="t[3] - t[2]" />
+          @for (nx of niches(t[0], t[1]); track nx) {
+            <path [attr.d]="'M' + (nx - 9) + ' ' + (t[3] - 6) + ' V' + (t[2] + (t[3] - t[2]) * 0.45) + ' Q' + nx + ' ' + (t[2] + 6) + ' ' + (nx + 9) + ' ' + (t[2] + (t[3] - t[2]) * 0.45) + ' V' + (t[3] - 6)" fill="none" stroke-width="2" />
+          }
+        }
+        @let top = g[g.length - 1];
+        @let tw = top[1] - top[0];
+        <path [attr.d]="'M' + (top[0] + 6) + ' ' + top[2] + ' C' + (top[0] + 6) + ' ' + (top[2] - tw * 0.55) + ' ' + (top[1] - 6) + ' ' + (top[2] - tw * 0.55) + ' ' + (top[1] - 6) + ' ' + top[2] + 'Z'" />
+        @for (kx of spread(top[0] + tw * 0.22, top[1] - tw * 0.22, 3); track kx) {
+          <path [attr.d]="'M' + kx + ' ' + (top[2] - tw * 0.42) + ' v-' + tw * 0.2" [attr.stroke]="k.a" stroke-width="4" />
+          <circle [attr.cx]="kx" [attr.cy]="top[2] - tw * 0.64" [attr.r]="tw * 0.07" [attr.fill]="k.a" stroke="none" />
+        }
+        @if (cover()) {
+          <path [attr.d]="'M420 ' + g[0][3] + ' V' + (g[0][2] + 22) + ' Q450 ' + (g[0][2] - 4) + ' 480 ' + (g[0][2] + 22) + ' V' + g[0][3] + 'Z'" [attr.fill]="k.paper" />
+        }
+      </g>
+      <!-- temple bands -->
+      @for (by of cover() ? [496, 1352] : [258, 1400]; track by) {
+        <g>
+          <path [attr.d]="'M112 ' + by + ' H788 M112 ' + (by + 30) + ' H788'" [attr.stroke]="k.a" stroke-width="4" />
+          @for (x of bandTeeth; track x) { <path [attr.d]="'M' + x + ' ' + (by + 4) + ' l11 22 l11 -22z'" [attr.fill]="k.p" /> }
+        </g>
+      }
+      <!-- banana leaves -->
+      @if (cover()) {
+        @for (side of [0, 1]; track side) {
+          <g [attr.transform]="side ? 'translate(900 0) scale(-1 1)' : ''">
+            <path d="M112 1600 C96 1450 130 1300 214 1170 C240 1320 214 1470 186 1600Z" [attr.fill]="url('leaf')" />
+            <path d="M150 1600 C150 1450 178 1300 214 1170" fill="none" [attr.stroke]="k.pDark" stroke-width="3" />
+            <path d="M200 1600 C220 1480 270 1380 330 1310 C330 1420 290 1520 250 1600Z" [attr.fill]="url('leaf')" opacity="0.85" />
+            <path d="M226 1600 C246 1500 286 1390 330 1310" fill="none" [attr.stroke]="k.pDark" stroke-width="2.5" />
+            <path d="M136 1320 l26 10 M130 1400 l28 8 M126 1480 l30 6 M180 1250 l18 14" [attr.stroke]="k.pDark" stroke-width="2" opacity="0.6" />
+          </g>
+        }
+      }
+      <!-- kolam -->
+      <g [attr.transform]="cover() ? 'translate(0 1430)' : 'translate(0 1462)'" fill="none" [attr.stroke]="k.p" stroke-width="3">
+        @for (pt of kolam; track $index) {
+          <path [attr.d]="'M' + pt.x + ' ' + (pt.y - 24) + ' L' + (pt.x + 24) + ' ' + pt.y + ' L' + pt.x + ' ' + (pt.y + 24) + ' L' + (pt.x - 24) + ' ' + pt.y + 'Z'" stroke-linejoin="round" />
+          <circle [attr.cx]="pt.x" [attr.cy]="pt.y" r="4.5" [attr.fill]="k.a" stroke="none" />
+        }
+        <ellipse cx="450" cy="40" rx="190" ry="64" [attr.stroke]="k.a" stroke-width="2.5" />
+      </g>
+    </svg>
+  }
+
+  <!-- 5. Royal monogram: a maroon scroll on gold rods, damask, filigree corners and a seal -->
+  @case ('royal') {
+    <svg viewBox="0 0 900 1600" aria-hidden="true">
+      <defs>
+        <linearGradient [attr.id]="id + '-rod'" x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0" [attr.stop-color]="k.pDark" /><stop offset="0.4" [attr.stop-color]="k.a" /><stop offset="0.6" [attr.stop-color]="k.p" /><stop offset="1" [attr.stop-color]="k.pDark" />
+        </linearGradient>
+        <pattern [attr.id]="id + '-damask'" width="110" height="110" patternUnits="userSpaceOnUse">
+          <g [attr.fill]="k.p" opacity="0.1">
+            <path d="M55 20 C70 40 70 55 55 70 C40 55 40 40 55 20Z" /><path d="M55 70 C75 70 88 82 90 96 C76 92 62 86 55 70Z M55 70 C35 70 22 82 20 96 C34 92 48 86 55 70Z" />
+            <circle cx="0" cy="0" r="6" /><circle cx="110" cy="0" r="6" /><circle cx="0" cy="110" r="6" /><circle cx="110" cy="110" r="6" />
+          </g>
+        </pattern>
+      </defs>
+      <rect width="900" height="1600" [attr.fill]="url('damask')" />
+      <g fill="none" [attr.stroke]="k.p">
+        <rect x="70" y="104" width="760" height="1392" stroke-width="4" />
+        <rect x="86" y="120" width="728" height="1360" stroke-width="1.5" opacity="0.8" />
+      </g>
+      @for (y of [40, 1496]; track y) {
+        <rect x="70" [attr.y]="y === 40 ? 104 : 1482" width="760" height="14" fill="#000" opacity="0.25" />
+        <rect x="44" [attr.y]="y" width="812" height="64" rx="32" [attr.fill]="url('rod')" />
+        @for (x of [30, 870]; track x) {
+          <circle [attr.cx]="x" [attr.cy]="y + 32" r="30" [attr.fill]="url('rod')" [attr.stroke]="k.pDark" stroke-width="2" />
+          <circle [attr.cx]="x" [attr.cy]="y + 32" r="12" [attr.fill]="k.a" />
+        }
+      }
+      @for (cn of corners; track cn.id) {
+        <g [attr.transform]="cn.t">
+          <g [attr.transform]="cover() ? 'translate(86 120)' : 'translate(86 120) scale(0.8)'" fill="none" [attr.stroke]="k.p" stroke-width="3.5" stroke-linecap="round">
+            <path d="M8 8 C70 8 110 30 110 80 C110 118 72 126 60 102 C50 82 72 70 84 84" />
+            <path d="M8 8 C8 70 30 110 80 110 C118 110 126 72 102 60 C82 50 70 72 84 84" />
+            <path d="M120 16 C160 10 190 24 214 14 M16 120 C10 160 24 190 14 214" stroke-width="2.5" />
+            <path d="M150 14 q12 -16 26 -6 q-12 14 -26 6z M14 150 q-16 12 -6 26 q14 -12 6 -26z" [attr.fill]="k.p" />
+            <circle cx="8" cy="8" r="8" [attr.fill]="k.p" />
+          </g>
+        </g>
+      }
+      <path d="M70 770 L90 800 L70 830 L50 800Z M830 770 L850 800 L830 830 L810 800Z" [attr.fill]="k.p" />
+      @if (cover()) {
+        <g transform="translate(450 1392)">
+          <circle r="62" [attr.fill]="k.p" stroke-dasharray="6 5" [attr.stroke]="k.p" stroke-width="12" />
+          <circle r="50" fill="#7d1022" [attr.stroke]="k.a" stroke-width="3" />
+          <circle r="40" fill="none" [attr.stroke]="k.p" stroke-width="1.5" />
+          <g transform="translate(-28 -30) scale(0.9)" fill="none" stroke-width="5" stroke-linecap="round" [attr.stroke]="k.p">
+            <path d="M32 23.5C31.5 14 26.5 8.5 19.5 8.5C12 8.5 7 14 7 21C7 28 25 32 32 37C35.5 39.5 37.5 41 37.5 44C37.5 47 35.5 48.5 32 51C28.5 53.5 25 56 21.5 58.5" />
+            <path d="M32 23.5C32.5 14 37.5 8.5 44.5 8.5C52 8.5 57 14 57 21C57 28 39 32 32 37C28.5 39.5 26.5 41 26.5 44C26.5 47 28.5 48.5 32 51C35.5 53.5 39 56 42.5 58.5" />
+          </g>
+        </g>
+      }
+    </svg>
+  }
+
+  <!-- 6. Modern minimal: almost nothing, one hairline and an accent tick -->
+  @case ('minimal') {
+    <svg viewBox="0 0 900 1600" aria-hidden="true">
+      <path d="M96 150 V1450" [attr.stroke]="k.p" stroke-width="1.5" opacity="0.35" />
+      <rect x="90" [attr.y]="cover() ? 560 : 150" width="12" height="120" [attr.fill]="k.a" />
+      @if (cover()) { <path d="M150 1340 H804" [attr.stroke]="k.p" stroke-width="1.5" opacity="0.35" /> }
+    </svg>
+  }
+
+  <!-- 7. Floral watercolour: pastel roses and leaves in two corners, an oval line -->
+  @case ('floral') {
+    <svg viewBox="0 0 900 1600" aria-hidden="true">
+      <defs>
+        <radialGradient [attr.id]="id + '-rose'" cx="0.45" cy="0.4" r="0.7">
+          <stop offset="0" [attr.stop-color]="k.pLight" /><stop offset="0.5" [attr.stop-color]="k.a" /><stop offset="1" [attr.stop-color]="k.aSoft" />
+        </radialGradient>
+        <radialGradient [attr.id]="id + '-peach'" cx="0.45" cy="0.4" r="0.7">
+          <stop offset="0" stop-color="#f0a07a" /><stop offset="0.55" stop-color="#f8c6a8" /><stop offset="1" stop-color="#fde6d6" />
+        </radialGradient>
+        <linearGradient [attr.id]="id + '-leaf'" x1="0" y1="0" x2="1" y2="1">
+          <stop offset="0" stop-color="#b8d0b0" /><stop offset="1" stop-color="#6e9a78" />
+        </linearGradient>
+        <radialGradient [attr.id]="id + '-wash'">
+          <stop offset="0" [attr.stop-color]="k.a" stop-opacity="0.32" /><stop offset="1" [attr.stop-color]="k.a" stop-opacity="0" />
+        </radialGradient>
+      </defs>
+      <circle cx="170" cy="170" r="330" [attr.fill]="url('wash')" />
+      <circle cx="730" cy="1430" r="330" [attr.fill]="url('wash')" />
+      @if (cover()) {
+        <ellipse cx="450" cy="830" rx="318" ry="520" fill="none" [attr.stroke]="k.a" stroke-width="2.5" />
+        <ellipse cx="450" cy="830" rx="304" ry="506" fill="none" [attr.stroke]="k.a" stroke-width="1" opacity="0.6" />
+      }
+      @let fl = floral();
+      @for (lf of fl.leaves; track $index) {
+        <g [attr.transform]="'translate(' + lf.x + ' ' + lf.y + ') rotate(' + lf.a + ') scale(' + lf.s + ')'">
+          <path d="M0 0 C30 -34 90 -34 130 0 C90 34 30 34 0 0Z" [attr.fill]="url('leaf')" opacity="0.92" />
+          <path d="M6 0 H120" stroke="#5b8566" stroke-width="2" opacity="0.6" />
+        </g>
+      }
+      @for (r of fl.roses; track $index) {
+        <g [attr.transform]="'translate(' + r.x + ' ' + r.y + ')'">
+          @for (a of rosePetals; track a) {
+            <circle [attr.cx]="r.r * 0.42" cy="0" [attr.r]="r.r * 0.6" [attr.fill]="url(r.g)" opacity="0.88" [attr.transform]="rot(a)" />
+          }
+          <circle [attr.r]="r.r * 0.55" [attr.fill]="url(r.g)" />
+          <path [attr.d]="'M' + (-r.r * 0.3) + ' 0 A' + r.r * 0.3 + ' ' + r.r * 0.3 + ' 0 1 1 0 ' + r.r * 0.3 + ' M' + (-r.r * 0.12) + ' 0 A' + r.r * 0.14 + ' ' + r.r * 0.14 + ' 0 1 1 ' + r.r * 0.05 + ' ' + r.r * 0.14" fill="none" [attr.stroke]="k.p" stroke-width="2.2" opacity="0.4" stroke-linecap="round" />
+        </g>
+      }
+      @for (b of fl.buds; track $index) {
+        <circle [attr.cx]="b.x" [attr.cy]="b.y" [attr.r]="b.r" [attr.fill]="url('rose')" />
+      }
+    </svg>
+  }
+
+  <!-- 8. Mehndi line-art: a henna mandala, corner paisleys and vines, all in line work -->
+  @case ('mehndi') {
+    <svg viewBox="0 0 900 1600" aria-hidden="true">
+      <g fill="none" [attr.stroke]="k.p" stroke-linecap="round" stroke-linejoin="round">
+        @if (cover()) {
+          <g transform="translate(450 800)">
+            <circle r="352" stroke-width="3" />
+            <circle r="338" stroke-width="1.5" />
+            @for (a of ring48; track a) { <circle cx="0" cy="-372" r="5" [attr.fill]="k.p" stroke="none" [attr.transform]="rot(a)" /> }
+            @for (a of ring12; track a) { <path d="M0 -392 C10 -404 10 -418 0 -430 C-10 -418 -10 -404 0 -392Z" [attr.fill]="k.a" stroke="none" [attr.transform]="rot(a)" /> }
+            @for (a of ring24; track a) {
+              <g [attr.transform]="rot(a)">
+                <path d="M0 -250 C26 -272 30 -306 0 -334 C-30 -306 -26 -272 0 -250Z" stroke-width="2.6" />
+                <path d="M0 -264 C12 -278 14 -300 0 -318 C-14 -300 -12 -278 0 -264Z" stroke-width="1.4" [attr.stroke]="k.a" />
+                <circle cx="0" cy="-292" r="3" [attr.fill]="k.p" stroke="none" />
+              </g>
+            }
+            @for (a of ring36; track a) { <path d="M-20 -244 A20 20 0 0 1 20 -244" stroke-width="2" [attr.transform]="rot(a)" /> }
+            <circle r="234" stroke-width="2.4" />
+            <circle r="222" stroke-width="5" stroke-dasharray="0 13" [attr.stroke]="k.a" />
+          </g>
+        } @else {
+          <g transform="translate(450 1600)" opacity="0.5">
+            <circle r="250" stroke-width="2.4" />
+            @for (a of ring24; track a) { <path d="M0 -250 C22 -270 24 -296 0 -320 C-24 -296 -22 -270 0 -250Z" stroke-width="2" [attr.transform]="rot(a)" /> }
+            <circle r="236" stroke-width="4" stroke-dasharray="0 12" [attr.stroke]="k.a" />
+          </g>
+        }
+        @for (cn of corners; track cn.id) {
+          <g [attr.transform]="cn.t">
+            <g transform="translate(70 80) rotate(-20)">
+              <path d="M0 0 C70 -14 110 40 88 100 C72 140 18 146 -6 120 C-28 96 -8 62 20 72 C40 80 36 104 18 104" stroke-width="3.2" />
+              <path d="M10 16 C58 10 84 50 70 92 C60 118 28 124 12 110" stroke-width="1.6" [attr.stroke]="k.a" />
+              @for (t of [0.15, 0.35, 0.55, 0.75]; track t) { <circle [attr.cx]="20 + 60 * t" [attr.cy]="22 + 70 * t" r="3.5" [attr.fill]="k.p" stroke="none" /> }
+            </g>
+          </g>
+        }
+        @for (side of [0, 1]; track side) {
+          <g [attr.transform]="side ? 'translate(900 0) scale(-1 1)' : ''">
+            <path d="M44 300 C66 340 22 380 44 420 C66 460 22 500 44 540 C66 580 22 620 44 660 C66 700 22 740 44 780 C66 820 22 860 44 900 C66 940 22 980 44 1020 C66 1060 22 1100 44 1140 C66 1180 22 1220 44 1260" stroke-width="2.4" />
+            @for (y of vine; track y; let i = $index) {
+              <path [attr.transform]="'translate(44 ' + y + ') rotate(' + (i % 2 ? 50 : 130) + ')'" d="M0 0 C8 -10 22 -10 30 0 C22 10 8 10 0 0Z" stroke-width="1.8" />
+            }
+          </g>
+        }
+      </g>
+    </svg>
+  }
+
+  <!-- 9. Photo save-the-date: the placeholder poster art, used when the couple has no photo -->
+  @case ('photo') {
+    <svg viewBox="0 0 900 1600" preserveAspectRatio="xMidYMid slice" aria-hidden="true">
+      <defs>
+        <linearGradient [attr.id]="id + '-sky'" x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0" [attr.stop-color]="k.paper" /><stop offset="0.38" [attr.stop-color]="k.aDark" /><stop offset="0.62" [attr.stop-color]="k.a" /><stop offset="0.8" [attr.stop-color]="k.p" />
+        </linearGradient>
+      </defs>
+      <rect width="900" height="1600" [attr.fill]="url('sky')" />
+      @for (s of [[120, 140], [300, 90], [520, 180], [700, 110], [820, 260], [80, 380], [620, 330], [420, 60]]; track $index) {
+        <circle [attr.cx]="s[0]" [attr.cy]="s[1]" r="3" fill="#fff" opacity="0.7" />
+      }
+      <circle cx="450" cy="1010" r="210" [attr.fill]="k.p" opacity="0.95" />
+      <path d="M0 1080 C150 1020 300 1060 450 1040 C600 1020 760 1060 900 1030 V1600 H0Z" [attr.fill]="k.pDark" opacity="0.55" />
+      <path d="M0 1100 L120 1100 L120 990 Q150 950 180 990 L180 1100 L330 1100 L330 940 Q390 860 450 940 Q510 860 570 940 L570 1100 L720 1100 L720 990 Q750 950 780 990 L780 1100 L900 1100 V1600 H0Z" [attr.fill]="k.paper" />
+      <path d="M440 940 V900 M460 940 V900 M450 870 V846" [attr.stroke]="k.paper" stroke-width="10" />
+      <circle cx="450" cy="890" r="26" [attr.fill]="k.paper" />
+      <path d="M0 640 Q225 720 450 650 Q675 720 900 640" fill="none" stroke="#fff" stroke-opacity="0.5" stroke-width="2" />
+      @for (l of lights; track l.x) { <circle [attr.cx]="l.x" [attr.cy]="l.y" r="7" [attr.fill]="k.p" /> }
+    </svg>
+  }
+
+  <!-- 10. Phulkari baraat: bold geometric bands top and bottom, side stitches, confetti -->
+  @case ('phulkari') {
+    @let ph = phulkari();
+    <svg viewBox="0 0 900 1600" aria-hidden="true">
+      @for (cy of ph.rows; track cy; let top = $first) {
+        <rect x="0" [attr.y]="cy - ph.h / 2" width="900" [attr.height]="ph.h" [attr.fill]="ph.base" />
+        @for (d of ph.row; track d.k) {
+          <polygon [attr.points]="diamond(d.x, cy, ph.dw, ph.dh)" [attr.fill]="ph.colours[d.k % 4]" />
+          <polygon [attr.points]="diamond(d.x, cy, ph.dw * 0.66, ph.dh * 0.66)" [attr.fill]="ph.base" />
+          <polygon [attr.points]="diamond(d.x, cy, ph.dw * 0.44, ph.dh * 0.44)" [attr.fill]="ph.colours[(d.k + 1) % 4]" />
+          <polygon [attr.points]="diamond(d.x, cy, ph.dw * 0.18, ph.dh * 0.18)" [attr.fill]="ph.colours[(d.k + 2) % 4]" />
+          <polygon [attr.points]="diamond(d.x + ph.dw, cy - ph.dh, ph.dw * 0.3, ph.dh * 0.3)" [attr.fill]="ph.colours[(d.k + 3) % 4]" />
+          <polygon [attr.points]="diamond(d.x + ph.dw, cy + ph.dh, ph.dw * 0.3, ph.dh * 0.3)" [attr.fill]="ph.colours[(d.k + 3) % 4]" />
+        }
+        @let edge = top ? cy + ph.h / 2 : cy - ph.h / 2;
+        @for (x of spread(0, 900, 31); track x) {
+          <path [attr.d]="'M' + (x - 15) + ' ' + edge + ' L' + x + ' ' + (edge + (top ? 22 : -22)) + ' L' + (x + 15) + ' ' + edge + 'Z'" [attr.fill]="k.a" />
+        }
+        <path [attr.d]="'M0 ' + edge + ' H900'" [attr.stroke]="k.p" stroke-width="6" />
+      }
+      @for (side of [0, 1]; track side) {
+        <g [attr.transform]="side ? 'translate(900 0) scale(-1 1)' : ''">
+          <rect x="0" [attr.y]="ph.h" width="34" [attr.height]="1600 - ph.h * 2" [attr.fill]="ph.base" />
+          @for (y of sideDiamonds; track y; let i = $index) {
+            <polygon [attr.points]="diamond(17, y, 13, 30)" [attr.fill]="ph.colours[i % 4]" />
+          }
+        </g>
+      }
+      @if (cover()) {
+        @for (cf of confetti; track $index) {
+          <rect [attr.x]="cf.x - 9" [attr.y]="cf.y - 4" width="18" height="8" rx="2" [attr.fill]="ph.colours[cf.k]" [attr.transform]="rot(cf.r, cf.x, cf.y)" />
+        }
+      }
+    </svg>
+  }
+}

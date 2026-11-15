@@ -1,7 +1,7 @@
 import { eventName, sortEvents } from './calendar';
 import { parseIsoDate } from './format';
 import {
-  EventKind, InviteDesign, InviteLanguage, InvitePalette, InviteTemplate, InviteText, InviteTone, Wedding, WeddingEvent,
+  EventKind, INVITE_TEMPLATES, InviteDesign, InviteLanguage, InvitePalette, InviteTemplate, InviteText, InviteTone, Wedding, WeddingEvent,
 } from './models';
 import { firstName } from './util';
 
@@ -10,23 +10,82 @@ import { firstName } from './util';
 export interface TemplateMeta {
   id: InviteTemplate;
   name: string;
+  /** One line for the style picker. */
   blurb: string;
   palette: InvitePalette;
   /** Templates that open with "Shree Ganeshaya Namah" by tradition. */
   invocation: boolean;
   defaultLanguage: InviteLanguage;
+  /** Whether the cover shows the couple's photo (the other styles keep it for the web page). */
+  photo: boolean;
 }
 
 export const TEMPLATES: TemplateMeta[] = [
-  { id: 'ganesh', name: 'Shree Ganesh', blurb: 'Classic kankotri: Ganesh, kumkum red and gold', palette: { primary: '#9c1c1c', accent: '#d4a017', paper: '#fff6e0' }, invocation: true, defaultLanguage: 'hindi' },
-  { id: 'rajasthani', name: 'Rajasthani marigold', blurb: 'Jharokha arches, toran and genda phool', palette: { primary: '#a3261f', accent: '#f29a1d', paper: '#fff1d6' }, invocation: true, defaultLanguage: 'english' },
-  { id: 'gujarati', name: 'Gujarati kankotri', blurb: 'Bandhani dots, kalash and a red-green border', palette: { primary: '#8f1630', accent: '#1f7a4a', paper: '#fffaf0' }, invocation: true, defaultLanguage: 'gujarati' },
-  { id: 'south', name: 'South Indian temple', blurb: 'Gopuram, banana leaves and kolam', palette: { primary: '#14532d', accent: '#c9971c', paper: '#fdf6e3' }, invocation: true, defaultLanguage: 'english' },
-  { id: 'royal', name: 'Royal maroon & gold', blurb: 'Deep maroon with gold filigree', palette: { primary: '#d4af37', accent: '#f3d98b', paper: '#4a0a1e' }, invocation: false, defaultLanguage: 'english' },
-  { id: 'minimal', name: 'Modern minimal', blurb: 'Ivory, a monogram and a single sprig', palette: { primary: '#2f2a26', accent: '#b9835a', paper: '#fbf8f3' }, invocation: false, defaultLanguage: 'english' },
+  { id: 'ganesh', name: 'Shree Ganesh classic', blurb: 'Double-ruled frame, Ganesh on top and a centred stack in kumkum red on ivory', palette: { primary: '#9c1c1c', accent: '#c8901a', paper: '#fff8ec' }, invocation: true, defaultLanguage: 'hindi', photo: true },
+  { id: 'rajasthani', name: 'Rajasthani jharokha', blurb: 'A haveli doorway of scalloped arches, marigold toran, peacocks and elephants', palette: { primary: '#b0215a', accent: '#e3a21a', paper: '#fff4dc' }, invocation: true, defaultLanguage: 'english', photo: true },
+  { id: 'gujarati', name: 'Gujarati kankotri', blurb: 'Full bandhani dots, mirror-work and a kalash over a framed panel', palette: { primary: '#a3122a', accent: '#1d7a46', paper: '#fff8ec' }, invocation: true, defaultLanguage: 'gujarati', photo: false },
+  { id: 'south', name: 'South Indian temple', blurb: 'Gopuram, saree temple border, banana leaves, thoranam and kolam', palette: { primary: '#0f5132', accent: '#c9971c', paper: '#fdf6e3' }, invocation: true, defaultLanguage: 'english', photo: false },
+  { id: 'royal', name: 'Royal monogram', blurb: "A maroon scroll with gold filigree and the couple's crest", palette: { primary: '#e2bf63', accent: '#f6e3a6', paper: '#4a0a1e' }, invocation: false, defaultLanguage: 'english', photo: false },
+  { id: 'minimal', name: 'Modern minimal', blurb: 'Big editorial type, white space and a thin knot monogram', palette: { primary: '#1f1d1b', accent: '#c0532d', paper: '#faf7f2' }, invocation: false, defaultLanguage: 'english', photo: false },
+  { id: 'floral', name: 'Floral watercolour', blurb: 'Pastel roses and leaves around the names in a flowing script', palette: { primary: '#7d4660', accent: '#e79bb0', paper: '#fffaf7' }, invocation: false, defaultLanguage: 'english', photo: false },
+  { id: 'mehndi', name: 'Mehndi line-art', blurb: 'A henna mandala and paisleys drawn by hand around the couple', palette: { primary: '#6b3410', accent: '#b5652b', paper: '#fbf0df' }, invocation: true, defaultLanguage: 'hindi', photo: false },
+  { id: 'photo', name: 'Photo save-the-date', blurb: 'Your photo full-bleed with the names on top, like a film poster', palette: { primary: '#f3c86b', accent: '#ef7b62', paper: '#17121c' }, invocation: false, defaultLanguage: 'english', photo: true },
+  { id: 'phulkari', name: 'Phulkari baraat', blurb: 'Bold Punjabi phulkari bands, a dhol and baraat colours', palette: { primary: '#b0124c', accent: '#f6a21a', paper: '#fff6e6' }, invocation: false, defaultLanguage: 'hinglish', photo: false },
 ];
 
 export const templateMeta = (id: InviteTemplate): TemplateMeta => TEMPLATES.find((t) => t.id === id) ?? TEMPLATES[0];
+
+/** Names older builds or AI replies may use for a style. */
+const TEMPLATE_ALIASES: Record<string, InviteTemplate> = {
+  classic: 'ganesh', 'shree-ganesh': 'ganesh', kankotri: 'gujarati', bandhani: 'gujarati',
+  marigold: 'rajasthani', jharokha: 'rajasthani', temple: 'south', 'south-indian': 'south',
+  maroon: 'royal', 'royal-maroon': 'royal', monogram: 'royal', modern: 'minimal',
+  watercolour: 'floral', watercolor: 'floral', henna: 'mehndi', poster: 'photo', 'save-the-date': 'photo', punjabi: 'phulkari',
+};
+
+/** A current template id or a known older name for one; null for anything else. */
+export function knownTemplate(raw: unknown): InviteTemplate | null {
+  const id = typeof raw === 'string' ? raw.trim().toLowerCase() : '';
+  return (INVITE_TEMPLATES as readonly string[]).includes(id) ? (id as InviteTemplate) : TEMPLATE_ALIASES[id] ?? null;
+}
+
+/** Any stored or suggested template id, mapped onto a style that exists today. */
+export const templateId = (raw: unknown): InviteTemplate => knownTemplate(raw) ?? 'ganesh';
+
+/** The default colours of the first six styles before they were redrawn. */
+export const LEGACY_PALETTES: Partial<Record<InviteTemplate, InvitePalette>> = {
+  ganesh: { primary: '#9c1c1c', accent: '#d4a017', paper: '#fff6e0' },
+  rajasthani: { primary: '#a3261f', accent: '#f29a1d', paper: '#fff1d6' },
+  gujarati: { primary: '#8f1630', accent: '#1f7a4a', paper: '#fffaf0' },
+  south: { primary: '#14532d', accent: '#c9971c', paper: '#fdf6e3' },
+  royal: { primary: '#d4af37', accent: '#f3d98b', paper: '#4a0a1e' },
+  minimal: { primary: '#2f2a26', accent: '#b9835a', paper: '#fbf8f3' },
+};
+
+const samePalette = (a: InvitePalette, b: InvitePalette) =>
+  (['primary', 'accent', 'paper'] as const).every((k) => a[k]?.toLowerCase() === b[k]?.toLowerCase());
+
+/**
+ * A saved design on today's styles: unknown ids map to a current one, and a design that still has a
+ * style's old default colours gets the redrawn style's colours. Colours the couple chose are kept.
+ */
+export function migrateInvite(d: InviteDesign): InviteDesign {
+  const template = templateId(d.template);
+  const legacy = LEGACY_PALETTES[template];
+  const keepColours = d.template === template && !!d.palette && !(legacy && samePalette(d.palette, legacy));
+  const palette = keepColours ? d.palette : { ...templateMeta(template).palette };
+  return template === d.template && palette === d.palette ? d : { ...d, template, palette };
+}
+
+/** Mixes two #rrggbb colours: t = 0 gives a, t = 1 gives b. */
+export function mixHex(a: string, b: string, t: number): string {
+  const rgb = (h: string) => {
+    const m = /^#?([0-9a-f]{6})$/i.exec((h ?? '').trim());
+    return m ? [0, 2, 4].map((i) => parseInt(m[1].slice(i, i + 2), 16)) : [128, 128, 128];
+  };
+  const [x, y] = [rgb(a), rgb(b)];
+  return '#' + x.map((v, i) => Math.round(v + (y[i] - v) * t).toString(16).padStart(2, '0')).join('');
+}
 
 /** Relative luminance (WCAG) of a #rrggbb colour. */
 export function luminance(hex: string): number {
@@ -270,16 +329,21 @@ export interface DesignPick {
 }
 
 const RULES: [RegExp, InviteTemplate, string][] = [
+  [/photo|save the date|poster|cinematic|pre-?wedding|film/i, 'photo', 'A photo-first save-the-date puts the two of you up front, like a film poster.'],
+  [/mehndi|mehendi|henna|boho|bohemian|hand-?drawn/i, 'mehndi', 'Henna line-art feels personal and hand-made.'],
+  [/floral|flower|pastel|watercolou?r|blush|roses|spring|garden/i, 'floral', 'Soft pastel florals suit a garden or day wedding.'],
+  [/punjab|amritsar|ludhiana|jalandhar|patiala|chandigarh|mohali|bhangra|dhol|phulkari|sardar|\bkaur\b/i, 'phulkari', 'A Punjabi celebration deserves phulkari colours and a dhol.'],
   [/gujarat|ahmedabad|surat|vadodara|baroda|rajkot|garba|patel|shah|mehta|desai|bhavnagar/i, 'gujarati', 'Gujarati family names or city: a bandhani kankotri feels like home.'],
-  [/udaipur|jaipur|jodhpur|rajasthan|jaisalmer|bikaner|palace|haveli|fort|marwar/i, 'rajasthani', 'A Rajasthan palace venue suits jharokha arches and marigolds.'],
+  [/udaipur|jaipur|jodhpur|rajasthan|jaisalmer|bikaner|palace|haveli|fort|marwar/i, 'rajasthani', 'A Rajasthan palace venue suits a jharokha doorway and marigolds.'],
   [/chennai|madurai|bengaluru|bangalore|kerala|kochi|hyderabad|tamil|iyer|iyengar|reddy|nair|menon|pillai|rao|temple|mandapam/i, 'south', 'A South Indian wedding: temple gopuram, banana leaves and kolam.'],
-  [/beach|goa|minimal|modern|court|registry|intimate|brunch|garden/i, 'minimal', 'An intimate or modern celebration suits a clean, minimal invite.'],
-  [/royal|grand|regal|taj|leela|oberoi|ballroom|black tie/i, 'royal', 'A grand venue suits deep maroon and gold.'],
+  [/beach|goa|minimal|modern|court|registry|intimate|brunch/i, 'minimal', 'An intimate or modern celebration suits a clean, minimal invite.'],
+  [/royal|grand|regal|taj|leela|oberoi|ballroom|black tie/i, 'royal', 'A grand venue suits a maroon scroll with your gold crest.'],
 ];
 
 export function designPicks(w: Wedding, wishes = ''): DesignPick {
   const haystack = [wishes, w.city, w.venue, w.partner1, w.partner2, ...(w.events ?? []).map((e) => `${e.venue} ${e.dressCode ?? ''}`)].join(' ');
-  const hit = RULES.find(([re]) => re.test(haystack));
+  // What the couple asked for wins over what their city or venue suggests.
+  const hit = (wishes.trim() ? RULES.find(([re]) => re.test(wishes)) : undefined) ?? RULES.find(([re]) => re.test(haystack));
   const template = hit?.[1] ?? 'ganesh';
   const meta = templateMeta(template);
   const tone: InviteTone = /fun|playful|quirky|masti/i.test(wishes) ? 'fun' : /modern|minimal|simple/i.test(wishes) ? 'modern' : 'traditional';

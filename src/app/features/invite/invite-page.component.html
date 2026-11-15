@@ -2,30 +2,133 @@
 @let w = wedding();
 @let p = page();
 @let l = labels();
-<article class="page" [class]="'page tpl-' + d.template + ' kind-' + p.kind" [attr.lang]="d.language === 'hindi' ? 'hi' : d.language === 'gujarati' ? 'gu' : 'en'">
+@let t = d.template;
+@let pal = d.palette;
+<article [class]="'page tpl-' + t + ' kind-' + p.kind + ' lang-' + d.language" [attr.lang]="d.language === 'hindi' ? 'hi' : d.language === 'gujarati' ? 'gu' : 'en'" [attr.data-font-key]="t + '-' + d.language">
   @if (aiBackground()) {
     <img class="ai-bg" [src]="aiBackground()" alt="" crossorigin="anonymous" (error)="hideImage($event)" />
   }
-  <div class="frame" aria-hidden="true"><span class="corner tl"></span><span class="corner tr"></span><span class="corner bl"></span><span class="corner br"></span></div>
-  @if (d.template === 'rajasthani') { <div class="toran" aria-hidden="true"></div> }
+
+  @if (t === 'photo') {
+    <div class="poster" [class.band]="p.kind !== 'cover'" aria-hidden="true">
+      @if (d.coverPhoto) {
+        <img [src]="d.coverPhoto" alt="" (error)="hideImage($event)" />
+      } @else {
+        <app-invite-art template="photo" [palette]="pal" />
+      }
+      <div class="scrim"></div>
+    </div>
+  } @else {
+    <app-invite-art [template]="t" [kind]="p.kind === 'cover' ? 'cover' : 'inner'" [palette]="pal" />
+  }
 
   <div class="content">
     @switch (p.kind) {
       @case ('cover') {
-        <p class="invocation">{{ d.text.invocation }}</p>
-        <app-invite-motif class="motif" [class.small]="!!d.coverPhoto" [template]="d.template" [monogram]="monogram()" [primary]="d.palette.primary" [accent]="d.palette.accent" />
-        @if (hasShlok()) { <p class="shlok">{{ d.text.shlok }}</p> }
-        <h1 class="title">{{ d.text.title }}</h1>
-        @if (d.coverPhoto) {
-          <div class="photo"><img [src]="d.coverPhoto" alt="" (error)="hideImage($event)" /></div>
+        @switch (t) {
+          @case ('ganesh') {
+            <app-invite-motif class="hero" name="ganesh" [primary]="pal.primary" [accent]="pal.accent" />
+            <p class="invocation">{{ d.text.invocation }}</p>
+            @if (hasShlok()) { <p class="shlok">{{ d.text.shlok }}</p> }
+            <app-invite-motif class="rule" name="flourish" [primary]="pal.primary" [accent]="pal.accent" />
+            <h1 class="title">{{ d.text.title }}</h1>
+            @if (showPhoto()) { <div class="medallion"><img [src]="d.coverPhoto" alt="" (error)="hideImage($event)" /></div> }
+            <p class="names"><span>{{ names().a }}</span><span class="amp">{{ withWord() }}</span><span>{{ names().b }}</span></p>
+            <app-invite-motif class="rule" name="flourish" [primary]="pal.primary" [accent]="pal.accent" />
+            <p class="date">{{ date() }}</p>
+            @if (w.city) { <p class="place">{{ w.city }}</p> }
+          }
+          @case ('rajasthani') {
+            <p class="invocation">{{ d.text.invocation }}</p>
+            @if (showPhoto()) {
+              <div class="window"><img [src]="d.coverPhoto" alt="" (error)="hideImage($event)" /></div>
+            } @else {
+              <app-invite-motif class="hero" name="peacocks" [primary]="pal.primary" [accent]="pal.accent" />
+            }
+            <h1 class="title">{{ d.text.title }}</h1>
+            <p class="names"><span>{{ names().a }}</span><span class="amp">{{ withWord() }}</span><span>{{ names().b }}</span></p>
+            <p class="date">{{ date() }}</p>
+            @if (w.city) { <p class="place">{{ w.city }}</p> }
+          }
+          @case ('gujarati') {
+            <p class="invocation">{{ d.text.invocation }}</p>
+            @if (hasShlok()) { <p class="shlok">{{ d.text.shlok }}</p> }
+            <h1 class="title ribbon"><span>{{ d.text.title }}</span></h1>
+            <p class="names"><span>{{ names().a }}</span><span class="amp">{{ withWord() }}</span><span>{{ names().b }}</span></p>
+            <div class="date-box">
+              <p class="date">{{ date() }}</p>
+              @if (w.city) { <p class="place">{{ w.city }}</p> }
+            </div>
+          }
+          @case ('south') {
+            <p class="invocation">{{ d.text.invocation }}</p>
+            <h1 class="title">{{ d.text.title }}</h1>
+            <p class="names"><span>{{ names().a }}</span><span class="amp">{{ withWord() }}</span><span>{{ names().b }}</span></p>
+            <div class="when-row">
+              <p class="date">{{ date() }}</p>
+              @if (w.city) { <p class="place">{{ w.city }}</p> }
+            </div>
+          }
+          @case ('royal') {
+            <app-invite-motif class="crest" name="crest" [initials]="initials()" [primary]="pal.primary" [accent]="pal.accent" />
+            <p class="invocation">{{ d.text.invocation }}</p>
+            <h1 class="title">{{ d.text.title }}</h1>
+            <p class="names"><span>{{ names().a }}</span><span class="amp">{{ withWord() }}</span><span>{{ names().b }}</span></p>
+            <p class="date">{{ date() }}</p>
+            @if (w.city) { <p class="place">{{ w.city }}</p> }
+          }
+          @case ('minimal') {
+            <div class="mn-top">
+              <p class="invocation">{{ d.text.invocation }}</p>
+              <app-invite-motif class="knot" name="knot" [primary]="pal.primary" [accent]="pal.accent" />
+            </div>
+            <p class="names"><span>{{ names().a }}</span><span class="amp">{{ withWord() }}</span><span>{{ names().b }}</span></p>
+            <h1 class="title">{{ d.text.title }}</h1>
+            <div class="mn-foot">
+              <p class="date">{{ date() }}</p>
+              @if (w.city) { <p class="place">{{ w.city }}</p> }
+            </div>
+          }
+          @case ('floral') {
+            <p class="invocation">{{ d.text.invocation }}</p>
+            <h1 class="title">{{ d.text.title }}</h1>
+            <p class="names"><span>{{ names().a }}</span><span class="amp">{{ withWord() }}</span><span>{{ names().b }}</span></p>
+            <app-invite-motif class="rule" name="rose" [primary]="pal.primary" [accent]="pal.accent" />
+            <p class="date">{{ date() }}</p>
+            @if (w.city) { <p class="place">{{ w.city }}</p> }
+          }
+          @case ('mehndi') {
+            <p class="invocation">{{ d.text.invocation }}</p>
+            <div class="ring">
+              <h1 class="title">{{ d.text.title }}</h1>
+              <p class="names"><span>{{ names().a }}</span><span class="amp">{{ withWord() }}</span><span>{{ names().b }}</span></p>
+            </div>
+            <div class="below">
+              <p class="date">{{ date() }}</p>
+              @if (w.city) { <p class="place">{{ w.city }}</p> }
+            </div>
+          }
+          @case ('photo') {
+            <p class="invocation">{{ d.text.invocation }}</p>
+            <div class="credits">
+              <h1 class="title">{{ d.text.title }}</h1>
+              <p class="names"><span>{{ names().a }}</span><span class="amp">{{ withWord() }}</span><span>{{ names().b }}</span></p>
+              <p class="date-row"><span>{{ date() }}</span>@if (w.city) { <span class="dot" aria-hidden="true"></span><span>{{ w.city }}</span> }</p>
+            </div>
+          }
+          @case ('phulkari') {
+            <p class="invocation">{{ d.text.invocation }}</p>
+            <app-invite-motif class="hero" name="dhol" [primary]="pal.primary" [accent]="pal.accent" [paper]="pal.paper" />
+            <h1 class="title">{{ d.text.title }}</h1>
+            <p class="names"><span>{{ names().a }}</span><span class="amp">{{ withWord() }}</span><span>{{ names().b }}</span></p>
+            <p class="date">{{ date() }}</p>
+            @if (w.city) { <p class="place">{{ w.city }}</p> }
+          }
         }
-        <p class="names">{{ names().a }} <span class="amp">{{ withWord() }}</span> {{ names().b }}</p>
-        <p class="date">{{ date() }}</p>
-        @if (w.city) { <p class="place">{{ w.city }}</p> }
       }
 
       @case ('invitation') {
-        <app-invite-motif class="motif tiny" [template]="d.template" [monogram]="monogram()" [primary]="d.palette.primary" [accent]="d.palette.accent" />
+        @if (emblem(); as m) { <app-invite-motif class="emblem" [name]="m" [initials]="initials()" [primary]="pal.primary" [accent]="pal.accent" [paper]="pal.paper" /> }
         @if (greeting()) { <p class="dear">{{ l.dear }} <strong>{{ greeting() }}</strong>,</p> }
         <p class="body">{{ d.text.invitation }}</p>
         <div class="couple">
@@ -67,9 +170,9 @@
         @if (p.kind === 'events') {
           <h2 class="heading">{{ l.functions }}</h2>
           <ol class="events">
-            @for (e of p.events; track e.id) {
+            @for (e of p.events; track e.id; let i = $index) {
               <li class="event">
-                <span class="emoji" aria-hidden="true">{{ meta[e.kind].emoji }}</span>
+                <span class="emoji" aria-hidden="true"><span class="ico">{{ meta[e.kind].emoji }}</span><span class="num">{{ (p.part - 1) * 3 + i + 1 }}</span></span>
                 <div>
                   <h3>{{ eventName(e, d.language) }}</h3>
                   <p class="em">{{ eventDate(e.date, d.language) }} · {{ eventTime(e.time, d.language) }}</p>
@@ -84,7 +187,7 @@
       }
 
       @case ('final') {
-        <app-invite-motif class="motif tiny" [template]="d.template" [monogram]="monogram()" [primary]="d.palette.primary" [accent]="d.palette.accent" />
+        @if (emblem(); as m) { <app-invite-motif class="emblem" [name]="m" [initials]="initials()" [primary]="pal.primary" [accent]="pal.accent" [paper]="pal.paper" /> }
         <p class="closing">{{ d.text.closing }}</p>
         <div class="qrs">
           @if (rsvpUrl()) {

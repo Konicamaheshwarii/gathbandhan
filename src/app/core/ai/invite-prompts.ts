@@ -1,6 +1,6 @@
-import { DesignPick, TEMPLATES, draftInviteText, inkFor, luminance, templateMeta } from '../invite';
+import { DesignPick, TEMPLATES, draftInviteText, inkFor, knownTemplate, luminance, templateMeta } from '../invite';
 import { LlmRequest } from '../llm/llm-provider';
-import { INVITE_TEMPLATES, InviteLanguage, InviteTemplate, InviteText, InviteTone, Wedding } from '../models';
+import { InviteLanguage, InviteTemplate, InviteText, InviteTone, Wedding } from '../models';
 import { firstName } from '../util';
 import { extractJson, fence } from './prompts';
 
@@ -134,7 +134,7 @@ export function contrast(a: string, b: string): number {
 /** Unknown template ids and unreadable colour pairs fall back to the template's own palette. */
 export function validateDesign(raw: unknown): DesignPick {
   const o = (raw ?? {}) as Record<string, unknown>;
-  const template = INVITE_TEMPLATES.find((t) => t === o['template']);
+  const template = knownTemplate(o['template']);
   if (!template) throw new Error('The AI picked a design that does not exist.');
   const meta = templateMeta(template);
   const colours = [o['primary'], o['accent'], o['paper']].map((c) => (typeof c === 'string' ? c.trim() : ''));

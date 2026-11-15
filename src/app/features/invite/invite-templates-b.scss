@@ -1,0 +1,128 @@
+// Per-style layouts, split across files to keep each stylesheet small. Sizes in cqw (see invite-page.component.scss).
+
+// =====================================================================
+// 6. Modern minimal: asymmetric, left aligned, big editorial names
+// =====================================================================
+.tpl-minimal {
+  text-align: left;
+  .content { inset: 14cqw 11cqw 12cqw 17cqw; align-items: flex-start; }
+  &.kind-cover .content { display: grid; grid-template-rows: auto 1fr auto auto; justify-items: start; align-items: center; gap: 3cqw; }
+  .mn-top { display: flex; justify-content: space-between; align-items: flex-start; width: 100%; gap: 4cqw; }
+  .invocation { font-size: 2.5cqw; letter-spacing: 0.3em; text-transform: uppercase; font-weight: 500; max-width: 44cqw; }
+  .knot { width: 15cqw; }
+  .names { align-items: flex-start; font-weight: 400; line-height: 0.92; color: var(--i-primary); font-size: min(20cqw, calc(118cqw / var(--name-len, 5))); }
+  .amp { font-size: 0.42em; margin: 0.2em 0 0.15em 0.08em; }
+  .title { font-family: var(--i-body); font-size: 3.1cqw; letter-spacing: 0.3em; text-transform: uppercase; color: var(--i-accent); font-weight: 600; }
+  .mn-foot { display: flex; justify-content: space-between; align-items: flex-end; gap: 4cqw; width: 100%; padding-top: 3cqw; }
+  .date { font-family: var(--i-display); font-weight: 400; font-size: 4.2cqw; max-width: 44cqw; }
+  .place { font-size: 2.8cqw; letter-spacing: 0.3em; text-align: right; }
+  .emblem { width: 13cqw; }
+  .body { max-width: none; }
+  .heading { font-weight: 400; font-size: 9cqw; }
+  .couple, .when { justify-items: start; }
+  .sides { gap: 6cqw; }
+  .event { grid-template-columns: 10cqw 1fr; border-top: 0.25cqw solid color-mix(in srgb, var(--i-primary) 30%, transparent); padding-top: 2.4cqw; }
+  .event h3 { font-weight: 400; }
+  .emoji { border: 0; background: none; width: auto; height: auto; place-items: start; font: 400 7cqw/1 var(--i-display); color: var(--i-accent); .ico { display: none; } .num { display: block; } }
+  .qrs { justify-content: flex-start; }
+}
+
+// =====================================================================
+// 7. Floral watercolour: names in script inside the oval
+// =====================================================================
+.tpl-floral {
+  &.kind-cover .content { inset: 42cqw 21cqw 34cqw; gap: 2cqw; }
+  .content { inset: 32cqw 15cqw 28cqw; }
+  .invocation { font-style: italic; font-weight: 500; font-size: 3.6cqw; }
+  .title { text-transform: uppercase; letter-spacing: 0.22em; font-size: 4.2cqw; font-weight: 600; }
+  .names { color: var(--i-primary); font-size: min(15cqw, calc(96cqw / var(--name-len, 5))); line-height: 1.1; }
+  .amp { font-family: var(--i-display); font-size: 0.32em; color: var(--i-ink); margin: 0; }
+  .rule { width: 34cqw; }
+  .date { font-size: 3.8cqw; font-weight: 600; }
+  .place { font-size: 3.2cqw; }
+  .heading { font-family: var(--i-script); font-size: 11cqw; font-weight: 400; }
+  &.lang-hindi, &.lang-gujarati { .heading { font-size: 7.4cqw; } }
+  .body { font-size: 4.8cqw; }
+  .block h3 { font-family: var(--i-display); font-style: italic; text-transform: none; letter-spacing: 0; font-size: 4.2cqw; }
+  .event { grid-template-columns: 1fr; text-align: center; padding-bottom: 2.4cqw; border-bottom: 0.3cqw solid color-mix(in srgb, var(--i-accent) 60%, transparent); }
+  .event:last-child { border-bottom: 0; }
+  .emoji { display: none; }
+  .emblem { width: 26cqw; }
+}
+
+// =====================================================================
+// 8. Mehndi line-art: invocation above, couple inside the mandala
+// =====================================================================
+.tpl-mehndi {
+  background: radial-gradient(70% 45% at 50% 50%, color-mix(in srgb, var(--i-accent) 10%, var(--i-paper)), var(--i-paper));
+  &.kind-cover .content { inset: 0; display: block; }
+  &.kind-cover .invocation { position: absolute; top: 27cqw; left: 16cqw; right: 16cqw; font-size: 3.6cqw; }
+  .ring {
+    position: absolute; left: 50%; top: 88.9cqw; width: 46cqw; height: 46cqw; transform: translate(-50%, -50%);
+    display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 1.2cqw;
+  }
+  .ring .title { font-size: 5.2cqw; font-weight: 700; }
+  .ring .names { font-size: min(10cqw, calc(52cqw / var(--name-len, 5))); color: var(--i-primary); font-weight: 700; line-height: 1; }
+  .amp { font-style: normal; color: var(--i-accent); }
+  .below { position: absolute; top: 140cqw; left: 14cqw; right: 14cqw; display: grid; gap: 1cqw; }
+  .date { font-size: 4.2cqw; }
+  .content { inset: 28cqw 16cqw 24cqw; }
+  .heading { font-weight: 700; }
+  .event h3 { font-weight: 700; }
+  .emoji { border-style: dashed; background: none; }
+  .emblem { width: 18cqw; }
+}
+
+// =====================================================================
+// 9. Photo save-the-date: full-bleed photo, poster credits at the bottom
+// =====================================================================
+.tpl-photo {
+  text-align: left;
+  .poster { position: absolute; inset: 0; overflow: hidden; img { width: 100%; height: 100%; object-fit: cover; display: block; } }
+  .scrim { position: absolute; inset: 0; background: linear-gradient(180deg, rgb(0 0 0 / 40%) 0%, transparent 22%, transparent 38%, color-mix(in srgb, var(--i-paper) 70%, transparent) 64%, var(--i-paper) 96%); }
+  .poster.band { inset: 0 0 auto 0; height: 58cqw; .scrim { background: linear-gradient(180deg, rgb(0 0 0 / 20%) 0%, transparent 30%, var(--i-paper) 100%); } }
+  &.kind-cover .content { inset: 0; display: block; }
+  &.kind-cover .invocation { position: absolute; top: 8cqw; left: 8cqw; right: 8cqw; color: #fff; font-size: 2.8cqw; letter-spacing: 0.3em; text-transform: uppercase; font-weight: 500; text-shadow: 0 0.2cqw 1cqw rgb(0 0 0 / 50%); }
+  .credits { position: absolute; left: 8cqw; right: 8cqw; bottom: 10cqw; display: grid; gap: 2.4cqw; }
+  .title { font-weight: 400; text-transform: uppercase; letter-spacing: 0.32em; font-size: 3.6cqw; color: var(--i-primary); }
+  .names {
+    align-items: flex-start; font-family: var(--i-display); text-transform: uppercase; font-weight: 600; line-height: 0.92;
+    color: #fff; font-size: min(18cqw, calc(118cqw / var(--name-len, 5)));
+  }
+  .amp { font-size: 0.32em; text-transform: none; font-weight: 400; color: var(--i-primary); margin: 0.3em 0; letter-spacing: 0.2em; }
+  .date-row {
+    display: flex; flex-wrap: wrap; align-items: center; gap: 1.2cqw 2.4cqw; padding-top: 2.4cqw; border-top: 0.3cqw solid var(--i-primary);
+    color: #fff; font-family: var(--i-display); font-size: 3.4cqw; letter-spacing: 0.14em; text-transform: uppercase;
+  }
+  .dot { width: 1.4cqw; height: 1.4cqw; border-radius: 50%; background: var(--i-accent); }
+  .content { inset: 50cqw 11cqw 11cqw; align-items: flex-start; }
+  .heading { text-transform: uppercase; letter-spacing: 0.08em; font-size: 8cqw; }
+  .couple, .when { justify-items: start; }
+  .couple .name { text-transform: uppercase; }
+  .event { padding: 2cqw 2.4cqw; background: rgb(255 255 255 / 6%); border-left: 0.9cqw solid var(--i-accent); border-radius: 0.6cqw; }
+  .emoji { border: 0; background: none; }
+  .qrs { justify-content: flex-start; }
+}
+
+// =====================================================================
+// 10. Phulkari baraat: bold type between embroidery bands, a dhol
+// =====================================================================
+.tpl-phulkari {
+  &.kind-cover .content { inset: 33cqw 9cqw 33cqw; gap: 1.8cqw; }
+  .content { inset: 22cqw 10cqw 21cqw; }
+  .invocation { font-weight: 700; }
+  .hero { width: 36cqw; }
+  .title { font-weight: 800; font-size: 9.4cqw; text-shadow: 0.6cqw 0.6cqw 0 var(--i-accent); line-height: 1.05; }
+  .names { font-family: var(--i-display); font-weight: 800; color: var(--i-ink); font-size: min(12cqw, calc(86cqw / var(--name-len, 5))); line-height: 1; }
+  .amp { font-style: normal; color: var(--i-primary); }
+  .date { background: var(--i-accent); color: #2a1206; padding: 1.2cqw 4cqw; border-radius: 1cqw; transform: rotate(-2deg); box-shadow: 0.8cqw 0.8cqw 0 var(--i-primary); font-weight: 800; }
+  .place { font-weight: 700; color: var(--i-primary); }
+  .heading { font-weight: 800; text-shadow: 0.4cqw 0.4cqw 0 var(--i-accent); }
+  .couple .name { font-weight: 800; }
+  .emblem { width: 26cqw; }
+  .event { padding: 1.6cqw 2cqw; border-radius: 1cqw; background: color-mix(in srgb, var(--i-accent) 14%, transparent); border-left: 1.2cqw solid var(--i-primary); }
+  .event:nth-child(2) { border-left-color: var(--i-accent); }
+  .event:nth-child(3) { border-left-color: #16a06c; }
+  .event h3 { font-weight: 800; }
+  .emoji { border: 0; background: none; }
+}
