@@ -1,7 +1,7 @@
 import { ChangeDetectionStrategy, Component, ElementRef, computed, effect, inject, input, signal, untracked, viewChildren } from '@angular/core';
 import { RouterLink } from '@angular/router';
 import { AiService } from '../../core/ai/ai.service';
-import { DesignPick, InvitePage, TEMPLATES, defaultInvite, designPicks, draftInviteText, invitePages, templateMeta } from '../../core/invite';
+import { DesignPick, InvitePage, TEMPLATES, defaultInvite, designPicks, draftInviteText, invitePages, knownTemplate, migrateInvite, templateMeta } from '../../core/invite';
 import { TIER_LABELS } from '../../core/llm/llm-chain';
 import { INVITE_LANGUAGES, INVITE_TONES, InviteDesign, InviteLanguage, InviteTemplate, InviteText, InviteTone } from '../../core/models';
 import { SettingsStore } from '../../core/settings.store';
@@ -11,13 +11,14 @@ import { appBaseUrl } from '../../core/wedding-link';
 import { pagePng, pagesPdf, saveBlob } from '../../shared/export';
 import { ensureInviteFonts } from '../../shared/invite-fonts';
 import { LogoComponent } from '../../shared/logo.component';
+import { SlideDirective, SliderComponent } from '../../shared/slider.component';
 import { ToastService } from '../../shared/toast.service';
 import { InvitePageComponent } from './invite-page.component';
 
 /** The couple designs their digital kankotri: template, words (AI or typed), colours, families, export. */
 @Component({
   selector: 'app-invite-designer',
-  imports: [LogoComponent, RouterLink, InvitePageComponent],
+  imports: [LogoComponent, RouterLink, InvitePageComponent, SliderComponent, SlideDirective],
   providers: [WeddingStore],
   changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './invite-designer.page.html',
@@ -30,8 +31,14 @@ export class InviteDesignerPage {
   private readonly toast = inject(ToastService);
 
   readonly slug = input.required<string>();
+  /** `?template=royal` from the landing page's "Use this style". */
+  readonly template = input<string>();
 
   protected readonly templates = TEMPLATES;
+  protected readonly templateNames = TEMPLATES.map((t) => t.name);
+  /** The style shown in the middle of the picker (not applied until "Use this style"). */
+  protected readonly browsing = signal(0);
+  protected readonly browsingMeta = computed(() => TEMPLATES[this.browsing()]);
   protected readonly languages = INVITE_LANGUAGES;
   protected readonly tones = INVITE_TONES;
   protected readonly design = signal<InviteDesign | null>(null);
@@ -77,12 +84,19 @@ export class InviteDesignerPage {
       const slug = this.slug();
       untracked(async () => {
         const w = await this.store.load(slug, { manage: true });
-        if (w) this.design.set(structuredClone(w.invite ?? defaultInvite(w)));
+        if (!w) return;
+        this.design.set(structuredClone(w.invite ? migrateInvite(w.invite) : defaultInvite(w)));
+        const wanted = knownTemplate(untracked(this.template));
+        if (wanted && wanted !== this.design()!.template) {
+          this.chooseTemplate(wanted);
+          this.toast.show(`${templateMeta(wanted).name} applied. Save to keep it.`);
+        }
+        this.browsing.set(TEMPLATES.findIndex((t) => t.id === this.design()!.template));
       });
     });
     effect(() => {
       const d = this.design();
-      if (d) void ensureInviteFonts(d.language);
+      if (d) void ensureInviteFonts(d.language, d.template);
     });
   }
 
@@ -100,6 +114,7 @@ export class InviteDesignerPage {
   protected chooseTemplate(id: InviteTemplate): void {
     const meta = templateMeta(id);
     this.patch({ template: id, palette: { ...meta.palette }, showShlok: meta.invocation });
+    this.browsing.set(TEMPLATES.findIndex((t) => t.id === id));
   }
 
   /** Language and tone redraft the words offline at once; "Write with AI" can improve them. */

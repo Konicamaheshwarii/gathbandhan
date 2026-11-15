@@ -49,15 +49,21 @@
         <!-- Templates -->
         <section class="card stack">
           <h2>Style</h2>
-          <div class="templates" role="radiogroup" aria-label="Invite style">
-            @for (t of templates; track t.id) {
-              <button type="button" role="radio" class="tpl" [attr.aria-checked]="d.template === t.id" (click)="chooseTemplate(t.id)">
-                <app-invite-page class="mini" [wedding]="w" [design]="previewOf(d, t.id)" [page]="coverPage" aria-hidden="true" />
-                <span class="tpl-name">{{ t.name }}</span>
-                <span class="hint">{{ t.blurb }}</span>
-              </button>
-            }
-          </div>
+          <app-slider class="styles" label="Invite styles" [count]="templates.length" [labels]="templateNames" [(index)]="browsing" [interval]="0">
+            <ng-template appSlide let-i>
+              <app-invite-page class="mini" [wedding]="w" [design]="previewOf(d, templates[i].id)" [page]="coverPage" />
+            </ng-template>
+            <div class="style-caption">
+              <p class="tpl-name">{{ browsingMeta().name }}</p>
+              <p class="hint">{{ browsingMeta().blurb }}</p>
+              @if (browsingMeta().id === d.template) {
+                <p class="in-use small"><span aria-hidden="true">✓</span> Your invite uses this style</p>
+              } @else {
+                <button class="btn small primary" type="button" (click)="chooseTemplate(browsingMeta().id)">Use this style</button>
+              }
+            </div>
+          </app-slider>
+          <p class="hint">Switching style takes that style's colours; your words stay. The photo shows on the Photo, Rajasthani and Ganesh covers.</p>
         </section>
 
         <!-- Words -->

@@ -85,20 +85,22 @@
     <div class="row">
       <div>
         <p class="eyebrow">Invite styles</p>
-        <h2 id="tpl-h">Six kankotri styles, your colours</h2>
+        <h2 id="tpl-h">Ten kankotri styles, your colours</h2>
       </div>
       <span class="spacer"></span>
       <a class="btn small" [routerLink]="['/i', demoSlug]">Open the sample invite</a>
     </div>
-    <div class="carousel" tabindex="0" aria-label="Invite styles (sample content), scroll sideways">
-      @for (g of gallery(); track g.meta.id) {
-        <figure class="tpl-card">
-          <app-invite-page [wedding]="demo()!.wedding" [design]="g.design" [page]="cover" />
-          <figcaption><strong>{{ g.meta.name }}</strong><span class="hint">{{ g.meta.blurb }}</span></figcaption>
-        </figure>
-      }
-    </div>
-    <p class="hint">Samples shown with the demo couple, Riya &amp; Arjun. Every motif is drawn in code, so your invite prints sharp.</p>
+    <app-slider class="styles" label="Invite styles (sample content)" [count]="gallery().length" [labels]="templateNames" [(index)]="slide" [interval]="4500">
+      <ng-template appSlide let-i>
+        <app-invite-page [wedding]="demo()!.wedding" [design]="gallery()[i].design" [page]="cover" />
+      </ng-template>
+      <div class="style-caption">
+        <p class="style-name">{{ slideMeta().name }}</p>
+        <p class="muted small">{{ slideMeta().blurb }}</p>
+        <a class="btn primary small" [routerLink]="styleLink().link" [queryParams]="styleLink().query">Use this style</a>
+      </div>
+    </app-slider>
+    <p class="hint center">Samples shown with the demo couple, Riya &amp; Arjun. Every motif is drawn in code, so your invite prints sharp.</p>
   </section>
 }
 
@@ -106,7 +108,7 @@
   <p class="eyebrow center">Everything in one place</p>
   <h2 id="feat-h" class="center">Made for Indian weddings</h2>
   <div class="features">
-    <article class="card feature"><span class="f-icon" aria-hidden="true">💌</span><h3>Digital kankotri</h3><p class="muted small">Ganesh, Rajasthani, Gujarati, South Indian, royal or minimal. Animated web invite, PNG for WhatsApp and PDF.</p></article>
+    <article class="card feature"><span class="f-icon" aria-hidden="true">💌</span><h3>Digital kankotri</h3><p class="muted small">Ten styles from Ganesh and jharokha to mehndi, phulkari and a photo save-the-date. Animated web invite, PNG for WhatsApp and PDF.</p></article>
     <article class="card feature"><span class="f-icon" aria-hidden="true">📇</span><h3>Guest tracker</h3><p class="muted small">Import from CSV or contacts, personal links, and see sent, opened, RSVP'd and gave shagun at a glance.</p></article>
     <article class="card feature"><span class="f-icon" aria-hidden="true">📅</span><h3>Functions and RSVPs</h3><p class="muted small">Haldi to reception with maps, dress codes and add-to-calendar. Headcount per function for the caterer.</p></article>
     <article class="card feature"><span class="f-icon" aria-hidden="true">🪷</span><h3>Shagun by UPI</h3><p class="muted small">A real UPI link and QR. No gateway, no fees. You verify each blessing against your bank app.</p></article>

@@ -7,9 +7,10 @@ import { InvitePage, TEMPLATES, defaultInvite, templateMeta } from '../../core/i
 import { InviteDesign, InviteLanguage, InviteTemplate, Wedding } from '../../core/models';
 import { computeTotals } from '../../core/totals';
 import { firstName } from '../../core/util';
-import { ensureInviteFonts } from '../../shared/invite-fonts';
+import { ensureAllTemplateFonts, ensureInviteFonts } from '../../shared/invite-fonts';
 import { LogoComponent } from '../../shared/logo.component';
 import { IndianDatePipe, InrPipe } from '../../shared/pipes';
+import { SlideDirective, SliderComponent } from '../../shared/slider.component';
 import { InvitePageComponent } from '../invite/invite-page.component';
 
 interface PageSummary {
@@ -23,7 +24,8 @@ interface PageSummary {
 
 /** Template, language pairs the hero mockup cycles through (sample content). */
 const SHOWCASE: [InviteTemplate, InviteLanguage][] = [
-  ['rajasthani', 'english'], ['ganesh', 'hindi'], ['gujarati', 'gujarati'], ['south', 'english'], ['royal', 'english'], ['minimal', 'hinglish'],
+  ['rajasthani', 'english'], ['ganesh', 'hindi'], ['photo', 'english'], ['gujarati', 'gujarati'], ['floral', 'english'],
+  ['south', 'english'], ['mehndi', 'hindi'], ['royal', 'english'], ['phulkari', 'hinglish'], ['minimal', 'english'],
 ];
 
 const FAQ: { q: string; a: string }[] = [
@@ -38,7 +40,7 @@ const FAQ: { q: string; a: string }[] = [
 
 @Component({
   selector: 'app-home',
-  imports: [LogoComponent, RouterLink, InrPipe, IndianDatePipe, InvitePageComponent],
+  imports: [LogoComponent, RouterLink, InrPipe, IndianDatePipe, InvitePageComponent, SliderComponent, SlideDirective],
   changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './home.page.html',
   styleUrl: './home.page.scss',
@@ -63,7 +65,7 @@ export class HomePage {
     if (!d) return null;
     const base = d.invite ?? defaultInvite(d);
     const lang = language ?? templateMeta(template).defaultLanguage;
-    return { ...defaultInvite(d, template, lang, 'traditional'), grandparents: base.grandparents, coverPhoto: template === 'minimal' ? '' : base.coverPhoto };
+    return { ...defaultInvite(d, template, lang, 'traditional'), grandparents: base.grandparents, coverPhoto: base.coverPhoto };
   }
 
   protected readonly heroDesign = computed(() => {
@@ -74,11 +76,25 @@ export class HomePage {
   protected readonly heroList = computed(() => (this.heroDesign() ? [this.heroDesign()!] : []));
   protected readonly heroName = computed(() => templateMeta(SHOWCASE[this.showcase()][0]).name);
   protected readonly gallery = computed(() => (this.demo() ? TEMPLATES.map((t) => ({ meta: t, design: this.design(t.id)! })) : []));
+  protected readonly templateNames = TEMPLATES.map((t) => t.name);
+  /** The style in the middle of the slider. */
+  protected readonly slide = signal(0);
+  protected readonly slideMeta = computed(() => TEMPLATES[this.slide()]);
+
+  /** "Use this style" opens the designer of the couple's own page, or the sample's in demo mode. */
+  protected readonly styleLink = computed((): { link: string[]; query: Record<string, string> } => {
+    const id = this.slideMeta().id;
+    const own = this.mine()[0];
+    if (own) return { link: ['/w', own.wedding.slug, 'invite'], query: { template: id } };
+    if (!this.auth.enabled) return { link: ['/w', DEMO_SLUG, 'invite'], query: { template: id } };
+    return this.auth.user() ? { link: ['/create'], query: {} } : { link: ['/login'], query: { next: '/create' } };
+  });
 
   constructor() {
     void this.load();
     void ensureInviteFonts('hindi');
     void ensureInviteFonts('gujarati');
+    void ensureAllTemplateFonts();
     if (!this.reduceMotion) {
       const timer = setInterval(() => this.showcase.update((i) => (i + 1) % SHOWCASE.length), 3200);
       inject(DestroyRef).onDestroy(() => clearInterval(timer));
