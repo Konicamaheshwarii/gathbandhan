@@ -329,9 +329,9 @@ export interface DesignPick {
 }
 
 const RULES: [RegExp, InviteTemplate, string][] = [
-  [/photo|save the date|poster|cinematic|pre-?wedding|film/i, 'photo', 'A photo-first save-the-date puts the two of you up front, like a film poster.'],
-  [/mehndi|mehendi|henna|boho|bohemian|hand-?drawn/i, 'mehndi', 'Henna line-art feels personal and hand-made.'],
-  [/floral|flower|pastel|watercolou?r|blush|roses|spring|garden/i, 'floral', 'Soft pastel florals suit a garden or day wedding.'],
+  [/\bphoto|save the date|poster|cinematic|pre-?wedding|\bfilm\b/i, 'photo', 'A photo-first save-the-date puts the two of you up front, like a film poster.'],
+  [/mehndi|mehendi|\bhenna\b|\bboho\b|bohemian|hand-?drawn/i, 'mehndi', 'Henna line-art feels personal and hand-made.'],
+  [/floral|flower|pastel|watercolou?r|\bblush\b|\broses?\b|\bspring\b|garden/i, 'floral', 'Soft pastel florals suit a garden or day wedding.'],
   [/punjab|amritsar|ludhiana|jalandhar|patiala|chandigarh|mohali|bhangra|dhol|phulkari|sardar|\bkaur\b/i, 'phulkari', 'A Punjabi celebration deserves phulkari colours and a dhol.'],
   [/gujarat|ahmedabad|surat|vadodara|baroda|rajkot|garba|patel|shah|mehta|desai|bhavnagar/i, 'gujarati', 'Gujarati family names or city: a bandhani kankotri feels like home.'],
   [/udaipur|jaipur|jodhpur|rajasthan|jaisalmer|bikaner|palace|haveli|fort|marwar/i, 'rajasthani', 'A Rajasthan palace venue suits a jharokha doorway and marigolds.'],

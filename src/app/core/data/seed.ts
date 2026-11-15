@@ -21,7 +21,7 @@ export function demoWedding(now = new Date()): Wedding {
     grandparents: { bride: 'Smt. Kamla Devi & Late Shri Hariprasad Sharma', groom: 'Smt. Shanti & Shri Mohanlal Mehta' },
     swagatotsuk: 'Rohan & Ishita Sharma\nKabir, Myra & all the little cousins\nMama-Mami: Sanjay & Ritu Joshi',
     darshanabhilashi: 'Sharma & Mehta Parivar\nAll our friends from Pune and Bengaluru',
-    coverPhoto: 'demo/gallery-3.svg',
+    coverPhoto: 'demo/gallery-1.svg',
     updatedAt: now.getTime() - 5 * 24 * HOUR,
   };
   return w;

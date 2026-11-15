@@ -51,7 +51,7 @@
 .dear { font-size: 4.4cqw; }
 .body { font-size: 4.4cqw; line-height: 1.5; max-width: 68cqw; }
 .couple { display: grid; gap: 0.6cqw; .name { font-family: var(--i-display); font-size: 7.6cqw; color: var(--i-primary); line-height: 1.1; } .with { font-style: italic; color: var(--i-accent); font-size: 5cqw; } }
-.when { display: grid; gap: 0.6cqw; font-size: 4cqw; font-weight: 600; .muted { font-weight: 400; opacity: 0.85; } }
+.when { display: grid; gap: 0.6cqw; font-size: 4cqw; font-weight: 600; .venue-line { font-weight: 400; opacity: 0.85; } }
 
 .heading { font-family: var(--i-display); font-size: 7.4cqw; color: var(--i-primary); font-weight: 600; line-height: 1.1; }
 .block { display: grid; gap: 0.8cqw; font-size: 3.9cqw; h3 { font-size: 3.2cqw; letter-spacing: 0.14em; text-transform: uppercase; color: var(--i-primary); opacity: 0.85; font-family: var(--i-body); font-weight: 700; } }

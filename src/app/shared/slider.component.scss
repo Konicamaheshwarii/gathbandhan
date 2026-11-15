@@ -37,8 +37,8 @@
 .prev { left: 0.4rem; }
 .next { right: 0.4rem; }
 @media (min-width: 720px) {
-  .prev { left: calc(50% - var(--slide-w) / 2 - 64px); }
-  .next { right: calc(50% - var(--slide-w) / 2 - 64px); }
+  .prev { left: calc(50% - var(--slide-w) / 2 - 22px); }
+  .next { right: calc(50% - var(--slide-w) / 2 - 22px); }
 }
 
 .controls { display: flex; justify-content: center; align-items: center; gap: 0.5rem; flex-wrap: wrap; }

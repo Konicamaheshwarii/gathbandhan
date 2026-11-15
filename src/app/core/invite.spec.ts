@@ -1,5 +1,7 @@
 import { contrast, validateDesign, validateInviteText, validateWhatsapp } from './ai/invite-prompts';
-import { TEMPLATES, defaultInvite, designPicks, draftInviteText, inkFor, invitePages, localDate, localEventName, nameList } from './invite';
+import { LEGACY_PALETTES, TEMPLATES, defaultInvite, designPicks, draftInviteText, inkFor, invitePages, knownTemplate, localDate, localEventName, migrateInvite, mixHex, nameList, templateId, templateMeta } from './invite';
+import { INVITE_TEMPLATES } from './models';
+import { TEMPLATE_FONTS, inviteFontVars } from '../shared/invite-fonts';
 import { jpegSize, buildPdf } from './pdf';
 import { wedding } from './testing';
 
@@ -47,6 +49,71 @@ describe('invite text', () => {
   });
 });
 
+describe('template registry', () => {
+  it('has ten styles, one per id, each with its own colours and fonts', () => {
+    expect(TEMPLATES.length).toBe(10);
+    expect(TEMPLATES.map((t) => t.id)).toEqual([...INVITE_TEMPLATES]);
+    expect(new Set(TEMPLATES.map((t) => t.name)).size).toBe(10);
+    expect(new Set(TEMPLATES.map((t) => JSON.stringify(t.palette))).size).toBe(10);
+    for (const t of TEMPLATES) {
+      expect(TEMPLATE_FONTS[t.id]).withContext(t.id).toBeDefined();
+      expect(t.blurb.length).withContext(t.id).toBeLessThan(90);
+    }
+  });
+
+  it('keeps the six original ids and adds the four new ones', () => {
+    for (const id of ['ganesh', 'rajasthani', 'gujarati', 'south', 'royal', 'minimal', 'floral', 'mehndi', 'photo', 'phulkari']) {
+      expect(templateMeta(id as never).id).toBe(id as never);
+    }
+  });
+
+  it('maps stored, aliased and unknown ids onto current styles', () => {
+    expect(templateId('royal')).toBe('royal');
+    expect(templateId(' Phulkari ')).toBe('phulkari');
+    expect(templateId('marigold')).toBe('rajasthani');
+    expect(templateId('temple')).toBe('south');
+    expect(templateId('henna')).toBe('mehndi');
+    expect(templateId('disco')).toBe('ganesh');
+    expect(templateId(undefined)).toBe('ganesh');
+    expect(knownTemplate('disco')).toBeNull();
+    expect(knownTemplate('save-the-date')).toBe('photo');
+  });
+
+  it('moves a saved design with an old default palette to the redrawn colours, and keeps chosen colours', () => {
+    const w = wedding();
+    const old = { ...defaultInvite(w, 'royal'), palette: { ...LEGACY_PALETTES.royal! } };
+    expect(migrateInvite(old).palette).toEqual(templateMeta('royal').palette);
+    expect(migrateInvite(old).text).toEqual(old.text);
+    const custom = { ...defaultInvite(w, 'minimal'), palette: { primary: '#123456', accent: '#abcdef', paper: '#ffffff' } };
+    expect(migrateInvite(custom)).toBe(custom);
+    const current = defaultInvite(w, 'floral');
+    expect(migrateInvite(current)).toBe(current);
+    const unknown = migrateInvite({ ...defaultInvite(w), template: 'bandhani' as never });
+    expect(unknown.template).toBe('gujarati');
+    expect(unknown.palette).toEqual(templateMeta('gujarati').palette);
+  });
+
+  it('stacks each style font before the language font, so Indian scripts still have glyphs', () => {
+    const f = inviteFontVars('royal', 'hindi');
+    expect(f.display.startsWith("'Cinzel'")).toBeTrue();
+    expect(f.display).toContain('Tiro Devanagari Hindi');
+    expect(inviteFontVars('floral', 'english').script).toContain('Great Vibes');
+    expect(inviteFontVars('mehndi', 'gujarati').body).toContain('Mukta Vaani');
+  });
+
+  it('mixes colours', () => {
+    expect(mixHex('#000000', '#ffffff', 0.5)).toBe('#808080');
+    expect(mixHex('#9c1c1c', '#ffffff', 0)).toBe('#9c1c1c');
+  });
+
+  it('suggests the new styles from what the couple asks for first', () => {
+    expect(designPicks(wedding({ city: 'Amritsar' })).template).toBe('phulkari');
+    expect(designPicks(wedding({ city: 'Udaipur' }), 'a photo save the date').template).toBe('photo');
+    expect(designPicks(wedding({ city: 'Ahmedabad' }), 'pastel flowers').template).toBe('floral');
+    expect(designPicks(wedding(), 'henna line art').template).toBe('mehndi');
+  });
+});
+
 describe('AI invite validation', () => {
   const input = { wedding: wedding(), language: 'english' as const, tone: 'traditional' as const, template: 'ganesh' as const };
 
@@ -69,6 +136,8 @@ describe('AI invite validation', () => {
     const pick = validateDesign({ template: 'royal', primary: '#ffffff', accent: '#ffff00', paper: '#fefefe', tone: 'fun', language: 'gujarati' });
     expect(pick.palette).toEqual(TEMPLATES.find((t) => t.id === 'royal')!.palette);
     expect([pick.tone, pick.language]).toEqual(['fun', 'gujarati']);
+    expect(validateDesign({ template: 'mehndi', primary: '#6b3410', accent: '#b5652b', paper: '#fbf0df' }).template).toBe('mehndi');
+    expect(validateDesign({ template: 'jharokha' }).template).toBe('rajasthani');
     const ok = validateDesign({ template: 'minimal', primary: '#123456', accent: '#c08b5c', paper: '#fdfbf7' });
     expect(ok.palette.primary).toBe('#123456');
   });

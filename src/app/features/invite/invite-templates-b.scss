@@ -126,3 +126,12 @@
   .event h3 { font-weight: 800; }
   .emoji { border: 0; background: none; }
 }
+
+// Spaced capitals have no meaning in Devanagari and Gujarati, so those small lines get bigger instead.
+.page:is(.lang-hindi, .lang-gujarati) {
+  &.tpl-minimal .title { font-size: 4.4cqw; }
+  &.tpl-minimal .invocation { font-size: 3.2cqw; }
+  &.tpl-photo .title { font-size: 4.8cqw; }
+  &.tpl-photo.kind-cover .invocation { font-size: 3.4cqw; }
+  &.tpl-floral .title { font-size: 5.4cqw; }
+}

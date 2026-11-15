@@ -199,7 +199,11 @@ export class SliderComponent {
     const dx = e.clientX - this.start.x;
     if (!this.dragging() && Math.abs(dx) > 6 && Math.abs(dx) > Math.abs(e.clientY - this.start.y)) {
       this.dragging.set(true);
-      (e.currentTarget as HTMLElement).setPointerCapture?.(e.pointerId);
+      try {
+        (e.currentTarget as HTMLElement).setPointerCapture?.(e.pointerId);
+      } catch {
+        // The pointer may already be gone (a synthetic or cancelled event); dragging still works.
+      }
     }
     if (this.dragging()) this.dragX.set(dx);
   }

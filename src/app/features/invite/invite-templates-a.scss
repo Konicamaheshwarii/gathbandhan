@@ -103,3 +103,9 @@
   .emoji { border-color: var(--i-primary); background: none; }
 }
 
+
+.page:is(.lang-hindi, .lang-gujarati).tpl-royal {
+  .invocation { font-size: 3.4cqw; }
+  .title { font-size: 7.6cqw; }
+  .date { font-size: 3.8cqw; }
+}
