@@ -1,6 +1,7 @@
 import { COVER_PRESETS, CoverPreset, EVENT_KINDS, EventKind, Goal, MAX_EVENTS, MAX_GOALS, MAX_MILESTONES, Milestone, Wedding, WeddingEvent } from './models';
 import { isValidVpa } from './upi';
 import { uid } from './util';
+import { truncateText } from './text';
 
 /**
  * The app is static (GitHub Pages), so a guest on another phone has no server to load the
@@ -20,13 +21,13 @@ type PackedMilestone = [string, string, string, string, string];
 export function packWedding(w: Wedding): unknown[] {
   return [
     VERSION, w.slug, w.partner1, w.partner2, w.date, w.venue, w.city,
-    COVER_PRESETS.indexOf(w.cover.preset), w.story.slice(0, 1200), w.upiId, w.payeeName, w.showAmounts ? 1 : 0,
+    COVER_PRESETS.indexOf(w.cover.preset), truncateText(w.story, 1200), w.upiId, w.payeeName, w.showAmounts ? 1 : 0,
     w.goals.map((g): PackedGoal => [g.id, g.title, g.target, g.emoji, g.description ?? '']),
     (w.events ?? []).slice(0, MAX_EVENTS).map((e): PackedEvent => [
       e.id, EVENT_KINDS.indexOf(e.kind), e.name, e.date, e.time, e.endTime ?? '', e.venue, e.address ?? '', e.mapsUrl ?? '', e.dressCode ?? '',
     ]),
     [w.families?.bride ?? '', w.families?.groom ?? ''],
-    (w.milestones ?? []).slice(0, MAX_MILESTONES).map((m): PackedMilestone => [m.id, m.when, m.title, m.text.slice(0, 300), m.emoji]),
+    (w.milestones ?? []).slice(0, MAX_MILESTONES).map((m): PackedMilestone => [m.id, m.when, m.title, truncateText(m.text, 300), m.emoji]),
   ];
 }
 
@@ -128,8 +129,12 @@ export async function decodeWedding(encoded: string): Promise<Wedding> {
 }
 
 /** App base URL (works under a GitHub Pages sub-path) for building hash-routed links. */
-export function appBaseUrl(): string {
-  return `${location.origin}${location.pathname}`;
+/**
+ * The site's own address for links in messages: https://konicamaheshwarii.github.io/gathbandhan/
+ * on the live site (localhost while developing). A trailing index.html is dropped.
+ */
+export function appBaseUrl(loc: Pick<Location, 'origin' | 'pathname'> = location): string {
+  return `${loc.origin}${loc.pathname.replace(/index\.html$/, '')}`;
 }
 
 export function weddingUrl(slug: string, encoded?: string, base = appBaseUrl()): string {

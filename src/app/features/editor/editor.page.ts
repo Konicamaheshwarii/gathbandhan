@@ -20,6 +20,7 @@ import { EventsEditorComponent } from './events-editor.component';
 import { GalleryEditorComponent } from './gallery-editor.component';
 import { StoryEditorComponent } from './story-editor.component';
 import { GOAL_EMOJIS, goalForm, prefillFromProfile, toWedding, weddingForm } from './wedding-form';
+import { truncateText } from '../../core/text';
 
 @Component({
   selector: 'app-editor',
@@ -225,7 +226,7 @@ export class EditorPage {
     try {
       await this.ai.writeStory(
         { partner1: v.partner1, partner2: v.partner2, howWeMet: this.howWeMet(), details: this.storyDetails(), tone: this.tone(), language: this.storyLanguage() },
-        (text) => this.form.controls.story.setValue(text.slice(0, 1200)),
+        (text) => this.form.controls.story.setValue(truncateText(text, 1200)),
       );
     } catch (e) {
       this.storyError.set((e as Error).message);

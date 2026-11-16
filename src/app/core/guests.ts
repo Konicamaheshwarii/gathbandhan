@@ -1,8 +1,10 @@
 import { formatDate } from './format';
-import { Guest, GuestStatus, MAX_GUESTS, Side, Wedding } from './models';
+import { Guest, GuestStatus, InviteLanguage, InviteTone, MAX_GUESTS, Side, Wedding } from './models';
 import { normalizeIndianPhone } from './share';
 import { firstName, uid } from './util';
 import { appBaseUrl } from './wedding-link';
+import { truncateText } from './text';
+import { inviteMessageTemplate, personaliseInvite } from './whatsapp-invite';
 
 const TOKEN_CHARS = 'abcdefghijkmnopqrstuvwxyzABCDEFGHJKLMNPQRSTUVWXYZ23456789';
 
@@ -30,21 +32,20 @@ export function inviteUrl(slug: string, token?: string, base = appBaseUrl()): st
   return `${base}#/i/${slug}${token ? `/${token}` : ''}`;
 }
 
-/** The WhatsApp message each guest gets, with their personal link. */
-export function inviteWhatsappText(w: Wedding, g: Pick<Guest, 'name' | 'greeting'>, url: string, language: string = w.invite?.language ?? 'english'): string {
-  const couple = `${firstName(w.partner1)} & ${firstName(w.partner2)}`;
-  const date = formatDate(w.date);
-  const dear = guestGreeting(g);
-  switch (language) {
-    case 'hindi':
-      return `🙏 ${dear} जी,\n\n${couple} के शुभ विवाह (${date}, ${w.city || w.venue}) में आप सपरिवार सादर आमंत्रित हैं।\n\nआपका निमंत्रण पत्र यहाँ है 💌\n${url}\n\nकृपया RSVP करें। आपके आशीर्वाद की प्रतीक्षा रहेगी।`;
-    case 'gujarati':
-      return `🙏 ${dear},\n\n${couple}ના શુભ લગ્ન (${date}, ${w.city || w.venue}) પ્રસંગે આપને સહપરિવાર પધારવા ભાવભર્યું આમંત્રણ છે.\n\nઆપની કંકોત્રી અહીં છે 💌\n${url}\n\nકૃપા કરીને RSVP કરશો.`;
-    case 'hinglish':
-      return `🙏 ${dear},\n\n${couple} ki shaadi (${date}, ${w.city || w.venue}) mein aap sabko zaroor aana hai!\n\nAapka invite yahan hai 💌\n${url}\n\nPlease RSVP kar dena. Milte hain! 🎉`;
-    default:
-      return `🙏 Dear ${dear},\n\nWith great joy, we invite you and your family to the wedding of ${couple} on ${date}${w.city ? ` in ${w.city}` : ''}.\n\nYour invitation is here 💌\n${url}\n\nPlease RSVP so we can plan for you. Your presence is our blessing.`;
-  }
+/** The default WhatsApp message for one guest, with their personal links. */
+export function inviteWhatsappText(
+  w: Wedding, g: Pick<Guest, 'name' | 'greeting'>, url: string,
+  language: InviteLanguage = w.invite?.language ?? 'english', tone: InviteTone = 'traditional', rsvpUrl = rsvpLink(w.slug),
+): string {
+  return personaliseInvite(inviteMessageTemplate(w, { language, tone }), g, { invite: url, rsvp: rsvpUrl, shagun: shagunLink(w.slug) }, language, tone);
+}
+
+/** The RSVP and shagun pages of a wedding. */
+export function rsvpLink(slug: string, base = appBaseUrl()): string {
+  return `${base}#/w/${slug}/rsvp`;
+}
+export function shagunLink(slug: string, base = appBaseUrl()): string {
+  return `${base}#/w/${slug}/give`;
 }
 
 export interface ParsedGuests {
@@ -115,7 +116,7 @@ export function parseGuestList(text: string): ParsedGuests {
       }
       [name = '', group = ''] = rest;
     }
-    name = name.replace(/\s+/g, ' ').trim().slice(0, 80);
+    name = truncateText(name.replace(/\s+/g, ' ').trim(), 80);
     if (name.length < 2) {
       skipped++;
       continue;
@@ -124,8 +125,8 @@ export function parseGuestList(text: string): ParsedGuests {
       name,
       ...(phone ? { phone } : {}),
       ...(side ? { side } : {}),
-      ...(group.trim() ? { group: group.trim().slice(0, 60) } : {}),
-      ...(greeting.trim() ? { greeting: greeting.trim().slice(0, 80) } : {}),
+      ...(group.trim() ? { group: truncateText(group.trim(), 60) } : {}),
+      ...(greeting.trim() ? { greeting: truncateText(greeting.trim(), 80) } : {}),
     });
     if (guests.length >= MAX_GUESTS) break;
   }

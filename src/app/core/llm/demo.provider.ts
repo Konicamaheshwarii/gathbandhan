@@ -1,7 +1,7 @@
 import { GoalsInput, MilestonesInput, StoryInput, ThanksInput } from '../ai/ai.models';
 import { demoGoals, demoMilestones, demoStory, demoThanks } from '../ai/demo-writer';
 import type { DesignInput, InviteTextInput, WhatsappInput } from '../ai/invite-prompts';
-import { inviteWhatsappText } from '../guests';
+import { MSG, inviteMessageTemplate } from '../whatsapp-invite';
 import { designPicks, draftInviteText } from '../invite';
 import { LlmProvider, LlmRequest } from './llm-provider';
 
@@ -28,7 +28,11 @@ export class DemoProvider implements LlmProvider {
       }
       case 'whatsapp': {
         const i = req.input as WhatsappInput;
-        return inviteWhatsappText(i.wedding, { name: i.greeting, greeting: i.greeting }, i.url, i.language);
+        return inviteMessageTemplate(i.wedding, { language: i.language, tone: i.tone, includeShagun: !!i.shagunUrl })
+          .split(MSG.name).join(i.greeting)
+          .split(MSG.link).join(i.url)
+          .split(MSG.rsvp).join(i.rsvpUrl ?? i.url)
+          .split(MSG.shagun).join(i.shagunUrl ?? '');
       }
       case 'design': {
         const i = req.input as DesignInput;

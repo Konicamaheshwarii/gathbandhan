@@ -34,7 +34,7 @@
         <section class="card queue" aria-live="polite">
           <p class="eyebrow">Sending {{ queueIndex() + 1 }} of {{ queue().length }}</p>
           <h2>{{ g.greeting || g.name }}</h2>
-          <p class="hint">{{ g.name }} · +{{ g.phone }}</p>
+          <p class="hint">{{ g.name }} · +{{ g.phone }} · {{ langLabel(msg.languageFor(g)) }}</p>
           <pre class="preview-msg">{{ message(g) }}</pre>
           <button class="btn whatsapp block" type="button" (click)="sendCurrent()">Open WhatsApp for {{ g.name }}</button>
           <div class="row">
@@ -51,23 +51,7 @@
         </section>
       }
 
-      <section class="card stack">
-        <div class="row"><h2>Message</h2><span class="spacer"></span>
-          <button class="btn small ai-btn" type="button" (click)="writeWithAi()" [disabled]="writing()">
-            @if (writing()) { <span class="spinner" aria-hidden="true"></span> } ✨ Rewrite with AI
-          </button>
-        </div>
-        <div class="row" role="radiogroup" aria-label="Tone">
-          @for (t of tones; track t) {
-            <button type="button" role="radio" class="toggle small-toggle" [attr.aria-checked]="tone() === t" (click)="tone.set(t)">{{ t }}</button>
-          }
-        </div>
-        <textarea rows="8" [value]="template()" (input)="template.set($any($event.target).value)" aria-label="Invite message"></textarea>
-        <p class="hint"><code>{{ '{name}' }}</code> becomes each guest's greeting and <code>{{ '{link}' }}</code> their personal invite link.
-          @if (writtenBy()) { Written by {{ writtenBy() }}. }</p>
-        <p class="hint">{{ settings.aiHint() }}</p>
-        <button class="btn small ghost" type="button" (click)="resetTemplate()">Use the standard message</button>
-      </section>
+      <app-invite-composer [wedding]="w" [guests]="store.guests()" (opened)="markSent($event)" />
 
       <section class="card stack">
         <h2>Add guests</h2>
@@ -75,6 +59,11 @@
           <label>Name <input type="text" [value]="name()" (input)="name.set($any($event.target).value)" placeholder="Rakesh Sharma" /></label>
           <label>Greet them as <span class="hint">(optional)</span> <input type="text" [value]="greeting()" (input)="greeting.set($any($event.target).value)" placeholder="Sharma Parivar" /></label>
           <label>WhatsApp number <input type="tel" inputmode="tel" [value]="phone()" (input)="phone.set($any($event.target).value)" placeholder="98765 43210" /></label>
+          <label>Invite language <span class="hint">(optional)</span>
+            <select [value]="guestLanguage()" (change)="guestLanguage.set($any($event.target).value)">
+              <option value="">Same as the message ({{ langLabel(msg.language()) }})</option>
+              @for (l of languages; track l.id) { <option [value]="l.id">{{ l.label }}</option> }
+            </select></label>
           <div class="row" role="radiogroup" aria-label="Side">
             @for (s of sides; track s.id) {
               <button type="button" role="radio" class="toggle small-toggle" [attr.aria-checked]="side() === s.id" (click)="side.set(side() === s.id ? null : s.id)">{{ s.label }}</button>
@@ -122,6 +111,11 @@
                 @if (g.phone) {
                   <a class="btn small whatsapp" [href]="whatsapp(g)" target="_blank" rel="noopener" (click)="markSent(g)">{{ g.sentAt ? 'Resend' : 'Send' }}</a>
                 }
+                <select class="lang-pick" [value]="g.language ?? ''" (change)="setGuestLanguage(g, $any($event.target).value)"
+                        [attr.aria-label]="'Invite language for ' + g.name" [title]="'Invite language for ' + g.name">
+                  <option value="">{{ langLabel(msg.language()) }}</option>
+                  @for (l of languages; track l.id) { @if (l.id !== msg.language()) { <option [value]="l.id">{{ l.label }}</option> } }
+                </select>
                 <button class="btn small" type="button" (click)="copyLink(g)">Link</button>
                 <button class="btn small ghost danger" type="button" (click)="remove(g)" [attr.aria-label]="'Remove ' + g.name">✕</button>
               </div>

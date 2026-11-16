@@ -1,4 +1,5 @@
 import { isValidVpa, normalizeVpa } from './upi';
+import { truncateText } from './text';
 
 /**
  * Reading the couple's own UPI QR (the one GPay, PhonePe, Paytm or BHIM shows under "Receive
@@ -48,7 +49,7 @@ export function parseUpiQr(payload: string): UpiQrResult {
   const vpa = normalizeVpa(rawVpa);
   if (!isValidVpa(vpa)) return { ok: false, reason: 'bad-upi-id' };
 
-  const payeeName = (params.get('pn') ?? '').replace(/\s+/g, ' ').trim().slice(0, 60);
+  const payeeName = truncateText((params.get('pn') ?? '').replace(/\s+/g, ' ').trim(), 60);
   const mc = params.get('mc') ?? '';
   // Personal QRs carry no merchant code, or the "0000" placeholder; shops carry a real one.
   const merchant = (!!mc && mc !== '0000') || !!params.get('tr') || !!params.get('sign');

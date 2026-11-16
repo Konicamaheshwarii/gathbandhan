@@ -2,7 +2,7 @@ import { Injectable, OnDestroy, inject } from '@angular/core';
 import type { SupabaseClient } from '@supabase/supabase-js';
 import { Observable, Subject, merge } from 'rxjs';
 import {
-  Contribution, ContributionStatus, CoverPreset, FeeBearer, PaymentMode, PaymentProvider, Families, GalleryPhoto, Goal, Guest, GuestInvite, GuestMark, InviteDesign, Milestone,
+  Contribution, ContributionStatus, CoverPreset, InviteLanguage, FeeBearer, PaymentMode, PaymentProvider, Families, GalleryPhoto, Goal, Guest, GuestInvite, GuestMark, InviteDesign, Milestone,
   NewContribution, NewRsvp, PublicActivity, Rsvp, Side, Wedding, WeddingEvent,
 } from '../../models';
 import { LocalStorageWeddingRepository } from '../local-storage.repository';
@@ -52,6 +52,8 @@ export interface GuestRow {
   phone: string | null;
   side: Side | null;
   group_name: string | null;
+  /** Only sent when the couple picked (or cleared) a language, so older databases keep working. */
+  language?: InviteLanguage | null;
   token: string;
   sent_at: string | null;
   opened_at: string | null;
@@ -71,6 +73,7 @@ export function toGuestRow(g: Guest): GuestRow {
     phone: g.phone ?? null,
     side: g.side ?? null,
     group_name: g.group ?? null,
+    ...('language' in g ? { language: g.language ?? null } : {}),
     token: g.token,
     sent_at: iso(g.sentAt),
     opened_at: iso(g.openedAt),
@@ -86,6 +89,7 @@ export function fromGuestRow(r: GuestRow): Guest {
   if (r.phone) g.phone = r.phone;
   if (r.side) g.side = r.side;
   if (r.group_name) g.group = r.group_name;
+  if (r.language) g.language = r.language;
   const set = (key: 'sentAt' | 'openedAt' | 'rsvpAt' | 'gaveAt', v: string | null) => { const t = ms(v); if (t) g[key] = t; };
   set('sentAt', r.sent_at);
   set('openedAt', r.opened_at);

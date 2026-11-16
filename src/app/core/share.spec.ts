@@ -11,8 +11,8 @@ describe('sharing', () => {
   });
 
   it('builds WhatsApp links with or without a recipient', () => {
-    expect(whatsappUrl('Hi & bye')).toBe('https://wa.me/?text=Hi%20%26%20bye');
-    expect(whatsappUrl('Hi', '919876543210')).toBe('https://wa.me/919876543210?text=Hi');
+    expect(whatsappUrl('Hi & bye + 🙏')).toBe('https://api.whatsapp.com/send?text=Hi%20%26%20bye%20%2B%20%F0%9F%99%8F');
+    expect(whatsappUrl('Hi', '919876543210')).toBe('https://api.whatsapp.com/send?phone=919876543210&text=Hi');
   });
 
   it('writes an invite that frames the ask as shagun', () => {

@@ -1,0 +1,62 @@
+<section class="card composer" aria-labelledby="composer-h">
+  <div class="head">
+    <h2 id="composer-h">WhatsApp message</h2>
+    <p class="hint">Choose the language and tone. A guest can also have their own language in the list.</p>
+  </div>
+
+  <div class="seg langs" role="radiogroup" aria-label="Message language">
+    @for (l of languages; track l.id) {
+      <button type="button" role="radio" [attr.aria-checked]="state.language() === l.id" [attr.lang]="l.id === 'hindi' ? 'hi' : l.id === 'gujarati' ? 'gu' : 'en'"
+              (click)="pickLanguage(l.id)" [attr.data-lang]="l.id">{{ l.label }}</button>
+    }
+  </div>
+
+  <div class="seg tones" role="radiogroup" aria-label="Tone">
+    @for (t of tones; track t) {
+      <button type="button" role="radio" [attr.aria-checked]="state.tone() === t" (click)="pickTone(t)" [attr.data-tone]="t">{{ toneLabel(t) }}</button>
+    }
+  </div>
+
+  @if (guests().length) {
+    <label class="preview-for">
+      <span>Preview for</span>
+      <select [value]="previewGuest()?.id ?? ''" (change)="previewId.set($any($event.target).value)" aria-label="Preview the message for">
+        @for (g of guests(); track g.id) { <option [value]="g.id">{{ g.greeting || g.name }}</option> }
+      </select>
+    </label>
+  }
+
+  <div class="chat" aria-label="Message preview">
+    <div class="bubble" data-test="wa-preview" [innerHTML]="html()"></div>
+    <span class="meta" aria-hidden="true">{{ clock }} ✓✓</span>
+  </div>
+  @if (ownLanguage(); as own) {
+    <p class="hint own">In the list, {{ previewGuest()!.greeting || previewGuest()!.name }} gets their invite in <strong>{{ langLabel(own) }}</strong> (set on the guest).</p>
+  }
+
+  <label class="shagun">
+    <input type="checkbox" [checked]="state.includeShagun()" (change)="state.setIncludeShagun($any($event.target).checked)" data-test="include-shagun" />
+    <span><strong>Add the shagun link</strong> <span class="hint">Off by default: some guests find being asked for money awkward.</span></span>
+  </label>
+
+  <div class="tools">
+    <button class="btn small ai-btn" type="button" (click)="rewrite()" [disabled]="writing()">
+      @if (writing()) { <span class="spinner" aria-hidden="true"></span> } ✨ Rewrite with AI
+    </button>
+    <button class="btn small" type="button" (click)="editing.set(!editing())" [attr.aria-expanded]="editing()">✏️ Edit text</button>
+    @if (state.edited()) { <button class="btn small ghost" type="button" (click)="reset()">Use the standard message</button> }
+  </div>
+  @if (writtenBy()) { <p class="hint">Written by {{ writtenBy() }}.</p> }
+
+  @if (editing()) {
+    <textarea rows="12" [value]="state.template()" (input)="state.setTemplate($any($event.target).value)" aria-label="Edit the message"></textarea>
+    <p class="hint"><code>{{ '{name}' }}</code> becomes each guest's greeting, <code>{{ '{link}' }}</code> their personal invite,
+      <code>{{ '{rsvp}' }}</code> the RSVP page and <code>{{ '{shagun}' }}</code> the shagun page. *bold* and _italic_ work in WhatsApp.</p>
+  }
+
+  <div class="send">
+    <button class="btn" type="button" (click)="copy()" data-test="copy-message">Copy</button>
+    <a class="btn whatsapp" [href]="waLink()" target="_blank" rel="noopener" (click)="openWhatsapp()" data-test="open-whatsapp">Open WhatsApp</a>
+  </div>
+  <p class="hint">{{ settings.aiHint() }}</p>
+</section>

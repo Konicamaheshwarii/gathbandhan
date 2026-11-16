@@ -676,3 +676,10 @@ create policy "shagun: people delete their avatar" on storage.objects
   for delete to authenticated
   using (bucket_id = 'shagun-photos' and (storage.foldername(name))[1] = 'avatars'
          and (storage.foldername(name))[2] = (select auth.uid())::text);
+
+-- ---------- guests: invite language (added later; safe to run again) ----------
+-- The language of one guest's WhatsApp invite, when it differs from the couple's choice.
+alter table public.shagun_guests add column if not exists language text;
+alter table public.shagun_guests drop constraint if exists shagun_guests_language_check;
+alter table public.shagun_guests add constraint shagun_guests_language_check
+  check (language is null or language in ('english', 'hindi', 'gujarati', 'hinglish'));

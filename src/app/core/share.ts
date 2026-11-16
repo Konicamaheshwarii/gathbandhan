@@ -1,5 +1,6 @@
 import { formatDate, formatInrShort } from './format';
 import { Wedding } from './models';
+import { wellFormed } from './text';
 
 /** Indian mobile numbers: 10 digits starting 6-9, optionally with +91 / 91 / 0. Returns 91XXXXXXXXXX. */
 export function normalizeIndianPhone(input: string): string | null {
@@ -10,9 +11,17 @@ export function normalizeIndianPhone(input: string): string | null {
   return /^[6-9]\d{9}$/.test(local) ? `91${local}` : null;
 }
 
-/** wa.me link; with a phone it opens that chat, without one WhatsApp asks whom to send to. */
+/**
+ * WhatsApp "click to chat" link; with a phone it opens that chat, without one WhatsApp asks whom
+ * to send to. It goes straight to api.whatsapp.com/send: the short wa.me link redirects there, and
+ * on the way WhatsApp Desktop and Web can lose emoji (4-byte characters), which arrive as "�".
+ * Lone surrogates are dropped first, since encodeURIComponent would throw on them.
+ */
 export function whatsappUrl(text: string, phone?: string | null): string {
-  return `https://wa.me/${phone ?? ''}?text=${encodeURIComponent(text)}`;
+  const params = new URLSearchParams();
+  if (phone) params.set('phone', phone);
+  params.set('text', wellFormed(text));
+  return `https://api.whatsapp.com/send?${params.toString().replace(/\+/g, '%20')}`;
 }
 
 export function inviteMessage(w: Wedding, url: string, totalTarget: number): string {

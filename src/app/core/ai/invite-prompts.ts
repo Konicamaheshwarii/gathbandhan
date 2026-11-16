@@ -3,6 +3,8 @@ import { LlmRequest } from '../llm/llm-provider';
 import { InviteLanguage, InviteTemplate, InviteText, InviteTone, Wedding } from '../models';
 import { firstName } from '../util';
 import { extractJson, fence } from './prompts';
+import { tidyCase, truncateText, wellFormed } from '../text';
+import { MAX_EVENT_LINES, coupleNames, eventLine } from '../whatsapp-invite';
 
 const SYSTEM = `You write Indian wedding invitations (kankotri / nimantran patrika) for families.
 Write gracefully, respectfully and in the requested language and script. Never invent facts,
@@ -47,7 +49,7 @@ Reply with JSON only: {"invocation":"...","title":"...","invitation":"...","clos
   };
 }
 
-const text = (v: unknown, max: number) => (typeof v === 'string' ? v.replace(/\s+/g, ' ').trim().slice(0, max) : '');
+const text = (v: unknown, max: number) => (typeof v === 'string' ? truncateText(v.replace(/\s+/g, ' ').trim(), max) : '');
 
 /** Keeps the canonical shlok (AI never writes scripture) and rejects replies without the couple's names. */
 export function validateInviteText(raw: unknown, input: InviteTextInput): InviteText {
@@ -72,30 +74,44 @@ export interface WhatsappInput {
   url: string;
   language: InviteLanguage;
   tone: InviteTone;
+  /** The RSVP link (or its placeholder); kept in the message whatever the model writes. */
+  rsvpUrl?: string;
+  /** The shagun link (or its placeholder), only when the couple chose to include it. */
+  shagunUrl?: string;
 }
 
 export function whatsappRequest(input: WhatsappInput): LlmRequest {
   const w = input.wedding;
+  const events = [...(w.events ?? [])]
+    .sort((a, b) => `${a.date} ${a.time}`.localeCompare(`${b.date} ${b.time}`))
+    .slice(0, MAX_EVENT_LINES)
+    .map((e) => eventLine(e, input.language))
+    .join('\n');
   return {
     task: 'whatsapp',
     language: input.language,
     input,
     system: SYSTEM,
-    prompt: `Write a short WhatsApp message inviting one guest to a wedding, from the couple's family.
-Guest (address them like this): ${fence('guest', input.greeting, 80)}
-Couple: ${fence('couple', `${firstName(w.partner1)} & ${firstName(w.partner2)}`, 80)}
-Date: ${w.date}. City: ${fence('city', w.city, 60)}
+    prompt: `Write a warm WhatsApp message inviting one guest to a wedding, from the couple's family, like a short kankotri.
+Guest (address them exactly like this, it is a placeholder): ${input.greeting}
+Couple: ${fence('couple', coupleNames(w), 80)}
+Date: ${w.date}. City: ${fence('city', tidyCase(w.city), 60)}
+Functions (copy these lines as they are): ${fence('functions', events, 600)}
 Tone: ${input.tone}. Language: ${LANGUAGE[input.language]}.
-At most 50 words, one or two emojis at most. End with this exact link on its own line: ${input.url}
-Plain text only.`,
+Use WhatsApp formatting: the couple's names in *bold*, one blessing line in _italics_. 8 to 14 short lines, two or three emojis.
+Include these lines exactly: "📩 ${input.url}" and "✅ RSVP: ${input.rsvpUrl ?? input.url}"${input.shagunUrl ? ` and "🎁 ${input.shagunUrl}"` : ''}.
+End with the couple's names. No other links, no hashtags.`,
   };
 }
 
-/** The guest's link must survive whatever the model wrote. */
+/** The guest's links must survive whatever the model wrote; broken characters are dropped. */
 export function validateWhatsapp(textIn: string, input: WhatsappInput): string {
-  const t = textIn.replace(/<think>[\s\S]*?<\/think>/gi, '').trim().replace(/^["“]|["”]$/g, '').trim();
+  let t = wellFormed(textIn.replace(/<think>[\s\S]*?<\/think>/gi, '')).replace(/�/g, '').trim().replace(/^["“]|["”]$/g, '').trim();
   if (t.length < 20) throw new Error('The AI message was too short.');
-  return t.includes(input.url) ? t : `${t}\n\n${input.url}`;
+  if (!t.includes(input.url)) t = `${t}\n\n📩 ${input.url}`;
+  if (input.rsvpUrl && !t.includes(input.rsvpUrl)) t = `${t}\n✅ RSVP: ${input.rsvpUrl}`;
+  if (input.shagunUrl && !t.includes(input.shagunUrl)) t = `${t}\n🎁 ${input.shagunUrl}`;
+  return t;
 }
 
 export interface DesignInput {

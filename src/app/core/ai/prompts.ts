@@ -3,6 +3,7 @@ import { LlmRequest } from '../llm/llm-provider';
 import { MAX_GOALS, MAX_MILESTONES, NoteLanguage } from '../models';
 import { clamp } from '../util';
 import { GoalSuggestions, GoalsInput, MilestonesInput, StoryInput, SuggestedGoal, SuggestedMilestone, ThanksInput } from './ai.models';
+import { truncateText } from '../text';
 
 const SYSTEM = `You help Indian couples on Gathbandhan, an app for wedding e-invites and digital shagun,
 with their wedding shagun page: a wishlist of real goals
@@ -19,8 +20,9 @@ const LANGUAGE: Record<NoteLanguage, string> = {
 
 /** Fences user text and strips anything that could close the fence early. */
 export function fence(tag: string, text: string, max = 600): string {
-  const clean = (text ?? '').replace(/<\/?[a-z_]+>/gi, '').trim().slice(0, max);
-  return `<${tag}>\n${clean || '(not given)'}\n</${tag}>`;
+  const clean = (text ?? '').replace(/<\/?[a-z_]+>/gi, '').trim();
+  const clean2 = truncateText(clean, max);
+  return `<${tag}>\n${clean2 || '(not given)'}\n</${tag}>`;
 }
 
 export function storyRequest(input: StoryInput): LlmRequest {
@@ -127,7 +129,7 @@ export function cleanText(text: string): string {
 }
 
 const str = (v: unknown, max: number) =>
-  typeof v === 'string' || typeof v === 'number' ? String(v).trim().slice(0, max) : '';
+  typeof v === 'string' || typeof v === 'number' ? truncateText(String(v).trim(), max) : '';
 
 /** Rounds to amounts people actually set: ₹5,000 steps below a lakh, ₹25,000 up to ten lakh, then lakhs. */
 export function roundTarget(n: number): number {

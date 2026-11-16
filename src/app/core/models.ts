@@ -311,6 +311,8 @@ export interface Guest {
   side?: Side;
   /** "Mama's family", "Office", "College friends". */
   group?: string;
+  /** Language of their WhatsApp invite; unset means the couple's chosen language. */
+  language?: InviteLanguage;
   /** Secret part of their personal invite link. */
   token: string;
   sentAt?: number;

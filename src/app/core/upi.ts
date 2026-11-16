@@ -1,4 +1,5 @@
 import { MAX_UPI_AMOUNT } from './models';
+import { truncateText } from './text';
 
 /**
  * UPI deep links (NPCI "UPI Linking Specification").
@@ -28,7 +29,7 @@ export interface UpiPayment {
 /** Many UPI apps reject notes longer than about 50 characters or containing odd symbols. */
 export function upiNote(text: string, max = 50): string {
   const clean = (text ?? '').replace(/[^\p{L}\p{N} .,&'!-]/gu, ' ').replace(/\s+/g, ' ').trim();
-  return clean.length > max ? clean.slice(0, max - 1).trimEnd() + '…' : clean;
+  return truncateText(clean, max, '…');
 }
 
 export function upiAmount(amount: number): string {
@@ -47,7 +48,7 @@ export function buildUpiLink(p: UpiPayment): string {
   if (!isValidVpa(vpa)) throw new Error('That does not look like a UPI ID (name@bank).');
   const params = [
     `pa=${vpa}`,
-    `pn=${encodeURIComponent(p.payeeName.trim().slice(0, 50) || vpa)}`,
+    `pn=${encodeURIComponent(truncateText(p.payeeName.trim(), 50) || vpa)}`,
   ];
   if (p.amount !== undefined) params.push(`am=${upiAmount(p.amount)}`);
   params.push('cu=INR');

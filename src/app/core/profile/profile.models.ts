@@ -1,6 +1,7 @@
 import { InviteLanguage, NoteLanguage, Wedding } from '../models';
 import { isValidVpa, normalizeVpa } from '../upi';
 import { firstName } from '../util';
+import { graphemes } from '../text';
 
 /** Who the person is in the wedding. */
 export type WeddingRole = 'bride' | 'groom' | 'family' | 'planner' | 'other';
@@ -119,8 +120,9 @@ export function greetingName(p: Pick<Profile, 'displayName' | 'fullName'> | null
 /** "Konica Maheshwari" -> "KM"; falls back to the email's first letter. */
 export function initialsOf(name: string, email = ''): string {
   const words = (name ?? '').trim().split(/\s+/).filter(Boolean);
-  const letters = words.length > 1 ? words[0][0] + words[words.length - 1][0] : words[0]?.slice(0, 1) ?? '';
-  return (letters || email.trim().slice(0, 1) || '?').toUpperCase();
+  const first = (w: string | undefined) => graphemes(w ?? '')[0] ?? '';
+  const letters = words.length > 1 ? first(words[0]) + first(words[words.length - 1]) : first(words[0]);
+  return (letters || first(email.trim()) || '?').toUpperCase();
 }
 
 /** The invite language for a profile language. */

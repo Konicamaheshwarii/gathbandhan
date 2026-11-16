@@ -1,4 +1,5 @@
 import { LlmError, LlmProvider, LlmRequest } from './llm-provider';
+import { truncateText } from '../text';
 
 export const POLLINATIONS_TEXT_URL = 'https://text.pollinations.ai/';
 /** The free tier allows about one reply every 45 seconds per IP address. */
@@ -75,6 +76,6 @@ export class PollinationsProvider implements LlmProvider {
  * labelled where it is used, and always over the CSS/SVG motifs so a failed image changes nothing.
  */
 export function aiImageUrl(prompt: string, seed: number, width = 1080, height = 1920): string {
-  const p = encodeURIComponent(prompt.replace(/\s+/g, ' ').trim().slice(0, 300));
+  const p = encodeURIComponent(truncateText(prompt.replace(/\s+/g, ' ').trim(), 300));
   return `https://image.pollinations.ai/prompt/${p}?width=${width}&height=${height}&seed=${seed}&nologo=true&model=flux`;
 }

@@ -1,10 +1,8 @@
 import { ChangeDetectionStrategy, Component, computed, effect, inject, input, signal, untracked } from '@angular/core';
 import { RouterLink } from '@angular/router';
-import { AiService } from '../../core/ai/ai.service';
-import { guestGreeting, guestStatus, inviteUrl, inviteWhatsappText, mergeGuests, parseGuestList } from '../../core/guests';
+import { guestStatus, inviteUrl, mergeGuests, parseGuestList } from '../../core/guests';
 import { defaultInvite, migrateInvite } from '../../core/invite';
-import { TIER_LABELS } from '../../core/llm/llm-chain';
-import { GUEST_STATUS, Guest, GuestStatus, INVITE_TONES, InviteTone, SIDES, Side } from '../../core/models';
+import { GUEST_STATUS, Guest, GuestStatus, INVITE_LANGUAGES, InviteLanguage, SIDES, Side } from '../../core/models';
 import { normalizeIndianPhone, whatsappUrl } from '../../core/share';
 import { SettingsStore } from '../../core/settings.store';
 import { WeddingStore } from '../../core/wedding.store';
@@ -12,11 +10,10 @@ import { copyText } from '../../shared/clipboard';
 import { LogoComponent } from '../../shared/logo.component';
 import { TimeAgoPipe } from '../../shared/pipes';
 import { ToastService } from '../../shared/toast.service';
+import { InviteComposerComponent } from './invite-composer.component';
+import { InviteMessageState } from './invite-message.state';
 
 const QUEUE_SIZE = 10;
-/** Placeholders in the message template, filled in per guest. */
-const NAME = '{name}';
-const LINK = '{link}';
 
 interface ContactsManager {
   select(props: string[], options?: { multiple?: boolean }): Promise<{ name?: string[]; tel?: string[] }[]>;
@@ -29,8 +26,8 @@ interface ContactsManager {
  */
 @Component({
   selector: 'app-guests',
-  imports: [LogoComponent, RouterLink, TimeAgoPipe],
-  providers: [WeddingStore],
+  imports: [LogoComponent, RouterLink, TimeAgoPipe, InviteComposerComponent],
+  providers: [WeddingStore, InviteMessageState],
   changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './guests.page.html',
   styleUrl: './guests.page.scss',
@@ -38,14 +35,15 @@ interface ContactsManager {
 export class GuestsPage {
   protected readonly store = inject(WeddingStore);
   protected readonly settings = inject(SettingsStore);
-  private readonly ai = inject(AiService);
+  protected readonly msg = inject(InviteMessageState);
   private readonly toast = inject(ToastService);
 
   readonly slug = input.required<string>();
 
   protected readonly statuses = GUEST_STATUS;
   protected readonly sides = SIDES;
-  protected readonly tones = INVITE_TONES;
+  protected readonly languages = INVITE_LANGUAGES;
+  protected readonly langLabel = (l: InviteLanguage) => INVITE_LANGUAGES.find((x) => x.id === l)?.label ?? l;
   protected readonly canPickContacts = typeof navigator !== 'undefined' && 'contacts' in navigator;
 
   protected readonly filter = signal<GuestStatus | 'all'>('all');
@@ -58,14 +56,9 @@ export class GuestsPage {
   protected readonly phone = signal('');
   protected readonly side = signal<Side | null>(null);
   protected readonly groupName = signal('');
+  protected readonly guestLanguage = signal<InviteLanguage | ''>('');
   protected readonly showImport = signal(false);
   protected readonly pasted = signal('');
-
-  // message
-  protected readonly template = signal('');
-  protected readonly tone = signal<InviteTone>('traditional');
-  protected readonly writing = signal(false);
-  protected readonly writtenBy = signal('');
 
   // queue
   protected readonly queue = signal<string[]>([]);
@@ -106,22 +99,24 @@ export class GuestsPage {
       const slug = this.slug();
       untracked(async () => {
         const w = await this.store.load(slug, { manage: true });
-        if (w && !this.template()) this.template.set(this.defaultTemplate());
+        if (w) this.msg.init(w, this.design()!.language);
       });
     });
-  }
-
-  private defaultTemplate(): string {
-    const w = this.store.wedding()!;
-    return inviteWhatsappText(w, { name: NAME, greeting: NAME }, LINK, this.design()!.language);
   }
 
   protected link(g: Guest): string {
     return inviteUrl(this.slug(), g.token);
   }
 
+  /** The guest's message, in their own language when one is set on them. */
   protected message(g: Guest): string {
-    return this.template().split(NAME).join(guestGreeting(g)).split(LINK).join(this.link(g));
+    return this.msg.message(g);
+  }
+
+  /** Per-guest language: '' means "the language chosen above". */
+  protected async setGuestLanguage(g: Guest, value: string): Promise<void> {
+    const language = INVITE_LANGUAGES.some((l) => l.id === value) ? (value as InviteLanguage) : undefined;
+    await this.save([{ ...g, language }], language ? `${g.greeting || g.name} gets the invite in ${this.langLabel(language)}` : `${g.greeting || g.name} follows the chosen language`);
   }
 
   // ---------- adding ----------
@@ -141,6 +136,7 @@ export class GuestsPage {
     const fresh = mergeGuests(w.id, this.store.guests(), [{
       name, ...(phone ? { phone } : {}), ...(this.side() ? { side: this.side()! } : {}),
       ...(this.groupName().trim() ? { group: this.groupName().trim() } : {}), ...(this.greeting().trim() ? { greeting: this.greeting().trim() } : {}),
+      ...(this.guestLanguage() ? { language: this.guestLanguage() as InviteLanguage } : {}),
     }]);
     if (!fresh.length) {
       this.toast.show(`${name} is already on your list.`);
@@ -195,32 +191,6 @@ export class GuestsPage {
   protected async remove(g: Guest): Promise<void> {
     if (!confirm(`Remove ${g.name} from the guest list?`)) return;
     await this.store.removeGuest(g);
-  }
-
-  // ---------- message ----------
-
-  protected async writeWithAi(): Promise<void> {
-    const w = this.store.wedding();
-    const d = this.design();
-    if (!w || !d) return;
-    this.writing.set(true);
-    try {
-      const r = await this.ai.whatsappMessage({ wedding: w, greeting: NAME, url: LINK, language: d.language, tone: this.tone() });
-      // Models sometimes rewrite the placeholder; make sure each guest still gets their name and link.
-      let text = r.value;
-      if (!text.includes(NAME)) text = text.replace(/^(\S+\s+)?/, (m) => `${m}${NAME}, `);
-      this.template.set(text);
-      this.writtenBy.set(TIER_LABELS[r.tier]);
-    } catch (e) {
-      this.toast.show((e as Error).message);
-    } finally {
-      this.writing.set(false);
-    }
-  }
-
-  protected resetTemplate(): void {
-    this.template.set(this.defaultTemplate());
-    this.writtenBy.set('');
   }
 
   // ---------- sending ----------
