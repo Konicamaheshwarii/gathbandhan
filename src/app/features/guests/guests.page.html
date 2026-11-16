@@ -60,9 +60,9 @@
           <label>Greet them as <span class="hint">(optional)</span> <input type="text" [value]="greeting()" (input)="greeting.set($any($event.target).value)" placeholder="Sharma Parivar" /></label>
           <label>WhatsApp number <input type="tel" inputmode="tel" [value]="phone()" (input)="phone.set($any($event.target).value)" placeholder="98765 43210" /></label>
           <label>Invite language <span class="hint">(optional)</span>
-            <select [value]="guestLanguage()" (change)="guestLanguage.set($any($event.target).value)">
-              <option value="">Same as the message ({{ langLabel(msg.language()) }})</option>
-              @for (l of languages; track l.id) { <option [value]="l.id">{{ l.label }}</option> }
+            <select (change)="guestLanguage.set($any($event.target).value)">
+              <option value="" [selected]="!guestLanguage()">Same as the message ({{ langLabel(msg.language()) }})</option>
+              @for (l of languages; track l.id) { <option [value]="l.id" [selected]="guestLanguage() === l.id">{{ l.label }}</option> }
             </select></label>
           <div class="row" role="radiogroup" aria-label="Side">
             @for (s of sides; track s.id) {
@@ -91,9 +91,9 @@
       <div class="row list-head">
         <h2 id="list-h">Guest list <span class="hint">({{ visible().length }} of {{ counts().all }})</span></h2>
         <span class="spacer"></span>
-        <select [value]="group()" (change)="group.set($any($event.target).value)" aria-label="Filter by group">
-          <option value="">All groups</option>
-          @for (g of groups(); track g) { <option [value]="g">{{ g }}</option> }
+        <select (change)="group.set($any($event.target).value)" aria-label="Filter by group">
+          <option value="" [selected]="!group()">All groups</option>
+          @for (g of groups(); track g) { <option [value]="g" [selected]="group() === g">{{ g }}</option> }
         </select>
         <input type="search" placeholder="Search" aria-label="Search guests" [value]="query()" (input)="query.set($any($event.target).value)" />
       </div>
@@ -111,10 +111,11 @@
                 @if (g.phone) {
                   <a class="btn small whatsapp" [href]="whatsapp(g)" target="_blank" rel="noopener" (click)="markSent(g)">{{ g.sentAt ? 'Resend' : 'Send' }}</a>
                 }
-                <select class="lang-pick" [value]="g.language ?? ''" (change)="setGuestLanguage(g, $any($event.target).value)"
+                <!-- [selected] on each option: a [value] on the select would be set before the @for options exist. -->
+                <select class="lang-pick" (change)="setGuestLanguage(g, $any($event.target).value)"
                         [attr.aria-label]="'Invite language for ' + g.name" [title]="'Invite language for ' + g.name">
-                  <option value="">{{ langLabel(msg.language()) }}</option>
-                  @for (l of languages; track l.id) { @if (l.id !== msg.language()) { <option [value]="l.id">{{ l.label }}</option> } }
+                  <option value="" [selected]="!g.language || g.language === msg.language()">{{ langLabel(msg.language()) }}</option>
+                  @for (l of languages; track l.id) { @if (l.id !== msg.language()) { <option [value]="l.id" [selected]="g.language === l.id">{{ l.label }}</option> } }
                 </select>
                 <button class="btn small" type="button" (click)="copyLink(g)">Link</button>
                 <button class="btn small ghost danger" type="button" (click)="remove(g)" [attr.aria-label]="'Remove ' + g.name">✕</button>

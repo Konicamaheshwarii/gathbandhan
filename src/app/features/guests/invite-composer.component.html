@@ -20,8 +20,8 @@
   @if (guests().length) {
     <label class="preview-for">
       <span>Preview for</span>
-      <select [value]="previewGuest()?.id ?? ''" (change)="previewId.set($any($event.target).value)" aria-label="Preview the message for">
-        @for (g of guests(); track g.id) { <option [value]="g.id">{{ g.greeting || g.name }}</option> }
+      <select (change)="previewId.set($any($event.target).value)" aria-label="Preview the message for">
+        @for (g of guests(); track g.id) { <option [value]="g.id" [selected]="previewGuest()?.id === g.id">{{ g.greeting || g.name }}</option> }
       </select>
     </label>
   }
