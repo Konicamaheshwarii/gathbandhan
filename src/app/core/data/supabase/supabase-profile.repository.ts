@@ -170,7 +170,7 @@ export class SupabaseProfileRepository extends ProfileRepository {
       throw friendlyError({ message: (e as Error).message });
     }
     if (result.error) {
-      if (isMissingTable(result.error)) throw new ProfilesUnavailable('Profiles are not set up on the server yet.');
+      if (isMissingTable(result.error)) throw new ProfilesUnavailable();
       if (result.error.code === '23514') throw new Error('Some details were not accepted. Check the phone number and UPI ID.');
       throw friendlyError(result.error);
     }

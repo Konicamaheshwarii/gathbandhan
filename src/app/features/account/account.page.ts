@@ -1,11 +1,11 @@
-import { AfterViewInit, ChangeDetectionStrategy, Component, DestroyRef, ElementRef, computed, effect, inject, signal, untracked } from '@angular/core';
+import { AfterViewInit, ChangeDetectionStrategy, Component, DestroyRef, ElementRef, WritableSignal, computed, effect, inject, signal, untracked } from '@angular/core';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { AuthService } from '../../core/auth/auth.service';
 import { downloadText } from '../../core/csv';
 import { WeddingRepository } from '../../core/data/wedding.repository';
 import {
-  MyWedding, PROFILE_LANGUAGES, ProfileErrors, ProfileInput, ProfileLanguage, WEDDING_ROLES, WeddingRole, accountExport, cleanProfileInput,
+  MyWedding, PROFILE_LANGUAGES, Profile, ProfileErrors, ProfileInput, ProfileLanguage, WEDDING_ROLES, WeddingRole, accountExport, cleanProfileInput,
   exportFileName, formatPhone,
 } from '../../core/profile/profile.models';
 import { ProfileRepository } from '../../core/profile/profile.repository';
@@ -26,6 +26,15 @@ export const ACCOUNT_SECTIONS = [
   { id: 'security', label: 'Security', icon: 'M12 3l7 3v6c0 4.5-3 7.5-7 9-4-1.5-7-4.5-7-9V6z' },
   { id: 'privacy', label: 'Privacy', icon: 'M5 11h14v10H5zM8 11V8a4 4 0 0 1 8 0v3' },
 ] as const;
+
+/** The editable fields as the forms show them. */
+type Draft = { fullName: string; displayName: string; phone: string; city: string; role: WeddingRole | null; language: ProfileLanguage; upiId: string; payeeName: string };
+function draftOf(p: Profile | null): Draft {
+  return {
+    fullName: p?.fullName ?? '', displayName: p?.displayName ?? '', phone: formatPhone(p?.phone ?? ''), city: p?.city ?? '',
+    role: p?.role ?? null, language: p?.language ?? 'en', upiId: p?.upiId ?? '', payeeName: p?.payeeName ?? '',
+  };
+}
 
 type Busy = '' | 'profile' | 'payments' | 'notify' | 'avatar' | 'signout' | 'global' | 'export' | 'delete';
 
@@ -105,18 +114,19 @@ export class AccountPage implements AfterViewInit {
   private savedTimer: ReturnType<typeof setTimeout> | undefined;
 
   constructor() {
-    // Fill the forms whenever a (new) profile arrives.
+    // Fill the forms when a profile arrives or changes, without touching fields the person has
+    // edited but not saved yet (saving one section must not wipe another section's draft).
+    let before: Profile | null = null;
     effect(() => {
       const p = this.store.profile();
       untracked(() => {
-        this.fullName.set(p?.fullName ?? '');
-        this.displayName.set(p?.displayName ?? '');
-        this.phone.set(formatPhone(p?.phone ?? ''));
-        this.city.set(p?.city ?? '');
-        this.role.set(p?.role ?? null);
-        this.language.set(p?.language ?? 'en');
-        this.upiId.set(p?.upiId ?? '');
-        this.payeeName.set(p?.payeeName ?? '');
+        const was = draftOf(before);
+        const now = draftOf(p);
+        for (const key of Object.keys(now) as (keyof Draft)[]) {
+          const field = this[key] as WritableSignal<Draft[typeof key]>;
+          if (field() === was[key]) field.set(now[key]);
+        }
+        before = p;
       });
     });
     effect(() => {

@@ -37,8 +37,8 @@
     <p class="note demo-note" role="note"><strong>Demo account.</strong> It lives only in this browser and no email is ever sent. With the online backend, the same page saves to your real account.</p>
   }
   @if (store.status() === 'unavailable') {
-    <p class="note" role="note">Profiles are not switched on for this site yet, so changes here cannot be saved. Your wedding pages work as usual.
-      <button class="btn small" type="button" (click)="store.load()">Try again</button></p>
+    <p class="note" role="note">We could not load your profile just now. You can still fill it in and save; your wedding pages work as usual.
+      <button class="btn small" type="button" (click)="store.load()">Load again</button></p>
   }
 
   <div class="layout">
@@ -128,7 +128,7 @@
           <div class="sec-foot">
             @if (saved() === 'profile') { <span class="saved" role="status"><span aria-hidden="true">✓</span> Saved</span> }
             @else if (profileDirty()) { <span class="hint">Unsaved changes</span> }
-            <button class="btn primary" type="submit" [disabled]="busy() === 'profile' || store.status() === 'unavailable'">
+            <button class="btn primary" type="submit" [disabled]="busy() === 'profile'">
               @if (busy() === 'profile') { <span class="spinner" aria-hidden="true"></span> Saving… } @else { Save profile }
             </button>
           </div>
@@ -164,7 +164,7 @@
           <div class="sec-foot">
             @if (saved() === 'payments') { <span class="saved" role="status"><span aria-hidden="true">✓</span> Saved</span> }
             @else if (paymentsDirty()) { <span class="hint">Unsaved changes</span> }
-            <button class="btn primary" type="submit" [disabled]="busy() === 'payments' || store.status() === 'unavailable'">
+            <button class="btn primary" type="submit" [disabled]="busy() === 'payments'">
               @if (busy() === 'payments') { <span class="spinner" aria-hidden="true"></span> Saving… } @else { Save payment details }
             </button>
           </div>
@@ -231,12 +231,12 @@
           <label class="switch-row">
             <span><strong>A guest gives shagun</strong><span class="muted small">A short email with the name, the dream and the blessing.</span></span>
             <input type="checkbox" role="switch" class="switch" data-test="notify-shagun" [checked]="p?.notifyShagun ?? true"
-                   (change)="setNotify({ notifyShagun: $any($event.target).checked })" [disabled]="busy() === 'notify' || store.status() === 'unavailable'" />
+                   (change)="setNotify({ notifyShagun: $any($event.target).checked })" [disabled]="busy() === 'notify'" />
           </label>
           <label class="switch-row">
             <span><strong>A guest RSVPs</strong><span class="muted small">Who is coming, to which functions, and how many.</span></span>
             <input type="checkbox" role="switch" class="switch" data-test="notify-rsvp" [checked]="p?.notifyRsvp ?? true"
-                   (change)="setNotify({ notifyRsvp: $any($event.target).checked })" [disabled]="busy() === 'notify' || store.status() === 'unavailable'" />
+                   (change)="setNotify({ notifyRsvp: $any($event.target).checked })" [disabled]="busy() === 'notify'" />
           </label>
         </div>
         @if (saved() === 'notify') { <p class="saved" role="status"><span aria-hidden="true">✓</span> Saved</p> }

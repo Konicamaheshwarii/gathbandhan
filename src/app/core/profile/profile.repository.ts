@@ -12,7 +12,11 @@ export interface DeleteAccountResult {
 }
 
 /** Thrown when the profile table is not there yet (schema not updated): the app carries on without profiles. */
-export class ProfilesUnavailable extends Error {}
+export class ProfilesUnavailable extends Error {
+  constructor(message = 'Profiles are not switched on for this site yet, so this could not be saved. The site owner needs to finish the setup; your wedding pages work as usual.') {
+    super(message);
+  }
+}
 
 /**
  * The signed-in person's own profile. Abstract class as DI token, like WeddingRepository:

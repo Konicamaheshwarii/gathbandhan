@@ -4,7 +4,7 @@ import { Router, provideRouter } from '@angular/router';
 import { AuthService, AuthUser } from '../../core/auth/auth.service';
 import { WeddingRepository } from '../../core/data/wedding.repository';
 import { MyWedding, Profile, emptyProfile } from '../../core/profile/profile.models';
-import { ProfileRepository } from '../../core/profile/profile.repository';
+import { ProfileRepository, ProfilesUnavailable } from '../../core/profile/profile.repository';
 import { ProfileStore } from '../../core/profile/profile.store';
 import { wedding } from '../../core/testing';
 import { AccountPage } from './account.page';
@@ -117,6 +117,62 @@ describe('AccountPage', () => {
     fixture.detectChanges();
     expect(profiles.save).toHaveBeenCalledWith(USER, jasmine.objectContaining({ city: 'Jaipur', phone: '+919829012345', fullName: 'Riya Sharma', role: 'bride' }));
     expect(section('profile').querySelector('.saved')!.textContent).toContain('Saved');
+  });
+
+  // Regression: the owner saw Save stay disabled after filling in the form.
+  const saveButtons = () => [...el.querySelectorAll<HTMLButtonElement>('button[type=submit]')];
+
+  it('enables Save with only the name filled in; every other field is optional', async () => {
+    await render(null);
+    expect(saveButtons().length).toBe(2);
+    expect(saveButtons().every((b) => !b.disabled)).withContext('enabled before typing').toBeTrue();
+    type('input[name=fullName]', 'Konica Maheshwari');
+    fixture.detectChanges();
+    expect(saveButtons()[0].disabled).toBeFalse();
+    section('profile').querySelector('form')!.dispatchEvent(new Event('submit'));
+    await settle();
+    expect(profiles.save).toHaveBeenCalledWith(USER, { fullName: 'Konica Maheshwari', displayName: '', phone: '', city: '', role: null, language: 'en' });
+  });
+
+  it('accepts phone numbers as people type them', async () => {
+    await render(null);
+    const cases: [string, string][] = [['98765 43210', '+919876543210'], ['+91 98765 43210', '+919876543210'], ['09876543210', '+919876543210'], ['+44 7700 900123', '+447700900123']];
+    for (const [typed, stored] of cases) {
+      profiles.save.calls.reset();
+      type('input[name=fullName]', 'Konica');
+      type('input[name=phone]', typed);
+      section('profile').querySelector('form')!.dispatchEvent(new Event('submit'));
+      await settle();
+      expect(profiles.save).withContext(typed).toHaveBeenCalledWith(USER, jasmine.objectContaining({ phone: stored }));
+    }
+  });
+
+  it('keeps every Save and toggle enabled when the profile could not be loaded, and explains a failed save', async () => {
+    await render(null);
+    profiles.get.and.rejectWith(new ProfilesUnavailable());
+    profiles.save.and.rejectWith(new ProfilesUnavailable());
+    await TestBed.inject(ProfileStore).load();
+    fixture.detectChanges();
+    expect(TestBed.inject(ProfileStore).status()).toBe('unavailable');
+    expect(saveButtons().every((b) => !b.disabled)).toBeTrue();
+    expect(el.querySelector<HTMLInputElement>('[data-test=notify-rsvp]')!.disabled).toBeFalse();
+    type('input[name=fullName]', 'Konica');
+    section('profile').querySelector('form')!.dispatchEvent(new Event('submit'));
+    await settle();
+    fixture.detectChanges();
+    expect(section('profile').querySelector('[role=alert]')!.textContent).toContain('not switched on for this site yet');
+    expect(saveButtons()[0].disabled).toBeFalse();
+  });
+
+  it('keeps an unsaved name when a notification toggle saves', async () => {
+    await render();
+    type('input[name=fullName]', 'Konica M');
+    const rsvp = el.querySelector<HTMLInputElement>('[data-test=notify-rsvp]')!;
+    rsvp.checked = false;
+    rsvp.dispatchEvent(new Event('change'));
+    await settle();
+    fixture.detectChanges();
+    expect(el.querySelector<HTMLInputElement>('input[name=fullName]')!.value).toBe('Konica M');
   });
 
   it('saves the default UPI ID and payee name', async () => {
@@ -305,6 +361,34 @@ describe('WelcomePage (onboarding)', () => {
     await settle();
     expect(profiles.save).toHaveBeenCalledWith(USER, { fullName: 'Riya Sharma', role: 'bride', phone: '', language: 'gu' });
     expect(router.navigateByUrl).toHaveBeenCalledOnceWith('/create');
+  });
+
+  it('has Save enabled from the start, and needs only the name (phone and role optional)', async () => {
+    await render('/account');
+    const save = el.querySelector<HTMLButtonElement>('button[type=submit]')!;
+    expect(save.disabled).toBeFalse();
+    const name = el.querySelector<HTMLInputElement>('input[name=fullName]')!;
+    name.value = 'Konica';
+    name.dispatchEvent(new Event('input'));
+    fixture.detectChanges();
+    expect(save.disabled).toBeFalse();
+    save.click();
+    await settle();
+    expect(profiles.save).toHaveBeenCalledWith(USER, { fullName: 'Konica', role: null, phone: '', language: 'en' });
+    expect(router.navigateByUrl).toHaveBeenCalledWith('/account');
+  });
+
+  it('accepts "+91 98765 43210" as typed', async () => {
+    await render('/account');
+    const fill: [string, string][] = [['input[name=fullName]', 'Konica'], ['input[name=phone]', '+91 98765 43210']];
+    for (const [sel, v] of fill) {
+      const i = el.querySelector<HTMLInputElement>(sel)!;
+      i.value = v;
+      i.dispatchEvent(new Event('input'));
+    }
+    el.querySelector<HTMLButtonElement>('button[type=submit]')!.click();
+    await settle();
+    expect(profiles.save).toHaveBeenCalledWith(USER, jasmine.objectContaining({ phone: '+919876543210' }));
   });
 
   it('can be skipped, which remembers the choice', async () => {
