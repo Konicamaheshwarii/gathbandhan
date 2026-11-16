@@ -57,7 +57,7 @@
 .demo-note, .note { margin: 0; }
 
 // ---------- layout ----------
-.layout { display: grid; gap: 1rem; }
+.layout { display: grid; gap: 1rem; grid-template-columns: minmax(0, 1fr); } // a long email must not widen the page
 .toc {
   position: sticky;
   top: 0;
@@ -103,7 +103,7 @@
   scroll-margin-top: 4.5rem;
   animation: rise 0.45s cubic-bezier(0.2, 0.8, 0.2, 1) both;
 }
-.sec-head { display: flex; gap: 0.8rem; align-items: flex-start; h2 { font-size: 1.25rem; margin-bottom: 0.15rem; } }
+.sec-head { display: flex; gap: 0.8rem; align-items: flex-start; h2 { font-size: 1.25rem; margin-bottom: 0.15rem; } > div { min-width: 0; } p { overflow-wrap: anywhere; } }
 .sec-ico {
   flex: none;
   display: grid;

@@ -17,7 +17,7 @@
         <h1>Namaste, {{ greeting() }}</h1>
         <p class="hero-meta">
           <span class="addr">{{ user?.email }}</span>
-          @if (memberSince()) { <span class="dot" aria-hidden="true">·</span><span>Member since {{ memberSince() }}</span> }
+          @if (memberSince()) { <span class="since"><span class="dot" aria-hidden="true">·</span> Member since {{ memberSince() }}</span> }
         </p>
       </div>
       <div class="meter" [attr.aria-label]="'Profile ' + percent() + '% complete'">
