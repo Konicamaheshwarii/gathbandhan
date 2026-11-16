@@ -39,7 +39,7 @@ You do not need to write any code. You will click through Supabase's website, pa
 3. Click **New query** (or the **+** button). A big empty box appears.
 4. Click inside it, press **Ctrl + V** (or **Cmd + V** on a Mac) to paste.
 5. Click the green **Run** button (bottom right), or press **Ctrl + Enter**.
-6. You should see **"Success. No rows returned"**. That is good. In **Table Editor** you should now see five tables starting with `shagun_`.
+6. You should see **"Success. No rows returned"**. That is good. In **Table Editor** you should now see six tables starting with `shagun_` (the sixth, `shagun_payout_accounts`, is only used by the optional Razorpay payments in [RAZORPAY_SETUP.md](RAZORPAY_SETUP.md)).
 
    - If Supabase shows a warning about "destructive operations", click **Run this query**. The file only removes and re-creates its own security rules.
    - It is safe to run the file again later (for example after an update to Gathbandhan).
