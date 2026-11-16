@@ -8,6 +8,8 @@ import { AiService } from '../../core/ai/ai.service';
 import { WeddingRepository } from '../../core/data/wedding.repository';
 import { formatInr } from '../../core/format';
 import { COVER_PRESETS, CoverPreset, MAX_GOALS, NOTE_LANGUAGES, NoteLanguage, Wedding } from '../../core/models';
+import { Profile } from '../../core/profile/profile.models';
+import { ProfileStore } from '../../core/profile/profile.store';
 import { SettingsStore } from '../../core/settings.store';
 import { expectedShagun } from '../../core/totals';
 import { resizeImage } from '../../shared/image';
@@ -17,7 +19,7 @@ import { ToastService } from '../../shared/toast.service';
 import { EventsEditorComponent } from './events-editor.component';
 import { GalleryEditorComponent } from './gallery-editor.component';
 import { StoryEditorComponent } from './story-editor.component';
-import { GOAL_EMOJIS, goalForm, toWedding, weddingForm } from './wedding-form';
+import { GOAL_EMOJIS, goalForm, prefillFromProfile, toWedding, weddingForm } from './wedding-form';
 
 @Component({
   selector: 'app-editor',
@@ -32,6 +34,7 @@ export class EditorPage {
   private readonly ai = inject(AiService);
   private readonly toast = inject(ToastService);
   protected readonly settings = inject(SettingsStore);
+  private readonly profile = inject(ProfileStore);
 
   /** Present on /w/:slug/edit, absent on /create. */
   readonly slug = input<string>();
@@ -62,7 +65,9 @@ export class EditorPage {
   protected readonly howWeMet = signal('');
   protected readonly storyDetails = signal('');
   protected readonly tone = signal<StoryTone>('warm');
-  protected readonly storyLanguage = signal<NoteLanguage>('english');
+  protected readonly storyLanguage = signal<NoteLanguage>(this.profile.noteLanguage());
+  /** Fields filled in from the account profile on /create, for the note under the form title. */
+  protected readonly prefilled = signal<string[]>([]);
   protected readonly storyBusy = signal(false);
   protected readonly storyError = signal('');
 
@@ -86,6 +91,22 @@ export class EditorPage {
       const slug = this.slug();
       if (slug) untracked(() => void this.load(slug));
     });
+    // A new page starts with the couple's name, UPI ID and language from the account profile.
+    effect(() => {
+      const p = this.profile.profile();
+      if (p && !this.slug()) untracked(() => this.prefillFrom(p));
+    });
+  }
+
+  private prefillDone = false;
+
+  /** Fills only empty fields, once, so nothing the couple typed is overwritten. */
+  private prefillFrom(p: Profile): void {
+    if (this.prefillDone) return;
+    this.prefillDone = true;
+    const filled = prefillFromProfile(this.form, p);
+    this.storyLanguage.set(this.profile.noteLanguage());
+    this.prefilled.set(filled);
   }
 
   /** Fills the UPI ID (and the name, when the QR has one) from the couple's confirmed QR. */

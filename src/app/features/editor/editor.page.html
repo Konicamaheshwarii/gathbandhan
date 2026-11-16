@@ -3,6 +3,9 @@
     <p class="eyebrow">{{ slug() ? 'Edit your page' : 'New wedding page' }}</p>
     <h1>{{ slug() ? 'Update your shagun page' : 'Create your shagun page' }}</h1>
     <p class="muted">Takes about three minutes. Nothing is published until you share the link.</p>
+    @if (prefilled().length) {
+      <p class="hint prefilled" role="status"><span aria-hidden="true">✓</span> Filled in {{ prefilled().join(', ') }} from <a routerLink="/account">your account</a>.</p>
+    }
   </div>
   @if (!slug()) {
     <button class="btn small" type="button" (click)="fillSample()">Try with sample details</button>

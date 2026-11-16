@@ -1,6 +1,7 @@
 :host { display: grid; grid-template-columns: minmax(0, 1fr); gap: 1.25rem; padding-top: 0.75rem; max-width: 50rem; margin: 0 auto; }
 
 .head { display: flex; justify-content: space-between; align-items: flex-end; gap: 1rem; flex-wrap: wrap; h1, p { margin: 0; } }
+.prefilled { margin-top: 0.35rem !important; color: var(--good); font-weight: 600; }
 .editor { display: grid; gap: 1.25rem; }
 h2 { display: flex; align-items: center; gap: 0.6rem; margin: 0; }
 .num-badge {

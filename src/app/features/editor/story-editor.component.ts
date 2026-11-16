@@ -2,6 +2,7 @@ import { ChangeDetectionStrategy, Component, inject, input, signal } from '@angu
 import { FormArray, ReactiveFormsModule } from '@angular/forms';
 import { AiService } from '../../core/ai/ai.service';
 import { MAX_MILESTONES, NOTE_LANGUAGES, NoteLanguage } from '../../core/models';
+import { ProfileStore } from '../../core/profile/profile.store';
 import { SettingsStore } from '../../core/settings.store';
 import { MilestoneForm, milestoneForm } from './wedding-form';
 
@@ -82,7 +83,8 @@ export class StoryEditorComponent {
   protected readonly open = signal(false);
   protected readonly howWeMet = signal('');
   protected readonly details = signal('');
-  protected readonly language = signal<NoteLanguage>('english');
+  /** Starts in the language chosen in the account profile. */
+  protected readonly language = signal<NoteLanguage>(inject(ProfileStore).noteLanguage());
   protected readonly busy = signal(false);
   protected readonly error = signal('');
 

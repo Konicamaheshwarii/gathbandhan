@@ -7,6 +7,7 @@ import { RUNTIME_CONFIG } from '../../core/config';
 import { isTestKey } from '../../../../supabase/functions/_shared/razorpay-core';
 import { PAYMENT_GATEWAY } from '../../core/payments/payment-gateway.token';
 import { formatRupees } from '../../core/payments/payments.models';
+import { ProfileStore } from '../../core/profile/profile.store';
 import { SettingsStore } from '../../core/settings.store';
 import { inviteMessage, whatsappUrl } from '../../core/share';
 import { firstName } from '../../core/util';
@@ -45,6 +46,7 @@ interface NoteDraft {
 export class DashboardPage {
   protected readonly store = inject(WeddingStore);
   protected readonly settings = inject(SettingsStore);
+  private readonly profile = inject(ProfileStore);
   private readonly ai = inject(AiService);
   private readonly toast = inject(ToastService);
   private readonly gateway = inject(PAYMENT_GATEWAY);
@@ -67,7 +69,8 @@ export class DashboardPage {
   /** Contribution whose thank-you panel is open. */
   protected readonly openNote = signal<string | null>(null);
   protected readonly drafts = signal<Record<string, NoteDraft>>({});
-  protected readonly defaultLanguage = signal<NoteLanguage>('english');
+  /** Thank-you notes start in the language chosen in the account profile. */
+  protected readonly defaultLanguage = signal<NoteLanguage>(this.profile.noteLanguage());
   /** Latest request per guest, so a slow earlier draft never overwrites a newer one. */
   private readonly noteSeq = new Map<string, number>();
 
@@ -75,6 +78,8 @@ export class DashboardPage {
     const w = this.store.wedding();
     return w ? `${firstName(w.partner1)} & ${firstName(w.partner2)}` : '';
   });
+  /** "Namaste, Konica" for a signed-in person with a profile, else the couple's names. */
+  protected readonly greetName = computed(() => this.profile.name() || this.couple());
   protected readonly goalTitle = computed(() => new Map((this.store.wedding()?.goals ?? []).map((g) => [g.id, g])));
   protected readonly counts = computed(() => {
     const list = this.store.contributions();

@@ -20,8 +20,8 @@
   <header class="hero cover" [class]="'hero cover cover-' + w.cover.preset" [class.photo]="!!w.cover.imageUrl"
           [style.background-image]="w.cover.imageUrl ? 'url(' + w.cover.imageUrl + ')' : null">
     <div class="hero-text">
-      <p class="eyebrow light">Couple dashboard</p>
-      <h1>Namaste, {{ couple() }}</h1>
+      <p class="eyebrow light">Couple dashboard@if (greetName() !== couple()) { · {{ couple() }}}</p>
+      <h1>Namaste, {{ greetName() }}</h1>
       <p class="hero-date">{{ w.date | indianDate: 'long' }}@if (w.city) { · {{ w.city }}}</p>
     </div>
     <div class="countdown" aria-label="Days to go">

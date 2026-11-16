@@ -1,5 +1,6 @@
 import { wedding } from '../../core/testing';
-import { goalForm, toWedding, weddingForm } from './wedding-form';
+import { emptyProfile } from '../../core/profile/profile.models';
+import { goalForm, prefillFromProfile, toWedding, weddingForm } from './wedding-form';
 
 describe('wedding form', () => {
   it('starts with two empty dreams and is invalid', () => {
@@ -43,5 +44,26 @@ describe('wedding form', () => {
   it('derives a slug for a new page', () => {
     const form = weddingForm(wedding());
     expect(toWedding(form, null).slug).toBe('asha-weds-dev');
+  });
+});
+
+describe('prefillFromProfile (new page from the account profile)', () => {
+  it('fills the bride or groom name and the UPI defaults into empty fields', () => {
+    const form = weddingForm();
+    const filled = prefillFromProfile(form, { ...emptyProfile('u'), fullName: 'Riya Sharma', role: 'bride', upiId: 'riya@okaxis', payeeName: '' });
+    expect(form.controls.partner1.value).toBe('Riya Sharma');
+    expect(form.controls.upiId.value).toBe('riya@okaxis');
+    expect(form.controls.payeeName.value).toBe('Riya Sharma');
+    expect(filled).toEqual(['your name', 'UPI ID', 'payee name']);
+  });
+
+  it('leaves the couple names alone for family and planners, and never overwrites', () => {
+    const form = weddingForm();
+    form.controls.upiId.setValue('typed@okhdfc');
+    const filled = prefillFromProfile(form, { ...emptyProfile('u'), fullName: 'Sunita Sharma', role: 'family', upiId: 'sunita@okaxis', payeeName: 'Sunita' });
+    expect(form.controls.partner1.value).toBe('');
+    expect(form.controls.upiId.value).toBe('typed@okhdfc');
+    expect(form.controls.payeeName.value).toBe('Sunita');
+    expect(filled).toEqual(['payee name']);
   });
 });

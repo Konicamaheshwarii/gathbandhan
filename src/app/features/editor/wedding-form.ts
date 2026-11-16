@@ -4,6 +4,7 @@ import {
   COVER_PRESETS, CoverPreset, EVENT_META, EventKind, GalleryPhoto, Goal, MAX_GOALS, MIN_GOALS, Milestone, Wedding, WeddingEvent,
 } from '../../core/models';
 import { isValidVpa, normalizeVpa } from '../../core/upi';
+import { Profile } from '../../core/profile/profile.models';
 import { uid, weddingSlug } from '../../core/util';
 
 export type GoalForm = FormGroup<{
@@ -199,4 +200,27 @@ export function toWedding(form: WeddingForm, original?: Wedding | null): Wedding
     milestones: v.milestones.map((m) => ({ id: m.id, when: m.when.trim(), title: m.title.trim(), text: m.text.trim(), emoji: m.emoji || '💛' })),
     gallery: v.gallery.filter((p) => p.url).map((p) => ({ id: p.id, url: p.url, ...opt('caption', p.caption) })),
   };
+}
+
+/**
+ * Fills a new page's empty fields from the profile: the person's own name as the first partner
+ * when they are the bride or groom, and the default UPI ID and payee name. Returns what it filled.
+ */
+export function prefillFromProfile(form: WeddingForm, p: Profile): string[] {
+  const filled: string[] = [];
+  const { partner1, upiId, payeeName } = form.controls;
+  if (!partner1.value.trim() && p.fullName && (p.role === 'bride' || p.role === 'groom')) {
+    partner1.setValue(p.fullName);
+    filled.push('your name');
+  }
+  if (!upiId.value.trim() && p.upiId) {
+    upiId.setValue(p.upiId);
+    filled.push('UPI ID');
+  }
+  const payee = p.payeeName || (p.upiId ? p.fullName : '');
+  if (!payeeName.value.trim() && payee) {
+    payeeName.setValue(payee);
+    filled.push('payee name');
+  }
+  return filled;
 }

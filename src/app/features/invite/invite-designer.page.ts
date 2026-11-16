@@ -13,6 +13,7 @@ import { ensureInviteFonts } from '../../shared/invite-fonts';
 import { LogoComponent } from '../../shared/logo.component';
 import { SlideDirective, SliderComponent } from '../../shared/slider.component';
 import { ToastService } from '../../shared/toast.service';
+import { ProfileStore } from '../../core/profile/profile.store';
 import { InvitePageComponent } from './invite-page.component';
 
 /** The couple designs their digital kankotri: template, words (AI or typed), colours, families, export. */
@@ -29,6 +30,7 @@ export class InviteDesignerPage {
   protected readonly settings = inject(SettingsStore);
   private readonly ai = inject(AiService);
   private readonly toast = inject(ToastService);
+  private readonly profile = inject(ProfileStore);
 
   readonly slug = input.required<string>();
   /** `?template=royal` from the landing page's "Use this style". */
@@ -85,7 +87,9 @@ export class InviteDesignerPage {
       untracked(async () => {
         const w = await this.store.load(slug, { manage: true });
         if (!w) return;
-        this.design.set(structuredClone(w.invite ? migrateInvite(w.invite) : defaultInvite(w)));
+        // A first design starts in the language chosen in the account profile.
+        const language = this.profile.status() === 'ready' ? this.profile.inviteLanguage() : undefined;
+        this.design.set(structuredClone(w.invite ? migrateInvite(w.invite) : defaultInvite(w, undefined, language)));
         const wanted = knownTemplate(untracked(this.template));
         if (wanted && wanted !== this.design()!.template) {
           this.chooseTemplate(wanted);
