@@ -16,6 +16,7 @@ concurrency:
 
 jobs:
   build:
+    name: Unit tests and build
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -25,15 +26,51 @@ jobs:
           cache: npm
       - run: npm ci
       - run: npm run test:ci
+      - run: npm run test:functions
       - run: npx ng build --base-href /gathbandhan/
       - uses: actions/upload-pages-artifact@v3
         if: github.ref == 'refs/heads/main'
         with:
           path: dist/gathbandhan/browser
 
+  e2e:
+    name: End-to-end tests (Playwright, Chromium)
+    needs: build
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - name: Cache Playwright browsers
+        id: pw-cache
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/ms-playwright
+          key: playwright-${{ runner.os }}-${{ hashFiles('package-lock.json') }}
+      - name: Install Chromium
+        if: steps.pw-cache.outputs.cache-hit != 'true'
+        run: npx playwright install --with-deps chromium
+      - name: Install Chromium's system libraries
+        if: steps.pw-cache.outputs.cache-hit == 'true'
+        run: npx playwright install-deps chromium
+      # Builds the production bundle under /gathbandhan/ and runs every spec. Supabase, Razorpay
+      # and every other outside host are blocked or answered by mocks; nothing real is called.
+      - run: npm run e2e
+      - uses: actions/upload-artifact@v4
+        if: failure()
+        with:
+          name: playwright-report
+          path: |
+            playwright-report/
+            test-results/
+          retention-days: 7
+
   deploy:
     if: github.ref == 'refs/heads/main'
-    needs: build
+    needs: [build, e2e]
     runs-on: ubuntu-latest
     environment:
       name: github-pages
