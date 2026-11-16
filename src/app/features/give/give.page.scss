@@ -160,8 +160,9 @@ legend + * { clear: both; }
   color: #4a3200;
   text-align: left;
   ul { margin: 0.35rem 0 0; padding-left: 1.1rem; }
-  code { font-size: 0.95em; word-break: break-all; }
+  code { font-size: 0.95em; white-space: nowrap; }
 }
+.done .test-details { padding: 0.65rem 0.85rem; border-radius: 12px; margin: 0.25rem 0 1rem; }
 .status-line { margin: 0; display: flex; gap: 0.5rem; align-items: center; font-weight: 600; &.slow { display: block; font-weight: 400; } }
 .paid-badge {
   margin: 0.25rem auto;

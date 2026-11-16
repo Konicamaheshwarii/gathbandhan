@@ -9,6 +9,7 @@
 ![AI](https://img.shields.io/badge/AI-free%2C%20no%20key%20%7C%20Chrome%20AI%20%7C%20Gemini%20%7C%20Groq-8E75B2)
 ![PWA](https://img.shields.io/badge/PWA-installable%20%2B%20offline-5A0FC8)
 ![UPI](https://img.shields.io/badge/payments-UPI%20intent%20%2B%20QR-097939)
+![Razorpay](https://img.shields.io/badge/optional-Razorpay%20Checkout%20%2B%20Route-0C2451)
 ![CI](https://github.com/Konicamaheshwarii/gathbandhan/actions/workflows/ci.yml/badge.svg)
 ![License](https://img.shields.io/badge/license-MIT-blue)
 
@@ -46,11 +47,12 @@ The name is the *gathbandhan*, the sacred knot that ties the couple together dur
 - **Public page** per wedding with the parents' names, a **functions timeline** (date, time, venue, Google Maps link, dress code) with **Add to Google Calendar** and **.ics** downloads, an **our story** timeline, a **photo gallery**, and progress per dream with the couple's **goal updates** ("Flights booked!").
 - **RSVP** per function with party size, side and a note. The couple sees headcount per function and exports a CSV for the caterer.
 - **Shagun by UPI**: pick a dream, tap ₹501, ₹1,100, ₹2,100 or ₹5,100 (or any amount up to the ₹1,00,000 UPI limit), choose bride's or groom's side, and pay with a standard NPCI `upi://pay` link or QR. The money never touches Shagun; the couple verifies each blessing against their bank app.
-- **Blessing wall**, live across tabs (demo) or devices (backend). Amounts stay hidden unless the couple shows them; phone numbers are never public.
+- **Optional: Razorpay (instant confirmation)**, chosen per wedding on **Dashboard → 💳 Payments**. Guests pay by UPI, card or netbanking in Razorpay Checkout (loaded only on the give page, only in this mode), and the blessing is marked **"✓ Paid"** automatically, but only after a Supabase Edge Function has checked Razorpay's signature. Each order carries a **Razorpay Route** transfer to the couple's own linked account, so the money settles to them. The couple sees the fee (about 2% + GST) before enabling it and chooses who bears it: the couple, or the guest as a "convenience fee" line. A webhook confirms payments even if the guest closes the tab; slow confirmations are polled; closing Checkout or a failed payment offers **Try again** on the same order. With a `rzp_test_…` key everything says **"Test mode, no real money"** and lists Razorpay's test UPI ID and card. If the payment server is not deployed yet, guests are quietly sent to direct UPI. Setup: **[docs/RAZORPAY_SETUP.md](docs/RAZORPAY_SETUP.md)**.
+- **Blessing wall**, live across tabs (demo) or devices (backend). Razorpay-verified blessings carry a **✓ Paid** badge. Amounts stay hidden unless the couple shows them; phone numbers are never public.
 - **Printable venue QR card** in A6 or A5.
 
 ### Couple dashboard
-Cover hero with days to go, quick actions, stat cards (shagun blessed, verified, guests invited, invites opened, people coming, blessings), **shagun over time** (single-series area chart with a crosshair tooltip and a table view), **bride's side vs groom's side** (100% bar; the two hues were checked for colour-blind separation in light and dark mode), photo goal cards with update posting, a **recent activity** feed, a **wedding checklist**, RSVPs by function, co-owners, CSV exports and AI thank-you notes in English, हिन्दी or Hinglish.
+Cover hero with days to go, quick actions, stat cards (shagun blessed, verified in bank vs guest-confirmed, paid via Razorpay with fees, guests invited, invites opened, people coming, blessings), **shagun over time** (single-series area chart with a crosshair tooltip and a table view), **bride's side vs groom's side** (100% bar; the two hues were checked for colour-blind separation in light and dark mode), photo goal cards with update posting, a **recent activity** feed, a **wedding checklist**, RSVPs by function, co-owners, CSV exports (with payment method, Razorpay payment and order IDs, what the guest paid and fees) and AI thank-you notes in English, हिन्दी or Hinglish.
 
 | Dashboard | Invite designer |
 |---|---|
@@ -59,6 +61,18 @@ Cover hero with days to go, quick actions, stat cards (shagun blessed, verified,
 | Functions timeline | RSVP | Paying by UPI | Installed app |
 |---|---|---|---|
 | ![Functions](docs/screenshots/mobile-functions.png) | ![RSVP](docs/screenshots/mobile-rsvp.png) | ![UPI](docs/screenshots/mobile-pay.png) | ![Installed app](docs/screenshots/mobile-installed-app.png) |
+
+#### Razorpay mode (demo: simulated test-mode checkout)
+
+| Checkout (demo, test mode) | Payment confirmed | ✓ Paid on the wall |
+|---|---|---|
+| ![Simulated Razorpay checkout with test-mode badge](docs/screenshots/mobile-razorpay-checkout.png) | ![Payment confirmed with payment ID and test details](docs/screenshots/mobile-razorpay-paid.png) | ![Blessing wall with a Paid badge](docs/screenshots/mobile-wall-paid.png) |
+
+| How guests pay (couple settings and payout onboarding) | Dashboard: paid vs guest-confirmed, fees |
+|---|---|
+| ![Payment settings](docs/screenshots/desktop-payments-settings.png) | ![Dashboard payment totals](docs/screenshots/desktop-dashboard-payments.png) |
+
+In demo mode (and on the sample wedding), Razorpay is shown as available with a **simulated checkout**, clearly labelled, that signs its pretend payments so the same verification code runs; couples can fill in the payout form and "simulate Razorpay approval". No real API is called.
 
 <details>
 <summary>More screens</summary>
@@ -99,11 +113,12 @@ On start the app reads `shagun_weddings` once. If the tables are missing (schema
 ```json
 {
   "supabaseUrl": "https://<project>.supabase.co",
-  "supabaseAnonKey": "<publishable or anon key>"
+  "supabaseAnonKey": "<publishable or anon key>",
+  "razorpayKeyId": "rzp_test_…"
 }
 ```
 
-The anon/publishable key is meant to be public; **Row Level Security** protects the data. Setup for a non-technical owner, click by click: **[docs/SUPABASE_SETUP.md](docs/SUPABASE_SETUP.md)**.
+The anon/publishable key and the Razorpay **Key ID** are meant to be public; **Row Level Security** protects the data, and the Razorpay **Key Secret** lives only in Supabase Edge Function secrets (the app ignores anything in `razorpayKeyId` that is not a key id). Setup for a non-technical owner, click by click: **[docs/SUPABASE_SETUP.md](docs/SUPABASE_SETUP.md)**.
 
 ### Database and security (`supabase/schema.sql`)
 One idempotent script to paste into the Supabase SQL editor. Every table, function and the photo bucket is prefixed `shagun_` so the project can be shared with other apps. The prefix (like the `sg.*` browser storage keys) comes from the app's original name, Shagun, and is kept so existing data and the schema still match.
@@ -111,6 +126,9 @@ One idempotent script to paste into the Supabase SQL editor. Every table, functi
 - **Guests (anon)**: read wedding pages; read totals and the blessing wall only through `shagun_public_activity()` (a security-definer function that never returns phone numbers, and returns amounts only if the couple shows them); **insert-only** on contributions (₹1 to ₹1,00,000, message up to 280 characters, the dream must exist; a trigger forces *guest confirmed*, no thank-you time and server time) and RSVPs (party of 1 to 20, only functions on the page).
 - **A guest with a personal link**: `shagun_guest_invite()` reveals only their own name and greeting; `shagun_guest_mark()` can only tick opened / RSVP'd / gave. The guest list itself is never readable.
 - **The couple** (email listed in `shagun_wedding_owners`): edit the wedding, read every contribution, RSVP and guest, update only `status` and `thanked_at` (column grants), add co-owners, and upload photos only into their wedding's folder. The last owner cannot be removed.
+- **Razorpay payments**: `shagun_weddings.payment_mode` (`upi_direct` default, or `razorpay`) and `fee_bearer` are the couple's; `razorpay_active` is set only by a trigger from the payout account. Contributions gain `provider`, Razorpay order and payment IDs, `charged_amount`, `guest_fee`, `fee_amount` and `paid_at`, and the statuses `pending`, `paid` and `failed`. An insert trigger forces every guest or couple insert to *guest confirmed* / direct UPI; only the service role (the Edge Functions) can create Razorpay rows, always as *pending*. An update trigger lets couples flip only direct-UPI rows between *guest confirmed* and *verified*, never set *paid*. Pending and failed attempts are left out of totals and the wall, and `shagun_order_status()` tells the give page one order's status while it waits.
+- **`shagun_payout_accounts`** (the couple's Route linked account): readable only by owners, writable only by the service role; checks allow only the **last four** digits of the bank account and PAN, so full numbers cannot be stored.
+- The Razorpay additions were checked with 27 more PGlite assertions (run twice): anon cannot insert status or provider, owners cannot set *paid* or `razorpay_active`, service-role *pending* → *paid* is idempotent, pending rows stay hidden, the payout table is private, and full bank numbers are rejected.
 - The script was run twice against an in-memory Postgres (PGlite) with Supabase-style `auth`/`storage` stubs and 41 checks as anon, owner, co-owner and stranger.
 
 ## Install it as a phone app
@@ -140,7 +158,21 @@ flowchart LR
     Chain --> Poll[Pollinations.ai]
     Chain --> Offline[Offline writers]
     UI --> Pure[calendar.ts · guests.ts · stats.ts · totals.ts · csv.ts · upi.ts]
+    UI --> Pay{{PaymentGateway<br/>demo or Edge Functions}}
+    Pay --> Core[razorpay-core.ts<br/>shared with the server]
+    Pay --> EF[Supabase Edge Functions<br/>create-order · verify · webhook · linked-account]
+    EF --> RZ[(Razorpay Orders + Route)]
 ```
+
+### Razorpay payment flow
+
+1. The guest picks an amount; if the couple chose "guest pays the fee" a convenience-fee line is shown.
+2. `razorpay-create-order` validates the request against the database (wedding in Razorpay mode, dream exists, ₹1–₹1,00,000, name and message limits, payout account active, or test mode), creates a Razorpay order with notes and a **Route transfer** of the couple's share, and records a *pending* contribution.
+3. Razorpay Checkout opens (lazy-loaded `checkout.js`, name and phone prefilled, maroon theme).
+4. On success `razorpay-verify` checks `HMAC_SHA256(order_id|payment_id, key_secret)` with a constant-time compare and marks the row *paid* (idempotent). If that is slow, the page polls the order status; independently, `razorpay-webhook` verifies `X-Razorpay-Signature` over the raw body and handles `payment.captured`, `order.paid`, `payment.failed`, transfer and account events, so a closed tab still ends up paid.
+5. `razorpay-linked-account` (couple only: Supabase JWT + ownership check) creates or updates the Route linked account, stakeholder and settlement config, and stores only ids, status and last-four digits. In test mode, if Route is unavailable, it falls back to orders without transfers and the UI says "test-only".
+
+All signature, validation, fee, webhook and CORS logic lives in one pure module, `supabase/functions/_shared/razorpay-core.ts`, used by the Deno functions, the Angular app and the tests. CORS allows only `https://konicamaheshwarii.github.io` and `http://localhost:*`. `supabase/functions-paste/` holds single-file copies for pasting into the Supabase dashboard (`npm run bundle:functions`).
 
 - **Persistence behind an interface.** Components and stores depend only on the abstract `WeddingRepository`. `main.ts` reads `config.json`, and only when keys are present dynamically imports the Supabase module, probes it, and provides its repository and auth service in place of the demo ones.
 - **Public and owner reads are separate.** Guests get `getPublicActivity()` (totals and the wall); the dashboard gets `listContributions()`, `listRsvps()` and `listGuests()`. The localStorage repository applies the same masking as the SQL function, so both modes behave alike.
@@ -154,6 +186,7 @@ flowchart LR
 npm install
 npm start          # http://localhost:4200
 npm run test:ci    # unit tests in headless Chrome
+npm run test:functions   # Razorpay core with Node's crypto (no Deno needed)
 npm run build:pages
 ```
 
@@ -161,7 +194,9 @@ Everything works in demo mode out of the box. For online mode, follow [docs/SUPA
 
 ## Testing
 
-162 unit tests (Jasmine + Karma, headless Chrome), including:
+230 unit tests (Jasmine + Karma, headless Chrome), plus 4 Node tests for the Razorpay core, including:
+
+- Razorpay: HMAC-SHA256 against RFC 4231 and Node-computed vectors, checkout and webhook signatures (tampered bodies, wrong secrets, malformed ids), webhook event handling, order input validation, fee maths for both fee bearers, the order and Route payloads, payout form checks and masking, CORS, the Edge Function client's "being set up" fallback, the demo gateway, totals that ignore pending and failed attempts, and the give flow with a mocked Checkout (success, failure and retry on the same order, closed window, slow verification with polling, fallback to direct UPI)
 
 - the Supabase repository against a mocked client (public columns only, insert-only guest writes, the RPC wall, slug uniqueness, photo upload and clean-up, co-owners, realtime subscriptions, friendly RLS errors) and the start-up probe that falls back to demo mode
 - the AI chain with mocked tiers (fall-through on errors, timeouts and invalid replies, language skipping, caller abort), the Chrome Prompt API and Pollinations providers (rate-limit cooldown), and validators for invite text, WhatsApp messages and design picks
@@ -170,14 +205,15 @@ Everything works in demo mode out of the box. For online mode, follow [docs/SUPA
 - calendar files (IST to UTC, RFC 5545 escaping and line folding, Google Calendar links), RSVP headcount and CSV
 - dashboard stats (running totals, side split, invite funnel, activity feed, checklist), the PWA service, the RSVP and give flows, share links, formatting, UPI links and totals
 
-Browser checks with Puppeteer at 375 px and 1280 px in demo mode: guest page, functions and calendar download, give flow with side, RSVP, personal invite (greeting, page animation, shehnai toggle, RSVP ticks the guest off), guest list import and the send queue, invite designer in Hindi and Gujarati with PNG and PDF export, dashboard chart tooltip, CSV export, goal updates and the editor. A production build served under `/gathbandhan/` was checked for a valid manifest (no installability errors in Chrome), an active service worker, and offline loading of the home page, wedding page and invite. A config pointing at a database without tables was checked to fall back to demo mode with the notice.
+Browser checks with Puppeteer at 375 px and 1280 px in demo mode, with Supabase and Razorpay hosts blocked: the couple switches to Razorpay and fills the payout form (bank and PAN never stored in full), a guest pays through the simulated checkout after a failed attempt and a retry, the wall shows ✓ Paid, the dashboard shows paid vs guest-confirmed totals, fees and payment IDs, the CSV includes them, and direct UPI still works unchanged. Earlier checks: guest page, functions and calendar download, give flow with side, RSVP, personal invite (greeting, page animation, shehnai toggle, RSVP ticks the guest off), guest list import and the send queue, invite designer in Hindi and Gujarati with PNG and PDF export, dashboard chart tooltip, CSV export, goal updates and the editor. A production build served under `/gathbandhan/` was checked for a valid manifest (no installability errors in Chrome), an active service worker, and offline loading of the home page, wedding page and invite. A config pointing at a database without tables was checked to fall back to demo mode with the notice.
 
 CI (GitHub Actions) runs the tests and a production build with `--base-href /gathbandhan/` on every push, then deploys `main` to GitHub Pages.
 
 ## Limitations
 
 - In demo mode, data lives in the browser where it was made; guests on other phones can still pay by UPI, but the couple's dashboard only sees what was recorded in their browser. Online mode removes this.
-- "I've paid" is the guest's word; UPI intent links give no payment callback without a gateway, so the couple verifies each blessing.
+- "I've paid" is the guest's word; UPI intent links give no payment callback without a gateway, so the couple verifies each blessing. Razorpay mode removes this, at the cost of gateway fees.
+- Razorpay mode: the Edge Functions are not deployed yet and need the owner's Key Secret (see the setup guide); live payments need Razorpay KYC and Route approval. The functions were type-checked and their core logic unit-tested, but have not run against Razorpay's API from this repo. Order creation is not rate limited beyond validation, and abandoned *pending* rows are kept (hidden) rather than cleaned up.
 - Some UPI apps limit intent links for person-to-person payments; the pay screen always shows the UPI ID too.
 - Supabase's built-in email sender allows only a few sign-in emails per hour; enough for a couple, and a free SMTP service can be added later.
 - Guest inserts are not rate limited beyond the database checks; a determined spammer could add fake blessings that the couple then removes.

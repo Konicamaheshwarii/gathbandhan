@@ -36,7 +36,7 @@ h3 { font-size: 1rem; }
   display: grid;
   gap: 0.75rem;
   grid-template-columns: repeat(auto-fit, minmax(13rem, 1fr));
-  label { display: grid; gap: 0.25rem; min-width: 0; }
+  label { display: grid; gap: 0.25rem; min-width: 0; align-content: start; }
   .wide { grid-column: 1 / -1; }
 }
 .summary {

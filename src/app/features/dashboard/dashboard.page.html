@@ -53,7 +53,7 @@
     <p class="note" role="note">You opened this page from a share link, so this dashboard only shows contributions made in this browser.</p>
   }
 
-  <section class="stats" aria-label="Overview">
+  <section class="stats" [class.with-payments]="razorpayMode() || payments().paidCount > 0" aria-label="Overview">
     <div class="card stat lead">
       <span class="label">Shagun blessed</span>
       <strong class="num">{{ t.raised | inr }}</strong>
@@ -64,7 +64,7 @@
     @if (razorpayMode() || payments().paidCount) {
       <div class="card stat"><span class="label">Paid via Razorpay @if (testMode()) { <span class="test-chip">Test mode</span> }</span>
         <strong class="num good">{{ payments().paid | inr }}</strong>
-        <span class="hint">{{ payments().paidCount }} payments · fees {{ rupees(payments().fees) }}@if (payments().guestFees) { (guests paid {{ rupees(payments().guestFees) }})}</span></div>
+        <span class="hint">{{ payments().paidCount }} {{ payments().paidCount === 1 ? 'payment' : 'payments' }} · fees {{ rupees(payments().fees) }}@if (payments().guestFees) { (guests paid {{ rupees(payments().guestFees) }})}</span></div>
     }
     <div class="card stat"><span class="label">Guests invited</span><strong class="num">{{ inv.sent }}<small>/{{ inv.total }}</small></strong><span class="hint">{{ inv.total - inv.sent }} not sent yet</span></div>
     <div class="card stat"><span class="label">Invites opened</span><strong class="num">{{ inv.opened }}</strong><span class="hint">{{ inv.sent ? pct(inv.opened, inv.sent) : 0 }}% of sent</span></div>

@@ -134,5 +134,9 @@ h2 { margin: 0; font-size: 1.2rem; }
   border-radius: 999px;
   padding: 0 0.4rem;
   vertical-align: 0.1em;
+  white-space: nowrap;
 }
 .test-note { border-style: dashed; }
+
+/* With a "Paid via Razorpay" card there are seven stats next to the lead card. */
+@media (min-width: 1101px) { .stats.with-payments { grid-template-columns: repeat(8, minmax(0, 1fr)); } }
