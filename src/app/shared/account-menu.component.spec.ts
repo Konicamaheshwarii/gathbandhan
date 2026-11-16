@@ -92,6 +92,20 @@ describe('AccountMenuComponent (header)', () => {
     expect(el.querySelector('.who')!.textContent).toContain('konica@yopmail.com');
   });
 
+  it('moves focus to the first item when the menu opens, as the app renders it', async () => {
+    profile = { ...emptyProfile('u1'), fullName: 'Konica Maheshwari' };
+    auth.user.set(USER);
+    await settle();
+    fixture.autoDetectChanges();
+    trigger().click();
+    await fixture.whenStable();
+    const items = [...el.querySelectorAll<HTMLElement>('[role=menuitem]')];
+    expect(items.length).toBe(3);
+    expect(document.activeElement).toBe(items[0]);
+    items[0].dispatchEvent(new KeyboardEvent('keydown', { key: 'ArrowDown', bubbles: true }));
+    expect(document.activeElement).toBe(items[1]);
+  });
+
   it('closes on Escape and on a click outside', async () => {
     auth.user.set(USER);
     await settle();

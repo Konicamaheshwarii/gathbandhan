@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, ElementRef, inject, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, ElementRef, Injector, afterNextRender, inject, signal } from '@angular/core';
 import { Router, RouterLink } from '@angular/router';
 import { AuthService } from '../core/auth/auth.service';
 import { ProfileStore } from '../core/profile/profile.store';
@@ -56,12 +56,14 @@ export class AccountMenuComponent {
   private readonly router = inject(Router);
   private readonly toast = inject(ToastService);
   private readonly host = inject<ElementRef<HTMLElement>>(ElementRef);
+  private readonly injector = inject(Injector);
 
   protected readonly open = signal(false);
 
   protected toggle(): void {
     this.open.update((o) => !o);
-    if (this.open()) queueMicrotask(() => this.host.nativeElement.querySelector<HTMLElement>('[role=menuitem]')?.focus());
+    // Focus the first item once the menu is on screen (a microtask would run before rendering).
+    if (this.open()) afterNextRender(() => this.host.nativeElement.querySelector<HTMLElement>('[role=menuitem]')?.focus(), { injector: this.injector });
   }
 
   close(refocus = false): void {
