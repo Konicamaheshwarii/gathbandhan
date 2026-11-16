@@ -8,6 +8,30 @@ interface InstallPromptEvent extends Event {
 }
 
 const DISMISSED_KEY = 'sg.installDismissed';
+const EARLY_PROMPT = '__gathbandhanInstallPrompt';
+
+/**
+ * Chrome can fire `beforeinstallprompt` while main.ts is still loading config.json, before
+ * Angular (and PwaService) exist; a missed event means no install button at all. main.ts calls
+ * this first thing, and PwaService picks the kept event up.
+ */
+export function captureEarlyInstallPrompt(target: Pick<Window, 'addEventListener' | 'removeEventListener'> = globalThis as unknown as Window): void {
+  const keep = (e: Event) => {
+    e.preventDefault();
+    (globalThis as Record<string, unknown>)[EARLY_PROMPT] = e;
+  };
+  target.addEventListener('beforeinstallprompt', keep);
+  (globalThis as Record<string, unknown>)[`${EARLY_PROMPT}Stop`] = () => target.removeEventListener('beforeinstallprompt', keep);
+}
+
+function takeEarlyInstallPrompt(): InstallPromptEvent | null {
+  const g = globalThis as Record<string, unknown>;
+  (g[`${EARLY_PROMPT}Stop`] as (() => void) | undefined)?.();
+  const e = (g[EARLY_PROMPT] as InstallPromptEvent | undefined) ?? null;
+  delete g[EARLY_PROMPT];
+  delete g[`${EARLY_PROMPT}Stop`];
+  return e;
+}
 
 export function isIosDevice(ua = navigator.userAgent, touchPoints = navigator.maxTouchPoints): boolean {
   // iPadOS reports itself as a Mac, so touch support tells the two apart.
@@ -39,6 +63,11 @@ export class PwaService {
   readonly showIosHelp = signal(false);
 
   constructor() {
+    const early = takeEarlyInstallPrompt();
+    if (early) {
+      this.deferred = early;
+      this.canPrompt.set(true);
+    }
     const onPrompt = (e: Event) => {
       e.preventDefault(); // show our own button instead of the mini-infobar
       this.deferred = e as InstallPromptEvent;

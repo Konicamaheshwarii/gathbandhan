@@ -4,6 +4,10 @@ import { appConfig } from './app/app.config';
 import { App } from './app/app';
 import { BACKEND_STATUS, BackendNotReady } from './app/core/backend-status';
 import { RUNTIME_CONFIG, hasBackend, loadRuntimeConfig } from './app/core/config';
+import { captureEarlyInstallPrompt } from './app/core/pwa.service';
+
+// Before anything async: the browser may offer installing while config.json is still loading.
+captureEarlyInstallPrompt();
 
 async function start(): Promise<void> {
   const config = await loadRuntimeConfig();

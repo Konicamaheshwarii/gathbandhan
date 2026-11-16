@@ -1,6 +1,6 @@
 import { provideZonelessChangeDetection } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
-import { PwaService, isIosDevice } from './pwa.service';
+import { PwaService, captureEarlyInstallPrompt, isIosDevice } from './pwa.service';
 
 describe('PwaService', () => {
   let pwa: PwaService;
@@ -31,6 +31,25 @@ describe('PwaService', () => {
     await pwa.install();
     expect(event.prompt).toHaveBeenCalled();
     expect(pwa.canPrompt()).toBeFalse();
+  });
+
+  it('keeps an install prompt that fired before the app started', async () => {
+    TestBed.resetTestingModule();
+    captureEarlyInstallPrompt();
+    const event = new Event('beforeinstallprompt', { cancelable: true }) as Event & { prompt: jasmine.Spy; userChoice: Promise<unknown> };
+    event.prompt = jasmine.createSpy('prompt').and.resolveTo();
+    event.userChoice = Promise.resolve({ outcome: 'dismissed' });
+    dispatchEvent(event); // while config.json is still loading, before Angular exists
+    expect(event.defaultPrevented).toBeTrue();
+    TestBed.configureTestingModule({ providers: [provideZonelessChangeDetection()] });
+    const late = TestBed.inject(PwaService);
+    expect(late.canPrompt()).toBeTrue();
+    await late.install();
+    expect(event.prompt).toHaveBeenCalledTimes(1);
+    // The early listener is gone: later prompts are handled by the service alone.
+    const again = new Event('beforeinstallprompt', { cancelable: true });
+    dispatchEvent(again);
+    expect(late.canPrompt()).toBeTrue();
   });
 
   it('remembers "not now" and hides once installed', () => {
