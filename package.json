@@ -8,7 +8,9 @@
     "build:pages": "ng build --base-href /gathbandhan/",
     "watch": "ng build --watch --configuration development",
     "test": "ng test",
-    "test:ci": "ng test --watch=false --browsers=ChromeHeadlessCI"
+    "test:ci": "ng test --watch=false --browsers=ChromeHeadlessCI",
+    "test:functions": "node --test supabase/functions/_shared/razorpay-core.node-test.mjs",
+    "bundle:functions": "node scripts/bundle-functions.mjs"
   },
   "prettier": {
     "printWidth": 100,
