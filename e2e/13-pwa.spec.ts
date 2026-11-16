@@ -7,7 +7,12 @@ test.describe('Installable app (PWA)', () => {
 
   async function waitForServiceWorker(page: import('@playwright/test').Page): Promise<void> {
     // ngsw registers once the app is stable (or after 5 s); then the page must be controlled.
-    await page.waitForFunction(async () => !!(await navigator.serviceWorker.getRegistration())?.active, null, { timeout: 20_000 });
+    // Wait until it is fully *activated* (not just activating): only then does a reload come under it.
+    await page.evaluate(async () => {
+      const reg = await navigator.serviceWorker.ready;
+      const sw = reg.active!;
+      if (sw.state !== 'activated') await new Promise<void>((done) => sw.addEventListener('statechange', () => sw.state === 'activated' && done()));
+    });
     await page.reload();
     await page.waitForFunction(() => !!navigator.serviceWorker.controller, null, { timeout: 20_000 });
   }
