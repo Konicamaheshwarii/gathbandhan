@@ -61,8 +61,9 @@ test.describe('Create a wedding page (demo)', () => {
     await page.getByRole('button', { name: 'Suggest dreams and amounts' }).click();
     await expect(page.locator('.suggestions li').first()).toBeVisible();
     await page.getByRole('button', { name: 'Replace my dreams with these' }).click();
+    // The form fills in after the click; wait for it instead of reading straight away.
+    await expect(page.getByLabel('Dream 1 title')).not.toHaveValue('');
     const firstTitle = await page.getByLabel('Dream 1 title').inputValue();
-    expect(firstTitle).not.toBe('');
     await page.getByRole('button', { name: 'Move dream 1 down' }).click();
     await expect(page.getByLabel('Dream 2 title')).toHaveValue(firstTitle);
 

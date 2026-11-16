@@ -44,7 +44,20 @@ test.describe('Wedding page (demo)', () => {
     // Paid by Razorpay, and blessings without a message, both show.
     await expect(wall.locator('.paid-chip').first()).toHaveText('✓ Paid');
     const more = wall.getByRole('button', { name: 'Show more blessings' });
-    while (await more.isVisible()) await more.click();
+    // Each click shows more until the button goes away. Wait for the list to grow (or the
+    // button to vanish) after every click, so a re-render between the check and the click
+    // can't leave the test waiting on a button that no longer exists.
+    const blessings = wall.locator('li.blessing');
+    for (let i = 0; i < 20 && (await more.isVisible()); i++) {
+      const before = await blessings.count();
+      await more.click({ timeout: 5_000 }).catch(async (e) => {
+        if (await more.isVisible()) throw e; // a real failure, not the button finishing its job
+      });
+      await expect
+        .poll(async () => ((await more.isVisible()) ? await blessings.count() : Number.MAX_SAFE_INTEGER))
+        .toBeGreaterThan(before);
+    }
+    await expect(more).toBeHidden();
     await expect(wall.getByText('🌼 Blessed the couple with shagun').first()).toBeVisible();
 
     const share = page.locator('section.share');
