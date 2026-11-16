@@ -65,7 +65,9 @@ export class WeddingStore {
   });
   readonly blessings = computed<WallEntry[]>(() =>
     this.manageMode && this.owner()
-      ? this.contributions().filter((c) => c.message.trim()).map((c) => ({ ...c, paid: c.status === 'paid' }))
+      ? this.contributions()
+          .filter((c) => c.status !== 'pending' && c.status !== 'failed')
+          .map((c) => ({ ...c, paid: c.status === 'paid' }))
       : this.activity().wall,
   );
 

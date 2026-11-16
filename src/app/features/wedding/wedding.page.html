@@ -140,7 +140,11 @@
               <ul class="blessings" aria-live="polite">
                 @for (b of wall(); track b.id) {
                   <li class="blessing">
-                    <p class="msg">“{{ b.message }}”</p>
+                    @if (b.message.trim()) {
+                      <p class="msg">“{{ b.message }}”</p>
+                    } @else {
+                      <p class="msg muted">🌼 Blessed the couple with shagun</p>
+                    }
                     <p class="who small">
                       <strong>{{ b.guestName }}</strong>
                       @if (b.paid) { <span class="paid-chip" title="Paid through Razorpay and confirmed">✓ Paid</span> }

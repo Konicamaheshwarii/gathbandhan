@@ -208,7 +208,7 @@ as $$
                'amount', case when (select show_amounts from w) then m.amount end,
                'createdAt', (extract(epoch from m.created_at) * 1000)::bigint
              )) order by m.created_at desc)
-      from (select * from c where btrim(message) <> '' order by created_at desc limit 200) m
+      from (select * from c order by created_at desc limit 200) m
     ), '[]'::jsonb)
   ) end;
 $$;
