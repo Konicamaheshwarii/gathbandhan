@@ -18,6 +18,10 @@
 --   • The couple (signed in by email, listed in wedding_owners): edit their wedding and
 --     invite design, see every contribution, RSVP and guest with phone numbers, verify
 --     contributions, add a partner as co-owner, upload photos into their wedding's folder.
+--     They can read their Razorpay payout status but never write it.
+--   • Razorpay payments (optional): only the Edge Functions in supabase/functions, which use
+--     the service-role key, create Razorpay contributions and mark them "paid", after checking
+--     Razorpay's signature. Guests and couples can never set "paid" themselves.
 -- =====================================================================================
 
 -- ---------- tables ----------
@@ -62,7 +66,7 @@ create table if not exists public.shagun_contributions (
   message     text not null default '' check (char_length(message) <= 280),
   phone       text check (phone is null or phone ~ '^91[6-9][0-9]{9}$'),
   side        text check (side is null or side in ('bride', 'groom')),
-  status      text not null default 'guest-confirmed' check (status in ('guest-confirmed', 'verified')),
+  status      text not null default 'guest-confirmed',
   thanked_at  timestamptz,
   created_at  timestamptz not null default now()
 );
@@ -99,6 +103,69 @@ create table if not exists public.shagun_guests (
 );
 create index if not exists shagun_guests_wedding_idx on public.shagun_guests (wedding_id, created_at);
 
+-- ---------- Razorpay payments (optional; added later, so existing projects are upgraded) ----------
+
+-- How guests pay: straight to the couple's UPI ID (default), or through Razorpay Checkout.
+-- razorpay_active mirrors the payout account status and is written only by the database itself.
+alter table public.shagun_weddings add column if not exists payment_mode text not null default 'upi_direct';
+alter table public.shagun_weddings add column if not exists fee_bearer text not null default 'couple';
+alter table public.shagun_weddings add column if not exists razorpay_active boolean not null default false;
+alter table public.shagun_weddings drop constraint if exists shagun_weddings_payment_mode_check;
+alter table public.shagun_weddings add constraint shagun_weddings_payment_mode_check check (payment_mode in ('upi_direct', 'razorpay'));
+alter table public.shagun_weddings drop constraint if exists shagun_weddings_fee_bearer_check;
+alter table public.shagun_weddings add constraint shagun_weddings_fee_bearer_check check (fee_bearer in ('couple', 'guest'));
+
+-- Contributions: direct UPI rows are 'guest-confirmed' / 'verified' (the couple checks the bank);
+-- Razorpay rows go 'pending' -> 'paid' (or 'failed') and only the Edge Functions change them.
+alter table public.shagun_contributions add column if not exists provider text not null default 'upi_direct';
+alter table public.shagun_contributions add column if not exists razorpay_order_id text;
+alter table public.shagun_contributions add column if not exists razorpay_payment_id text;
+-- What the guest was charged (shagun + any convenience fee) and the fees, in rupees.
+alter table public.shagun_contributions add column if not exists charged_amount numeric(10, 2);
+alter table public.shagun_contributions add column if not exists guest_fee numeric(10, 2) not null default 0;
+alter table public.shagun_contributions add column if not exists fee_amount numeric(10, 2) not null default 0;
+alter table public.shagun_contributions add column if not exists paid_at timestamptz;
+alter table public.shagun_contributions add column if not exists failure_reason text;
+alter table public.shagun_contributions drop constraint if exists shagun_contributions_status_check;
+alter table public.shagun_contributions add constraint shagun_contributions_status_check
+  check (status in ('guest-confirmed', 'verified', 'pending', 'paid', 'failed'));
+alter table public.shagun_contributions drop constraint if exists shagun_contributions_provider_check;
+alter table public.shagun_contributions add constraint shagun_contributions_provider_check
+  check (provider in ('upi_direct', 'razorpay')
+         and (provider = 'razorpay' or status in ('guest-confirmed', 'verified'))
+         and (provider = 'upi_direct' or (status in ('pending', 'paid', 'failed') and razorpay_order_id is not null)));
+alter table public.shagun_contributions drop constraint if exists shagun_contributions_payment_ids_check;
+alter table public.shagun_contributions add constraint shagun_contributions_payment_ids_check
+  check ((razorpay_order_id is null or razorpay_order_id ~ '^order_[A-Za-z0-9]{6,40}$')
+         and (razorpay_payment_id is null or razorpay_payment_id ~ '^pay_[A-Za-z0-9]{6,40}$')
+         and (failure_reason is null or char_length(failure_reason) <= 200)
+         and guest_fee >= 0 and fee_amount >= 0);
+create unique index if not exists shagun_contributions_order_idx on public.shagun_contributions (razorpay_order_id) where razorpay_order_id is not null;
+create unique index if not exists shagun_contributions_payment_idx on public.shagun_contributions (razorpay_payment_id) where razorpay_payment_id is not null;
+
+-- The couple's Razorpay Route linked account (where their shagun settles). Private: owners can
+-- read it, only the Edge Functions (service role) write it. Bank account and PAN are sent to
+-- Razorpay and never stored here, only their last four characters (the checks enforce it).
+create table if not exists public.shagun_payout_accounts (
+  wedding_id           text primary key references public.shagun_weddings (id) on delete cascade,
+  razorpay_account_id  text unique check (razorpay_account_id is null or razorpay_account_id ~ '^acc_[A-Za-z0-9]{6,40}$'),
+  stakeholder_id       text check (stakeholder_id is null or stakeholder_id ~ '^sth_[A-Za-z0-9]{6,40}$'),
+  product_id           text check (product_id is null or product_id ~ '^acc_prd_[A-Za-z0-9]{6,40}$'),
+  status               text not null default 'not_set_up'
+                       check (status in ('not_set_up', 'under_review', 'active', 'needs_info')),
+  status_detail        text check (status_detail is null or char_length(status_detail) <= 500),
+  -- false only in Razorpay test mode when Route could not be set up: orders then carry no transfer
+  route_enabled        boolean not null default true,
+  legal_name           text check (legal_name is null or char_length(legal_name) <= 120),
+  contact_email        text check (contact_email is null or char_length(contact_email) <= 254),
+  contact_phone        text check (contact_phone is null or contact_phone ~ '^[6-9][0-9]{9}$'),
+  bank_last4           text check (bank_last4 is null or bank_last4 ~ '^[0-9]{4}$'),
+  ifsc                 text check (ifsc is null or ifsc ~ '^[A-Z]{4}0[A-Z0-9]{6}$'),
+  pan_last4            text check (pan_last4 is null or pan_last4 ~ '^[A-Z0-9]{4}$'),
+  created_at           timestamptz not null default now(),
+  updated_at           timestamptz not null default now()
+);
+
 -- ---------- helper functions ----------
 
 -- True when the signed-in user's (verified) email is listed as an owner of the wedding.
@@ -120,7 +187,9 @@ returns jsonb
 language sql stable security definer set search_path = public
 as $$
   with w as (select id, show_amounts from public.shagun_weddings where id = p_wedding_id),
-       c as (select * from public.shagun_contributions where wedding_id = p_wedding_id)
+       -- Razorpay payments count once paid; pending and failed attempts never show.
+       c as (select * from public.shagun_contributions
+             where wedding_id = p_wedding_id and status not in ('pending', 'failed'))
   select case when not exists (select 1 from w) then null else jsonb_build_object(
     'raised', coalesce((select sum(amount) from c), 0),
     'contributors', (select count(distinct lower(btrim(guest_name))) from c),
@@ -135,6 +204,7 @@ as $$
                'guestName', m.guest_name,
                'message', m.message,
                'side', m.side,
+               'paid', case when m.status = 'paid' then true end,
                'amount', case when (select show_amounts from w) then m.amount end,
                'createdAt', (extract(epoch from m.created_at) * 1000)::bigint
              )) order by m.created_at desc)
@@ -170,6 +240,16 @@ begin
 end;
 $$;
 
+-- What the give page polls while a Razorpay payment is being confirmed: only the status of
+-- that one order (the order id comes from the guest's own checkout).
+create or replace function public.shagun_order_status(p_order_id text)
+returns text
+language sql stable security definer set search_path = public
+as $$
+  select c.status from public.shagun_contributions c
+  where c.provider = 'razorpay' and c.razorpay_order_id = p_order_id;
+$$;
+
 -- ---------- triggers ----------
 
 -- Whoever creates a wedding becomes its first owner.
@@ -201,7 +281,7 @@ end;
 $$;
 drop trigger if exists shagun_weddings_touch on public.shagun_weddings;
 create trigger shagun_weddings_touch before update of slug, partner1, partner2, wedding_date, venue, city,
-  upi_id, payee_name, show_amounts, details on public.shagun_weddings
+  upi_id, payee_name, show_amounts, details, payment_mode, fee_bearer on public.shagun_weddings
   for each row execute function public.shagun_touch_wedding();
 
 -- A wedding always keeps at least one owner (deleting the wedding itself still works).
@@ -221,13 +301,26 @@ drop trigger if exists shagun_wedding_owners_keep_last on public.shagun_wedding_
 create trigger shagun_wedding_owners_keep_last before delete on public.shagun_wedding_owners
   for each row execute function public.shagun_keep_last_owner();
 
--- Guests cannot mark their own shagun verified, backdate it, or give to a goal that does not exist.
+-- Guests cannot mark their own shagun verified or paid, backdate it, or give to a goal that does
+-- not exist. Only the service role (the Razorpay Edge Functions) may create Razorpay rows.
 create or replace function public.shagun_guard_contribution()
 returns trigger
 language plpgsql security definer set search_path = public
 as $$
 begin
-  new.status := 'guest-confirmed';
+  if coalesce(auth.role(), '') <> 'service_role' then
+    new.status := 'guest-confirmed';
+    new.provider := 'upi_direct';
+    new.razorpay_order_id := null;
+    new.razorpay_payment_id := null;
+    new.charged_amount := null;
+    new.guest_fee := 0;
+    new.fee_amount := 0;
+    new.paid_at := null;
+    new.failure_reason := null;
+  elsif new.provider = 'razorpay' and new.status <> 'pending' then
+    raise exception 'Razorpay shagun starts as pending.' using errcode = '23514';
+  end if;
   new.thanked_at := null;
   new.created_at := now();
   new.guest_name := btrim(new.guest_name);
@@ -244,6 +337,52 @@ $$;
 drop trigger if exists shagun_contributions_guard on public.shagun_contributions;
 create trigger shagun_contributions_guard before insert on public.shagun_contributions
   for each row execute function public.shagun_guard_contribution();
+
+-- Couples may flip direct-UPI shagun between 'guest-confirmed' and 'verified' and tick "thanked".
+-- Razorpay rows keep the status Razorpay gave them: nobody but the service role sets 'paid'.
+create or replace function public.shagun_guard_contribution_update()
+returns trigger
+language plpgsql security definer set search_path = public
+as $$
+begin
+  if coalesce(auth.role(), '') = 'service_role' then
+    return new;
+  end if;
+  if old.provider = 'razorpay' then
+    new.status := old.status;
+  elsif new.status not in ('guest-confirmed', 'verified') then
+    raise exception 'Only Razorpay can mark a payment as paid.' using errcode = '23514';
+  end if;
+  new.provider := old.provider;
+  new.razorpay_order_id := old.razorpay_order_id;
+  new.razorpay_payment_id := old.razorpay_payment_id;
+  new.charged_amount := old.charged_amount;
+  new.guest_fee := old.guest_fee;
+  new.fee_amount := old.fee_amount;
+  new.paid_at := old.paid_at;
+  new.amount := old.amount;
+  return new;
+end;
+$$;
+drop trigger if exists shagun_contributions_guard_update on public.shagun_contributions;
+create trigger shagun_contributions_guard_update before update on public.shagun_contributions
+  for each row execute function public.shagun_guard_contribution_update();
+
+-- The wedding's razorpay_active flag follows its payout account, so guests' pages know whether
+-- Razorpay Checkout can be offered (they cannot read the payout table itself).
+create or replace function public.shagun_sync_payout_status()
+returns trigger
+language plpgsql security definer set search_path = public
+as $$
+begin
+  new.updated_at := now();
+  update public.shagun_weddings set razorpay_active = (new.status = 'active') where id = new.wedding_id;
+  return new;
+end;
+$$;
+drop trigger if exists shagun_payout_accounts_sync on public.shagun_payout_accounts;
+create trigger shagun_payout_accounts_sync before insert or update on public.shagun_payout_accounts
+  for each row execute function public.shagun_sync_payout_status();
 
 create or replace function public.shagun_guard_rsvp()
 returns trigger
@@ -285,14 +424,17 @@ create trigger shagun_contributions_bump after insert or update or delete on pub
 
 -- ---------- privileges (column level) ----------
 
-revoke all on public.shagun_weddings, public.shagun_wedding_owners, public.shagun_contributions, public.shagun_rsvps, public.shagun_guests from anon, authenticated;
+revoke all on public.shagun_weddings, public.shagun_wedding_owners, public.shagun_contributions, public.shagun_rsvps, public.shagun_guests,
+  public.shagun_payout_accounts from anon, authenticated;
 
 grant select (id, slug, partner1, partner2, wedding_date, venue, city, upi_id, payee_name, show_amounts,
-              details, created_at, updated_at, activity_at)
+              details, created_at, updated_at, activity_at, payment_mode, fee_bearer, razorpay_active)
   on public.shagun_weddings to anon, authenticated;
-grant insert (id, slug, partner1, partner2, wedding_date, venue, city, upi_id, payee_name, show_amounts, details)
+grant insert (id, slug, partner1, partner2, wedding_date, venue, city, upi_id, payee_name, show_amounts, details,
+              payment_mode, fee_bearer)
   on public.shagun_weddings to authenticated;
-grant update (slug, partner1, partner2, wedding_date, venue, city, upi_id, payee_name, show_amounts, details)
+grant update (slug, partner1, partner2, wedding_date, venue, city, upi_id, payee_name, show_amounts, details,
+              payment_mode, fee_bearer)
   on public.shagun_weddings to authenticated;
 grant delete on public.shagun_weddings to authenticated;
 
@@ -307,10 +449,14 @@ grant select, delete on public.shagun_rsvps to authenticated;
 
 grant select, insert, update, delete on public.shagun_guests to authenticated;
 
+-- Payout accounts: the couple may read theirs; nobody but the service role writes.
+grant select on public.shagun_payout_accounts to authenticated;
+
 grant execute on function public.shagun_public_activity(text) to anon, authenticated;
 grant execute on function public.shagun_guest_invite(text, text) to anon, authenticated;
 grant execute on function public.shagun_guest_mark(text, text, text) to anon, authenticated;
 grant execute on function public.shagun_is_owner(text) to anon, authenticated;
+grant execute on function public.shagun_order_status(text) to anon, authenticated;
 
 -- ---------- row level security ----------
 
@@ -319,6 +465,7 @@ alter table public.shagun_wedding_owners enable row level security;
 alter table public.shagun_contributions enable row level security;
 alter table public.shagun_rsvps enable row level security;
 alter table public.shagun_guests enable row level security;
+alter table public.shagun_payout_accounts enable row level security;
 
 drop policy if exists "wedding pages are public" on public.shagun_weddings;
 create policy "wedding pages are public" on public.shagun_weddings
@@ -373,6 +520,10 @@ create policy "owners remove rsvps" on public.shagun_rsvps
 drop policy if exists "owners manage guests" on public.shagun_guests;
 create policy "owners manage guests" on public.shagun_guests
   for all to authenticated using (public.shagun_is_owner(wedding_id)) with check (public.shagun_is_owner(wedding_id));
+
+drop policy if exists "owners see their payout account" on public.shagun_payout_accounts;
+create policy "owners see their payout account" on public.shagun_payout_accounts
+  for select to authenticated using (public.shagun_is_owner(wedding_id));
 
 -- ---------- realtime (live blessing wall and dashboard) ----------
 
