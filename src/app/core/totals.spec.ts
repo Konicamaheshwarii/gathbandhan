@@ -54,11 +54,16 @@ describe('publicActivity', () => {
 
   it('never exposes phone numbers, and hides amounts unless the couple shows them', () => {
     const hidden = publicActivity(wedding({ showAmounts: false }), list());
-    expect(hidden.wall.map((e) => e.guestName)).toEqual(['kabir ', 'Kabir']);
+    expect(hidden.wall.map((e) => e.guestName)).toEqual(['kabir ', 'Zoya', 'Kabir']);
     expect(hidden.wall.every((e) => !('amount' in e) && !('phone' in e))).toBeTrue();
-    expect(hidden.wall[1].side).toBe('groom');
+    expect(hidden.wall[2].side).toBe('groom');
     const shown = publicActivity(wedding({ showAmounts: true }), list());
-    expect(shown.wall[1].amount).toBe(2100);
+    expect(shown.wall[2].amount).toBe(2100);
+  });
+
+  it('shows blessings without a message on the wall, like the live database', () => {
+    const wall = publicActivity(wedding(), list()).wall;
+    expect(wall.find((e) => e.guestName === 'Zoya')).toEqual(jasmine.objectContaining({ message: '', goalId: 'g1' }));
   });
 
   it('gives the same totals guests and the couple see', () => {

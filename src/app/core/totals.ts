@@ -50,8 +50,8 @@ export function publicActivity(wedding: Wedding, all: readonly Contribution[]): 
     goals,
     raised: sum(contributions),
     contributors: new Set(contributions.map((c) => c.guestName.trim().toLowerCase())).size,
-    wall: contributions
-      .filter((c) => c.message.trim())
+    // Every counted blessing shows, with or without a message (the live database does the same).
+    wall: [...contributions]
       .sort((a, b) => b.createdAt - a.createdAt)
       .map((c) => ({
         id: c.id,

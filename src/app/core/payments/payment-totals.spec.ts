@@ -31,6 +31,7 @@ describe('totals with Razorpay payments', () => {
     expect(a.wall.map((e) => [e.message, !!e.paid])).toEqual(jasmine.arrayWithExactContents([
       ['UPI blessing', false],
       ['Paid blessing', true],
+      ['', false], // counted shagun without a message still shows
     ]));
   });
 
