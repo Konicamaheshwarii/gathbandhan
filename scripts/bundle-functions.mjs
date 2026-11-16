@@ -1,4 +1,4 @@
-// Builds one self-contained file per Razorpay Edge Function in supabase/functions-paste/, for
+// Builds one self-contained file per Edge Function in supabase/functions-paste/, for
 // owners who deploy by pasting code into the Supabase dashboard editor (which takes one file).
 // The Supabase CLI deploys supabase/functions/<name>/index.ts directly and does not need these.
 // Run: node scripts/bundle-functions.mjs
@@ -9,7 +9,7 @@ import { fileURLToPath } from 'node:url';
 const root = join(dirname(fileURLToPath(import.meta.url)), '..');
 const fnDir = join(root, 'supabase', 'functions');
 const outDir = join(root, 'supabase', 'functions-paste');
-const NAMES = ['razorpay-create-order', 'razorpay-verify', 'razorpay-webhook', 'razorpay-linked-account'];
+const NAMES = ['razorpay-create-order', 'razorpay-verify', 'razorpay-webhook', 'razorpay-linked-account', 'shagun-delete-account'];
 
 const read = (p) => readFileSync(join(fnDir, p), 'utf8').replace(/\r\n/g, '\n');
 /** Drops imports of the shared modules (multi-line too) and `export` keywords. */

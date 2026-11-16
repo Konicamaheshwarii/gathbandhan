@@ -567,3 +567,112 @@ drop policy if exists "shagun: owners delete photos" on storage.objects;
 create policy "shagun: owners delete photos" on storage.objects
   for delete to authenticated
   using (bucket_id = 'shagun-photos' and public.shagun_is_owner((storage.foldername(name))[1]));
+
+-- =====================================================================================
+-- Account profiles (added later; safe to run again).
+--
+-- One row per signed-in person, keyed by their auth user id. Only that person can read or
+-- change it; guests (anon) have no access at all. The avatar lives in the shagun-photos bucket
+-- under "avatars/<user id>/", and only its owner can write that folder.
+-- =====================================================================================
+
+create table if not exists public.shagun_profiles (
+  id             uuid primary key references auth.users (id) on delete cascade,
+  full_name      text not null default '' check (char_length(full_name) <= 80),
+  display_name   text not null default '' check (char_length(display_name) <= 40),
+  -- E.164, for example +919876543210
+  phone          text check (phone is null or phone ~ '^\+[1-9][0-9]{6,14}$'),
+  city           text not null default '' check (char_length(city) <= 60),
+  avatar_path    text check (avatar_path is null or avatar_path ~ '^avatars/[0-9a-f-]{36}/[A-Za-z0-9_-]{1,64}\.(jpg|png|webp)$'),
+  wedding_role   text check (wedding_role is null or wedding_role in ('bride', 'groom', 'family', 'planner', 'other')),
+  language       text not null default 'en' check (language in ('en', 'hi', 'gu', 'hinglish')),
+  -- reused when the person creates a wedding page
+  upi_id         text check (upi_id is null or upi_id ~ '^[a-zA-Z0-9][a-zA-Z0-9._-]{0,255}@[a-zA-Z][a-zA-Z0-9.]{1,63}$'),
+  payee_name     text check (payee_name is null or char_length(payee_name) between 1 and 60),
+  -- stored now for a future email feature; nothing is emailed yet
+  notify_shagun  boolean not null default true,
+  notify_rsvp    boolean not null default true,
+  created_at     timestamptz not null default now(),
+  updated_at     timestamptz not null default now(),
+  -- the avatar must sit in the person's own folder
+  constraint shagun_profiles_avatar_owner check (avatar_path is null or split_part(avatar_path, '/', 2) = id::text)
+);
+
+-- Server time for created_at / updated_at, and the id can never change.
+create or replace function public.shagun_touch_profile()
+returns trigger
+language plpgsql
+as $$
+begin
+  if tg_op = 'INSERT' then
+    new.created_at := now();
+  else
+    new.id := old.id;
+    new.created_at := old.created_at;
+  end if;
+  new.updated_at := now();
+  return new;
+end;
+$$;
+drop trigger if exists shagun_profiles_touch on public.shagun_profiles;
+create trigger shagun_profiles_touch before insert or update on public.shagun_profiles
+  for each row execute function public.shagun_touch_profile();
+
+-- Supabase grants every table to anon and authenticated by default: take that away first,
+-- then give signed-in people only the columns they need. Anon gets nothing.
+revoke all on public.shagun_profiles from anon, authenticated;
+grant select (id, full_name, display_name, phone, city, avatar_path, wedding_role, language, upi_id, payee_name,
+              notify_shagun, notify_rsvp, created_at, updated_at)
+  on public.shagun_profiles to authenticated;
+grant insert (id, full_name, display_name, phone, city, avatar_path, wedding_role, language, upi_id, payee_name,
+              notify_shagun, notify_rsvp)
+  on public.shagun_profiles to authenticated;
+grant update (full_name, display_name, phone, city, avatar_path, wedding_role, language, upi_id, payee_name,
+              notify_shagun, notify_rsvp)
+  on public.shagun_profiles to authenticated;
+grant delete on public.shagun_profiles to authenticated;
+
+alter table public.shagun_profiles enable row level security;
+
+drop policy if exists "people read their own profile" on public.shagun_profiles;
+create policy "people read their own profile" on public.shagun_profiles
+  for select to authenticated using (id = (select auth.uid()));
+drop policy if exists "people create their own profile" on public.shagun_profiles;
+create policy "people create their own profile" on public.shagun_profiles
+  for insert to authenticated with check (id = (select auth.uid()));
+drop policy if exists "people edit their own profile" on public.shagun_profiles;
+create policy "people edit their own profile" on public.shagun_profiles
+  for update to authenticated using (id = (select auth.uid())) with check (id = (select auth.uid()));
+drop policy if exists "people delete their own profile" on public.shagun_profiles;
+create policy "people delete their own profile" on public.shagun_profiles
+  for delete to authenticated using (id = (select auth.uid()));
+
+-- "avatars" is a folder in the photo bucket, so no wedding may use it as its id (wedding owners
+-- may write their wedding's folder). NOT VALID: checked for new and changed rows.
+alter table public.shagun_weddings drop constraint if exists shagun_weddings_id_not_reserved;
+alter table public.shagun_weddings add constraint shagun_weddings_id_not_reserved check (id <> 'avatars') not valid;
+
+-- Avatars: "avatars/<user id>/<file>". Anyone can view them by URL (the bucket is public);
+-- only the person can add, replace, list or remove files in their own folder.
+drop policy if exists "shagun: people upload their avatar" on storage.objects;
+create policy "shagun: people upload their avatar" on storage.objects
+  for insert to authenticated
+  with check (bucket_id = 'shagun-photos' and (storage.foldername(name))[1] = 'avatars'
+              and (storage.foldername(name))[2] = (select auth.uid())::text);
+drop policy if exists "shagun: people replace their avatar" on storage.objects;
+create policy "shagun: people replace their avatar" on storage.objects
+  for update to authenticated
+  using (bucket_id = 'shagun-photos' and (storage.foldername(name))[1] = 'avatars'
+         and (storage.foldername(name))[2] = (select auth.uid())::text)
+  with check (bucket_id = 'shagun-photos' and (storage.foldername(name))[1] = 'avatars'
+              and (storage.foldername(name))[2] = (select auth.uid())::text);
+drop policy if exists "shagun: people list their avatar" on storage.objects;
+create policy "shagun: people list their avatar" on storage.objects
+  for select to authenticated
+  using (bucket_id = 'shagun-photos' and (storage.foldername(name))[1] = 'avatars'
+         and (storage.foldername(name))[2] = (select auth.uid())::text);
+drop policy if exists "shagun: people delete their avatar" on storage.objects;
+create policy "shagun: people delete their avatar" on storage.objects
+  for delete to authenticated
+  using (bucket_id = 'shagun-photos' and (storage.foldername(name))[1] = 'avatars'
+         and (storage.foldername(name))[2] = (select auth.uid())::text);
