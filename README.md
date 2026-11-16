@@ -17,7 +17,7 @@ At Indian weddings, guests give gifts the couple did not ask for: the fourth mix
 
 The name is the *gathbandhan*, the sacred knot that ties the couple together during the pheras; the logo is that knot, a maroon and a gold thread tied into a heart. It is deliberately framed as **digital shagun**, not a fundraiser, because Indian couples hesitate to "ask for money". It is UPI-first, WhatsApp-native, free, and works as an installable phone app.
 
-**[▶ Live demo](https://konicamaheshwarii.github.io/gathbandhan/)**: opens with a sample wedding (Riya & Arjun) with a finished invite and 25 guests. No sign-up needed.
+**[▶ Live demo](https://konicamaheshwarii.github.io/gathbandhan/)**: opens with three made-up sample weddings: Riya & Arjun in Udaipur (the showcase), Hetal & Parth in Ahmedabad (Gujarati) and Meenakshi & Rohan in Bengaluru, each with a finished invite, about 50 guests, blessings and RSVPs. No sign-up needed.
 
 ![Landing page on desktop](docs/screenshots/desktop-home.png)
 
@@ -113,7 +113,7 @@ AI writes: invite text (language, tone: traditional / modern / fun; the Ganesh s
 Gathbandhan runs in two modes, chosen at start-up from `public/config.json`:
 
 - **Demo mode** (empty keys): everything lives in the browser's localStorage, share links carry the wedding page itself (deflated into the URL), and the sample wedding is seeded. A thin strip says "Demo mode: data stays in this browser".
-- **Online mode** (Supabase keys present): weddings, shagun, RSVPs and guests live in Supabase, links are short (`#/w/:slug`), couples sign in by **email magic link or 6-digit code** and get an account page with their profile, a partner can be added as **co-owner**, photos go to Supabase Storage, and the blessing wall and dashboard update **in realtime**. supabase-js is loaded only in this mode (a lazy chunk).
+- **Online mode** (Supabase keys present): weddings, shagun, RSVPs and guests live in Supabase, links are short (`#/w/:slug`), couples sign in with an **email magic link** (plus a 6-digit code if the owner adds it to the email template and sets `signInCode` in config.json) and get an account page with their profile, a partner can be added as **co-owner**, photos go to Supabase Storage, and the blessing wall and dashboard update **in realtime**. supabase-js is loaded only in this mode (a lazy chunk).
 
 On start the app reads `shagun_weddings` once. If the tables are missing (schema not run yet), the key is wrong, the project is paused or the network is down, it **falls back to demo mode** and the strip explains why, instead of breaking.
 
@@ -197,6 +197,7 @@ npm install
 npm start          # http://localhost:4200
 npm run test:ci    # unit tests in headless Chrome
 npm run test:functions   # Razorpay core with Node's crypto (no Deno needed)
+npm run e2e        # Playwright end-to-end tests against the production build (Chromium)
 npm run build:pages
 ```
 
@@ -204,7 +205,7 @@ Everything works in demo mode out of the box. For online mode, follow [docs/SUPA
 
 ## Testing
 
-255 unit tests (Jasmine + Karma, headless Chrome), plus 4 Node tests for the Razorpay core, including:
+395 unit tests (Jasmine + Karma, headless Chrome), 4 Node tests for the Razorpay core, and 141 Playwright end-to-end tests (see below). The unit tests include:
 
 - the UPI QR reader: GPay, PhonePe, Paytm and BHIM style payloads, URL-encoded (and Hindi) names, `+` for spaces, an uppercase scheme, merchant extras dropped, duplicate keys, and the errors for other QRs; plus decoding QR images drawn by the app's own generator, blank images, non-images and a badly blurred QR
 
@@ -219,7 +220,9 @@ Everything works in demo mode out of the box. For online mode, follow [docs/SUPA
 
 Browser checks with Puppeteer at 375 px and 1280 px in demo mode, with Supabase and Razorpay hosts blocked: the couple switches to Razorpay and fills the payout form (bank and PAN never stored in full), a guest pays through the simulated checkout after a failed attempt and a retry, the wall shows ✓ Paid, the dashboard shows paid vs guest-confirmed totals, fees and payment IDs, the CSV includes them, and direct UPI still works unchanged. The UPI QR upload was checked with QR images rendered by the app itself (the give page's UPI QR with amount and note, and the venue card's link QR) plus an image without a QR: the right message for each, the form filled after confirming, no image kept and no network request while reading. Earlier checks: guest page, functions and calendar download, give flow with side, RSVP, personal invite (greeting, page animation, shehnai toggle, RSVP ticks the guest off), guest list import and the send queue, invite designer in Hindi and Gujarati with PNG and PDF export, dashboard chart tooltip, CSV export, goal updates and the editor. A production build served under `/gathbandhan/` was checked for a valid manifest (no installability errors in Chrome), an active service worker, and offline loading of the home page, wedding page and invite. A config pointing at a database without tables was checked to fall back to demo mode with the notice.
 
-CI (GitHub Actions) runs the tests and a production build with `--base-href /gathbandhan/` on every push, then deploys `main` to GitHub Pages.
+**End-to-end tests** (Playwright, Chromium, `e2e/`): one spec per flow group in **[docs/FLOWS.md](docs/FLOWS.md)**, which documents every couple and guest flow as a manual test script and ends with a test report. They run against the production build served under `/gathbandhan/`, mostly in demo mode on a 390 × 844 phone, with key flows also at 1280 × 860. The online paths (magic-link sign-in, welcome and profile, live wedding page, contributions and RSVPs, the realtime wall, Razorpay order and verification, payout onboarding, delete account) run against an in-memory **Supabase mock** (auth, REST, RPC, storage, Edge Functions and the realtime websocket) and a mock of Razorpay's `checkout.js`. Every test blocks `*.supabase.co`, `checkout.razorpay.com` and `api.razorpay.com` and fails if a request gets past the mocks; no email is ever sent. A layout pass checks every main screen at 375 px in light and dark mode (with Hindi and Gujarati content) for sideways scrolling and saves screenshots. `npm run e2e` builds first; `E2E_SKIP_BUILD=1 npm run e2e` reuses the last build.
+
+CI (GitHub Actions) runs the unit tests, the Razorpay core tests and a production build with `--base-href /gathbandhan/`, then the end-to-end tests (with cached browsers), and deploys `main` to GitHub Pages only when both pass.
 
 ## Limitations
 
@@ -230,7 +233,7 @@ CI (GitHub Actions) runs the tests and a production build with `--base-href /gat
 - Supabase's built-in email sender allows only a few sign-in emails per hour; enough for a couple, and a free SMTP service can be added later.
 - Guest inserts are not rate limited beyond the database checks; a determined spammer could add fake blessings that the couple then removes.
 - Pollinations' free tier answers only from the published site and about once every 45 seconds; between replies the offline templates take over. Chrome's on-device AI needs desktop Chrome with the model already downloaded.
-- The sample wedding uses a fake UPI ID (`riya.arjun@demo`) so nobody can pay it by mistake.
+- The sample weddings use fake UPI IDs (`…@demo`) and fake phone numbers (`+91 90000 …`) so nobody can pay or call them by mistake.
 
 ## License
 

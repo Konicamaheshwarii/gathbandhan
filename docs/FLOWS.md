@@ -536,4 +536,68 @@ The page has a festive header ("Namaste, *name*", email, member since, and a rin
 
 ## Test report
 
-*Filled in after the automated runs; see below.*
+QA pass of November 2026. The automated suite is in `e2e/` (Playwright, Chromium). Run it with `npm run e2e`; CI runs it on every push after the unit tests, and deploys only when both pass.
+
+**How it runs**
+- Against the **production build**, served under `/gathbandhan/` exactly like GitHub Pages, on a free port.
+- Mostly **demo mode** on a **390 × 844 phone**; tests tagged `@desktop` also run at **1280 × 860**.
+- **Online-mode** paths run against an in-memory **Supabase mock** (auth, tables, RPCs, storage, Edge Functions and the realtime websocket) and a mock of Razorpay's `checkout.js`. Every test blocks `*.supabase.co`, `checkout.razorpay.com` and `api.razorpay.com` (and every other outside host) and **fails if a request gets past the mocks**. No real email, payment or database call is ever made.
+- Downloads (PNG, PDF, CSV, .ics, JSON) are saved in the test's own output folder.
+- **Results**: 14 spec files, **141 tests** (phone and desktop), all passing in **two full runs in a row**; 395 unit tests passing; the production build with `--base-href /gathbandhan/` succeeds. One flaky test found on the way (the offline check started before the service worker was fully active) was fixed by waiting for that state, then confirmed over 63 repeated runs.
+
+### Flows and their automated tests
+
+| Flow | Automated spec | Mode | Status |
+|---|---|---|---|
+| C1 Landing page and style slider | `01-landing.spec.ts` | demo, phone + desktop | ✅ |
+| C2 Sign in (magic link, check your email, resend countdown, rate limit, expired link) | `02-sign-in.spec.ts` | demo + mocked live, phone + desktop | ✅ |
+| C3 First sign-in welcome (save and skip) | `02-sign-in.spec.ts` | demo + mocked live | ✅ |
+| C4 Account page (profile, photo crop, payment defaults with UPI QR, my pages, notifications, sign out everywhere, download data, delete account) | `03-account.spec.ts` | demo + mocked live | ✅ |
+| C5 Header menu | `02-sign-in.spec.ts` | demo | ✅ |
+| C6 Create a page (profile prefill, functions, families, gallery, story and dreams with AI) | `04-create-edit.spec.ts` | demo + mocked live | ✅ |
+| C7 Edit | `04-create-edit.spec.ts` | demo + mocked live | ✅ |
+| C8 Co-owners | `04-create-edit.spec.ts` | mocked live | ✅ |
+| C9 Invite designer (10 styles, 4 languages, colours, pages, PNG/PDF, web invite) | `05-invite-designer.spec.ts` | demo | ✅ |
+| C10 Guest list (add, CSV, paste, contacts, per-guest language, groups) | `06-guests.spec.ts` | demo | ✅ |
+| C11 WhatsApp message composer | `06-guests.spec.ts` | demo | ✅ |
+| C12 Send next 10 and tracking | `06-guests.spec.ts`, `10-guest-invite-rsvp.spec.ts` | demo | ✅ |
+| C13 Dashboard (stats, chart, side split, activity, checklist, verify, CSV, thank-you notes in 3 languages, goal updates) | `07-dashboard.spec.ts` | demo + mocked live | ✅ |
+| C14 How guests pay, fee bearer, payout onboarding | `08-payments.spec.ts` | demo + mocked live | ✅ |
+| C15 Venue QR card | `09-card-settings.spec.ts` | demo | ✅ |
+| C16 Settings (AI keys, free AI chain, theme, sample reset) | `09-card-settings.spec.ts` | demo | ✅ |
+| G1 Personal invite link | `10-guest-invite-rsvp.spec.ts` | demo + mocked live | ✅ |
+| G2 Animated invite, shehnai, add to calendar, share | `10-guest-invite-rsvp.spec.ts` | demo | ✅ |
+| G3 RSVP per function (and regrets) | `10-guest-invite-rsvp.spec.ts` | demo + mocked live | ✅ |
+| G4 Wedding page and blessing wall (realtime) | `11-guest-wedding-give.spec.ts` | demo + mocked live | ✅ |
+| G5 Give by direct UPI (intent link, QR, "I've paid") | `11-guest-wedding-give.spec.ts` | demo + mocked live | ✅ |
+| G6 Give by Razorpay (success, failure and retry, closed window, slow confirmation, fallback to UPI) | `12-guest-razorpay.spec.ts` | simulated + mocked live | ✅ |
+| G7 Wall: ✓ Paid and blessings without a message | `11-…`, `12-guest-razorpay.spec.ts` | demo + mocked live | ✅ |
+| P1 Install (Android prompt, iPhone help, installed tab bar) | `13-pwa.spec.ts` | production service worker | ✅ |
+| P2 Offline | `13-pwa.spec.ts` | production service worker | ✅ |
+| P3 Update toast | `13-pwa.spec.ts` | production service worker | ✅ |
+| Layout at 375 px, light and dark, Hindi and Gujarati content (25 screens) | `14-layout-375.spec.ts` | demo | ✅ |
+
+### Bugs found and fixed (each with a unit test)
+
+1. **Demo wall hid blessings without a message**, although the live database shows them ("🌼 Blessed the couple with shagun").
+2. **Landing page could showcase the wrong sample** once more samples were bundled; it now always shows Riya & Arjun.
+3. **Sign-in offered "Have a code? Type it"** and mentioned a code in the rate-limit messages, but on the free plan the email has only the link. The code now appears only with `"signInCode": true` in config.json.
+4. **Guest list showed the default language for guests who have their own** (the dropdown's value was set before its options existed). Same fix for the message preview and group filter.
+5. **Header account menu did not move focus to its first item** when opened (keyboard users).
+6. **The Install button could never appear** if the browser offered installing while the app was still starting (the event fired before the app listened). The early event is now kept.
+7. **Shagun chart tooltip vanished as soon as the finger lifted** on phones; it now stays on the tapped day.
+8. **Account page scrolled sideways on a phone with a long email address**, cutting off text; the separator dot also wrapped onto its own line.
+
+The test pass also found that the bundled data needed more variety: the samples now include a Gujarati wedding in Ahmedabad and a Tamil–Punjabi wedding in Bengaluru (see [The sample weddings](#the-sample-weddings)).
+
+### What could not be automated, and why
+
+| What | Why | How it was covered instead |
+|---|---|---|
+| Tapping the **real magic link** in a real email | Tests must never send email, and the link comes from Supabase's mail server | The mock records the sign-in request; the test then opens the app the way the link does (`#access_token=…`), including an expired-link case. Check by hand once after any auth change |
+| **Real UPI apps** (GPay, PhonePe, Paytm, BHIM) | `upi://` links open apps on a phone, not in a browser; no payment callback exists | The test checks the exact `upi://pay` link (UPI ID, name, amount, note) and that the QR is shown. Pay ₹1 to your own UPI ID by hand to check |
+| **Real Razorpay Checkout** (its hCaptcha, bank pages, live keys) | Tests must never call Razorpay; hCaptcha is built to stop automation | A mock `checkout.js` behaves like the test netbanking page (Success, Failure, close) and the Edge Functions are mocked. Do one manual test-mode payment after changing payments |
+| The **camera** ("Scan with camera") and the **phone contact picker** | No camera or contacts in a headless browser | QR screenshots are uploaded as files; the contact picker is stubbed with two contacts |
+| The **real install prompt** and home-screen app | Browsers only show it to a person, after their own checks | The app's handling is tested with a simulated `beforeinstallprompt`; the manifest, service worker, offline mode and update toast use the real production service worker |
+| Sound of the **shehnai**, print output of the **QR card**, look of exported PNG/PDF | Not measurable reliably | The toggle, the print call, the PNG size (1080 × 1920) and the PDF page count are checked; screenshots were reviewed by eye |
+| Opening **WhatsApp** | Leaves the browser | The exact `api.whatsapp.com/send` links (number and personal message) are checked |
