@@ -12,6 +12,7 @@ export function toAuthUser(session: Session | null): AuthUser | null {
 /** Email magic link (and the 6-digit code from the same email) through Supabase Auth. */
 export class SupabaseAuthService extends AuthService {
   readonly enabled = true;
+  readonly accounts = true;
   private readonly state = signal<AuthUser | null>(null);
   readonly user = this.state.asReadonly();
 
@@ -45,5 +46,15 @@ export class SupabaseAuthService extends AuthService {
 
   async signOut(): Promise<void> {
     await this.client.auth.signOut();
+  }
+
+  /** Revokes every session of this person, on every device. */
+  override async signOutEverywhere(): Promise<void> {
+    const { error } = await this.client.auth.signOut({ scope: 'global' });
+    if (error) {
+      // The local session is gone either way; say so if the other devices could not be reached.
+      await this.client.auth.signOut({ scope: 'local' });
+      throw friendlyError(error);
+    }
   }
 }

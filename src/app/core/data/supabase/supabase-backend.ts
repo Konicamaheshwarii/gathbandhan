@@ -5,7 +5,9 @@ import { BACKEND_STATUS, BackendNotReady, backendProblem } from '../../backend-s
 import { RuntimeConfig } from '../../config';
 import { WeddingRepository } from '../wedding.repository';
 import { PAYMENT_GATEWAY } from '../../payments/payment-gateway.token';
+import { ProfileRepository } from '../../profile/profile.repository';
 import { SupabaseAuthService } from './supabase-auth.service';
+import { SupabaseProfileRepository } from './supabase-profile.repository';
 import { SupabasePaymentGateway } from './supabase-payment-gateway';
 import { SupabaseWeddingRepository } from './supabase.repository';
 import { SUPABASE_CLIENT, T } from './supabase.token';
@@ -65,6 +67,7 @@ export async function supabaseProviders(config: RuntimeConfig): Promise<Provider
     { provide: SUPABASE_CLIENT, useValue: client },
     { provide: WeddingRepository, useClass: SupabaseWeddingRepository },
     { provide: PAYMENT_GATEWAY, useClass: SupabasePaymentGateway },
+    { provide: ProfileRepository, useClass: SupabaseProfileRepository },
     { provide: AuthService, useValue: new SupabaseAuthService(client, data.session) },
     { provide: BACKEND_STATUS, useValue: { configured: true, online: true } },
   ];

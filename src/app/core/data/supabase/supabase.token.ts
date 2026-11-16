@@ -16,6 +16,7 @@ export const T = {
   contributions: 'shagun_contributions',
   rsvps: 'shagun_rsvps',
   guests: 'shagun_guests',
+  profiles: 'shagun_profiles',
 } as const;
 
 export const RPC = {
