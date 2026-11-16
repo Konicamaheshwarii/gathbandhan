@@ -39,7 +39,7 @@
 
   <section class="panel">
     <div class="card login-card" [class.is-sent]="sent()">
-      @if (!auth.enabled) {
+      @if (!auth.accounts) {
         <div class="stack enter">
           <p class="eyebrow">Demo mode</p>
           <h1>No sign-in needed</h1>
@@ -47,16 +47,10 @@
             Once the owner connects the free Supabase backend, couples sign in here with just their email.</p>
           <a class="btn primary block big" routerLink="/">Go home</a>
         </div>
-      } @else if (auth.user(); as u) {
-        <div class="stack enter">
-          <p class="eyebrow">Signed in</p>
-          <h1>Namaste!</h1>
-          <p>You are signed in as <strong class="addr">{{ u.email }}</strong>. Only you (and co-owners you add) can edit your page,
-            see the dashboard and guests' phone numbers.</p>
-          <div class="actions">
-            <a class="btn primary big" [routerLink]="next() || '/'">Continue</a>
-            <button class="btn ghost" type="button" (click)="signOut()">Sign out</button>
-          </div>
+      } @else if (auth.user()) {
+        <div class="stack enter opening center muted" role="status">
+          <span class="spinner" aria-hidden="true"></span>
+          <p>Signed in. Opening your account…</p>
         </div>
       } @else if (!sent()) {
         <div class="stack enter">
@@ -65,6 +59,10 @@
             <h1>Welcome to Gathbandhan</h1>
             <p class="sub">Sign in to {{ purpose() }}.</p>
           </div>
+
+          @if (auth.simulated) {
+            <p class="note small demo-hint" role="note"><strong>Demo mode:</strong> no email is sent. Any address makes a demo account that lives only in this browser.</p>
+          }
 
           @if (linkError()) { <p class="alert small" role="alert">{{ linkError() }}. Ask for a new link below.</p> }
 
@@ -78,7 +76,7 @@
               </span>
             </label>
             <button class="btn primary block big" type="submit" [disabled]="busy()">
-              @if (busy()) { <span class="spinner" aria-hidden="true"></span> Sending… } @else { Email me a sign-in link }
+              @if (busy()) { <span class="spinner" aria-hidden="true"></span> Sending… } @else if (auth.simulated) { Sign in to the demo } @else { Email me a sign-in link }
             </button>
           </form>
 

@@ -1,9 +1,11 @@
 import { Routes } from '@angular/router';
-import { requireSignIn } from './core/auth/auth.service';
+import { requireAccount, requireSignIn } from './core/auth/auth.service';
 
 export const routes: Routes = [
   { path: '', title: 'Gathbandhan: wedding e-invites & digital shagun', loadComponent: () => import('./features/home/home.page').then((m) => m.HomePage) },
   { path: 'login', title: 'Sign in · Gathbandhan', loadComponent: () => import('./features/login/login.page').then((m) => m.LoginPage) },
+  { path: 'welcome', title: 'Welcome · Gathbandhan', canActivate: [requireAccount], loadComponent: () => import('./features/account/welcome.page').then((m) => m.WelcomePage) },
+  { path: 'account', title: 'My account · Gathbandhan', canActivate: [requireAccount], loadComponent: () => import('./features/account/account.page').then((m) => m.AccountPage) },
   { path: 'create', title: 'Create your page · Gathbandhan', canActivate: [requireSignIn], loadComponent: () => import('./features/editor/editor.page').then((m) => m.EditorPage) },
   { path: 'w/:slug', title: 'Bless the couple · Gathbandhan', loadComponent: () => import('./features/wedding/wedding.page').then((m) => m.WeddingPage) },
   { path: 'w/:slug/give', title: 'Give shagun · Gathbandhan', loadComponent: () => import('./features/give/give.page').then((m) => m.GivePage) },

@@ -97,10 +97,11 @@ export class LoginPage {
     }
     destroyRef.onDestroy(() => this.stopTimer());
 
-    // Already signed in (or the link was opened in another tab): carry on to where they were going.
+    // Already signed in (or the link was opened in another tab): carry on to where they were
+    // going, or to the account page.
     effect(() => {
-      const next = safeNext(this.next());
-      if (this.auth.user() && next) untracked(() => void this.router.navigateByUrl(next));
+      const next = safeNext(this.next()) || '/account';
+      if (this.auth.user()) untracked(() => void this.router.navigateByUrl(next));
     });
   }
 
@@ -110,7 +111,9 @@ export class LoginPage {
       return;
     }
     await this.attempt(async () => {
-      await this.auth.sendMagicLink(this.email(), this.next() || '/');
+      await this.auth.sendMagicLink(this.email(), safeNext(this.next()) || '/account');
+      // Demo mode signs in at once (no email); the effect above moves on.
+      if (this.auth.simulated) return;
       this.sentTo.set(this.email().trim());
       this.sent.set(true);
       this.startCooldown();
@@ -127,7 +130,7 @@ export class LoginPage {
     await this.attempt(async () => {
       await this.auth.verifyCode(this.email(), this.code());
       this.toast.show('Signed in');
-      await this.router.navigateByUrl(this.next() || '/');
+      await this.router.navigateByUrl(safeNext(this.next()) || '/account');
     });
   }
 
@@ -140,11 +143,6 @@ export class LoginPage {
     this.showCode.set(false);
     this.stopTimer();
     this.cooldown.set(0);
-  }
-
-  protected async signOut(): Promise<void> {
-    await this.auth.signOut();
-    this.toast.show('Signed out');
   }
 
   private startCooldown(): void {

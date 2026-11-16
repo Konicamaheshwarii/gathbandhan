@@ -6,6 +6,7 @@ import { LoginPage, RESEND_SECONDS, clock, purposeFor, safeNext } from './login.
 
 class FakeAuth extends AuthService {
   readonly enabled = true;
+  readonly accounts = true;
   readonly user = signal<AuthUser | null>(null);
   readonly sendMagicLink = jasmine.createSpy('sendMagicLink').and.resolveTo();
   readonly verifyCode = jasmine.createSpy('verifyCode').and.resolveTo();
@@ -160,12 +161,56 @@ describe('LoginPage', () => {
     expect(TestBed.inject(Router).navigateByUrl).toHaveBeenCalledWith('/create');
   });
 
-  it('shows the account card when signed in without a next param', () => {
+  it('sends a signed-in couple without a next param to their account page', () => {
     auth.user.set({ id: 'u1', email: 'riya@example.com' });
     render();
     TestBed.tick();
-    expect(TestBed.inject(Router).navigateByUrl).not.toHaveBeenCalled();
-    expect(el.textContent).toContain('You are signed in as');
+    expect(TestBed.inject(Router).navigateByUrl).toHaveBeenCalledWith('/account');
+    expect(el.textContent).not.toContain('Namaste');
+  });
+
+  it('asks the magic link to come back to the account page when there is no next', async () => {
+    render();
+    sendTo('riya@example.com');
+    await settle();
+    expect(auth.sendMagicLink).toHaveBeenCalledOnceWith('riya@example.com', '/account');
+  });
+
+  it('never sends the link back to an unsafe next', async () => {
+    render('//evil.example');
+    sendTo('riya@example.com');
+    await settle();
+    expect(auth.sendMagicLink).toHaveBeenCalledOnceWith('riya@example.com', '/account');
+  });
+});
+
+describe('LoginPage in demo mode', () => {
+  it('signs in to a local demo account at once, without the "check your email" step', async () => {
+    const { DemoAuthService } = await import('../../core/auth/auth.service');
+    localStorage.removeItem('sg.demoUser');
+    TestBed.configureTestingModule({
+      imports: [LoginPage],
+      providers: [provideZonelessChangeDetection(), provideRouter([]), { provide: AuthService, useClass: DemoAuthService }],
+    });
+    const navigate = spyOn(TestBed.inject(Router), 'navigateByUrl').and.resolveTo(true);
+    const fixture = TestBed.createComponent(LoginPage);
+    fixture.componentRef.setInput('next', '/create');
+    fixture.detectChanges();
+    const el: HTMLElement = fixture.nativeElement;
+    expect(el.querySelector('.demo-hint')!.textContent).toContain('no email is sent');
+    expect(el.querySelector('button[type=submit]')!.textContent).toContain('Sign in to the demo');
+    const input = el.querySelector<HTMLInputElement>('input[type=email]')!;
+    input.value = 'Konica@Example.com';
+    input.dispatchEvent(new Event('input'));
+    el.querySelector<HTMLFormElement>('form')!.dispatchEvent(new Event('submit'));
+    for (let i = 0; i < 10; i++) await Promise.resolve();
+    TestBed.tick();
+    fixture.detectChanges();
+    expect(TestBed.inject(AuthService).user()?.email).toBe('konica@example.com');
+    expect(el.querySelector('.sent')).toBeNull();
+    expect(navigate).toHaveBeenCalledWith('/create');
+    fixture.destroy();
+    localStorage.removeItem('sg.demoUser');
   });
 });
 

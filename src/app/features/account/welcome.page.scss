@@ -1,0 +1,54 @@
+@use './account-ui';
+
+:host { display: block; }
+
+.welcome { display: grid; place-items: start center; padding: 0.5rem 0 1rem; }
+@media (min-width: 700px) { .welcome { place-items: center; min-height: calc(100dvh - 190px); } }
+
+.welcome-card {
+  width: 100%;
+  max-width: 540px;
+  padding: 0;
+  overflow: hidden;
+  border-radius: 24px;
+  animation: rise 0.5s cubic-bezier(0.2, 0.8, 0.2, 1) both;
+}
+
+.band {
+  height: 92px;
+  display: grid;
+  place-items: end center;
+  .toran { position: absolute; top: -4px; left: 0; right: 0; }
+}
+.badge {
+  --knot-case: #fff8ee;
+  --knot-red: #8a1c3b;
+  --knot-gold: #c9a227;
+  display: grid;
+  place-items: center;
+  width: 64px;
+  height: 64px;
+  margin-bottom: -32px;
+  border-radius: 50%;
+  background: #fff8ee;
+  box-shadow: 0 0 0 4px var(--surface), 0 0 0 6px rgb(242 196 90 / 55%), 0 8px 20px rgb(0 0 0 / 18%);
+}
+
+.body { padding: 2.6rem 1.25rem 1.4rem; gap: 1.15rem; }
+.head { display: grid; gap: 0.4rem; text-align: center; }
+.head h1 { font-size: 1.6rem; }
+.sub { color: var(--muted); line-height: 1.5; }
+
+.roles .choice { flex: 1 1 auto; justify-content: center; }
+
+.btn.big { min-height: 52px; padding: 0.7rem 1.4rem; font-size: 1.02rem; border-radius: 14px; }
+.btn.primary.big { box-shadow: 0 6px 16px color-mix(in srgb, var(--accent) 26%, transparent); }
+
+.actions { display: grid; gap: 0.4rem; margin-top: 0.2rem; }
+
+@media (min-width: 560px) {
+  .body { padding: 2.8rem 2.25rem 1.8rem; }
+  .head h1 { font-size: 1.85rem; }
+}
+
+@media (prefers-reduced-motion: reduce) { .welcome-card { animation: none; } }

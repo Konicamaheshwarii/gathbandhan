@@ -1,0 +1,294 @@
+@let user = auth.user();
+@let p = store.profile();
+@let c = store.completion();
+
+<div class="account">
+  <header class="hero festive">
+    <div class="hero-main">
+      <div class="hero-avatar">
+        <app-avatar [url]="store.avatarUrl()" [initials]="store.initials()" [size]="88" [label]="'Your photo'" />
+        <label class="cam" title="Change your photo">
+          <input type="file" accept="image/*" class="sr-only" (change)="pickAvatar($event)" [disabled]="busy() === 'avatar'" aria-label="Change your photo" />
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 8h3l2-3h6l2 3h3v11H4z" /><circle cx="12" cy="13" r="3.5" /></svg>
+        </label>
+      </div>
+      <div class="hero-text">
+        <p class="eyebrow light">My account</p>
+        <h1>Namaste, {{ greeting() }}</h1>
+        <p class="hero-meta">
+          <span class="addr">{{ user?.email }}</span>
+          @if (memberSince()) { <span class="dot" aria-hidden="true">·</span><span>Member since {{ memberSince() }}</span> }
+        </p>
+      </div>
+      <div class="meter" [attr.aria-label]="'Profile ' + percent() + '% complete'">
+        <svg viewBox="0 0 44 44" aria-hidden="true">
+          <circle class="track" cx="22" cy="22" r="18" />
+          <circle class="fill" cx="22" cy="22" r="18" [attr.stroke-dasharray]="(percent() * 1.131) + ' 113.1'" />
+        </svg>
+        <div class="meter-text">
+          <strong class="num">{{ percent() }}%</strong>
+          <span>{{ c.done === c.total ? 'Profile complete' : 'Add ' + c.missing.slice(0, 2).join(' and ') }}</span>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  @if (auth.simulated) {
+    <p class="note demo-note" role="note"><strong>Demo account.</strong> It lives only in this browser and no email is ever sent. With the online backend, the same page saves to your real account.</p>
+  }
+  @if (store.status() === 'unavailable') {
+    <p class="note" role="note">Profiles are not switched on for this site yet, so changes here cannot be saved. Your wedding pages work as usual.
+      <button class="btn small" type="button" (click)="store.load()">Try again</button></p>
+  }
+
+  <div class="layout">
+    <nav class="toc" aria-label="Account sections">
+      @for (s of sections; track s.id) {
+        <button type="button" (click)="scrollTo(s.id)" [class.active]="active() === s.id">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path [attr.d]="s.icon" /></svg>{{ s.label }}
+        </button>
+      }
+    </nav>
+
+    <div class="cards">
+      <!-- ================= Profile ================= -->
+      <section class="card sec" id="profile" aria-labelledby="h-profile">
+        <header class="sec-head">
+          <span class="sec-ico" aria-hidden="true"><svg viewBox="0 0 24 24"><path [attr.d]="sections[0].icon" /></svg></span>
+          <div>
+            <h2 id="h-profile">Profile</h2>
+            <p class="muted small">How you appear in Gathbandhan. Only you can see your phone number.</p>
+          </div>
+        </header>
+
+        <div class="avatar-row">
+          <app-avatar [url]="store.avatarUrl()" [initials]="store.initials()" [size]="64" />
+          <div class="avatar-actions">
+            <label class="btn small file-btn">
+              <input type="file" accept="image/*" class="sr-only" data-test="avatar-file" (change)="pickAvatar($event)" [disabled]="busy() === 'avatar'" />
+              {{ store.avatarUrl() ? 'Change photo' : 'Add a photo' }}
+            </label>
+            @if (store.avatarUrl()) { <button type="button" class="btn small ghost" (click)="removeAvatar()" [disabled]="busy() === 'avatar'">Remove</button> }
+            <p class="hint">Cropped and shrunk to 256 px on this device{{ backend ? '; anyone with its link can see it' : '' }}.</p>
+          </div>
+        </div>
+        @if (avatarFile()) {
+          <app-avatar-cropper [file]="avatarFile()" [busy]="busy() === 'avatar'" (cropped)="useAvatar($event)" (cancelled)="avatarFile.set(null)" (failed)="avatarFailed($event)" />
+        }
+        @if (errorFor('avatar')) { <p class="alert small" role="alert">{{ errorFor('avatar') }}</p> }
+
+        <form class="stack form" (submit)="$event.preventDefault(); saveProfile()" novalidate>
+          <div class="grid2">
+            <label class="field">
+              <span>Full name <span class="req" aria-hidden="true">*</span></span>
+              <input type="text" name="fullName" autocomplete="name" maxlength="80" placeholder="Riya Sharma" [value]="fullName()"
+                     (input)="fullName.set($any($event.target).value); clearError('fullName')" [attr.aria-invalid]="!!errors().fullName || null" />
+              @if (errors().fullName) { <span class="error-text">{{ errors().fullName }}</span> }
+            </label>
+            <label class="field">
+              <span>Display name <span class="opt">what we call you</span></span>
+              <input type="text" name="displayName" autocomplete="nickname" maxlength="40" [placeholder]="firstName(fullName()) || 'Riya'"
+                     [value]="displayName()" (input)="displayName.set($any($event.target).value); clearError('displayName')" />
+              @if (errors().displayName) { <span class="error-text">{{ errors().displayName }}</span> }
+            </label>
+            <label class="field">
+              <span>Mobile number <span class="opt">optional</span></span>
+              <input type="tel" name="phone" autocomplete="tel" inputmode="tel" placeholder="+91 98765 43210" [value]="phone()"
+                     (input)="phone.set($any($event.target).value); clearError('phone')" [attr.aria-invalid]="!!errors().phone || null" />
+              @if (errors().phone) { <span class="error-text">{{ errors().phone }}</span> }
+            </label>
+            <label class="field">
+              <span>City <span class="opt">optional</span></span>
+              <input type="text" name="city" autocomplete="address-level2" maxlength="60" placeholder="Jaipur" [value]="city()"
+                     (input)="city.set($any($event.target).value); clearError('city')" />
+            </label>
+          </div>
+
+          <fieldset class="field">
+            <legend>Your role in the wedding</legend>
+            <div class="choices" role="radiogroup" aria-label="Your role in the wedding">
+              @for (r of roles; track r.id) {
+                <button type="button" role="radio" class="choice" [attr.aria-checked]="role() === r.id" (click)="role.set(role() === r.id ? null : r.id)">
+                  <span class="emoji" aria-hidden="true">{{ r.emoji }}</span>{{ r.label }}
+                </button>
+              }
+            </div>
+          </fieldset>
+
+          <fieldset class="field">
+            <legend>Preferred language <span class="opt">for invites and AI-written text</span></legend>
+            <div class="choices" role="radiogroup" aria-label="Preferred language">
+              @for (l of languages; track l.id) {
+                <button type="button" role="radio" class="choice" [attr.aria-checked]="language() === l.id" (click)="language.set(l.id)">{{ l.label }}</button>
+              }
+            </div>
+          </fieldset>
+
+          @if (errorFor('profile')) { <p class="alert small" role="alert">{{ errorFor('profile') }}</p> }
+          <div class="sec-foot">
+            @if (saved() === 'profile') { <span class="saved" role="status"><span aria-hidden="true">✓</span> Saved</span> }
+            @else if (profileDirty()) { <span class="hint">Unsaved changes</span> }
+            <button class="btn primary" type="submit" [disabled]="busy() === 'profile' || store.status() === 'unavailable'">
+              @if (busy() === 'profile') { <span class="spinner" aria-hidden="true"></span> Saving… } @else { Save profile }
+            </button>
+          </div>
+        </form>
+      </section>
+
+      <!-- ================= Payment defaults ================= -->
+      <section class="card sec" id="payments" aria-labelledby="h-payments">
+        <header class="sec-head">
+          <span class="sec-ico" aria-hidden="true"><svg viewBox="0 0 24 24"><path [attr.d]="sections[1].icon" /></svg></span>
+          <div>
+            <h2 id="h-payments">Payment defaults</h2>
+            <p class="muted small">Filled in for you when you create a new wedding page. Each page keeps its own copy, so changing this never changes a live page.</p>
+          </div>
+        </header>
+        <form class="stack form" (submit)="$event.preventDefault(); savePayments()" novalidate>
+          <div class="grid2">
+            <label class="field">
+              <span>Default UPI ID</span>
+              <input type="text" name="upiId" autocomplete="off" autocapitalize="none" spellcheck="false" placeholder="riya.sharma@okaxis"
+                     [value]="upiId()" (input)="upiId.set($any($event.target).value); clearError('upiId')" [attr.aria-invalid]="!!errors().upiId || null" />
+              @if (errors().upiId) { <span class="error-text">{{ errors().upiId }}</span> }
+            </label>
+            <label class="field">
+              <span>Payee name <span class="opt">as in your bank</span></span>
+              <input type="text" name="payeeName" autocomplete="name" maxlength="60" placeholder="Riya Sharma"
+                     [value]="payeeName()" (input)="payeeName.set($any($event.target).value); clearError('payeeName')" />
+              @if (errors().payeeName) { <span class="error-text">{{ errors().payeeName }}</span> }
+            </label>
+          </div>
+          <app-upi-qr-reader (confirmed)="useUpiFromQr($event)" />
+          @if (errorFor('payments')) { <p class="alert small" role="alert">{{ errorFor('payments') }}</p> }
+          <div class="sec-foot">
+            @if (saved() === 'payments') { <span class="saved" role="status"><span aria-hidden="true">✓</span> Saved</span> }
+            @else if (paymentsDirty()) { <span class="hint">Unsaved changes</span> }
+            <button class="btn primary" type="submit" [disabled]="busy() === 'payments' || store.status() === 'unavailable'">
+              @if (busy() === 'payments') { <span class="spinner" aria-hidden="true"></span> Saving… } @else { Save payment details }
+            </button>
+          </div>
+        </form>
+      </section>
+
+      <!-- ================= Wedding pages ================= -->
+      <section class="card sec" id="weddings" aria-labelledby="h-weddings">
+        <header class="sec-head">
+          <span class="sec-ico" aria-hidden="true"><svg viewBox="0 0 24 24"><path [attr.d]="sections[2].icon" /></svg></span>
+          <div>
+            <h2 id="h-weddings">My wedding pages</h2>
+            <p class="muted small">Pages you own or co-own{{ backend ? '' : ' in this browser' }}.</p>
+          </div>
+        </header>
+
+        @if (weddings() === null) {
+          <p class="muted small"><span class="spinner" aria-hidden="true"></span> Loading your pages…</p>
+        } @else {
+          <ul class="pages">
+            @for (m of weddings(); track m.wedding.id) {
+              @let w = m.wedding;
+              <li class="page-row" [class.sample]="m.access === 'sample'">
+                <span class="thumb cover" [class]="'thumb cover cover-' + w.cover.preset" [class.photo]="!!w.cover.imageUrl"
+                      [style.background-image]="w.cover.imageUrl ? 'url(' + w.cover.imageUrl + ')' : null" aria-hidden="true">
+                  {{ w.partner1.slice(0, 1) }}<span class="amp">&amp;</span>{{ w.partner2.slice(0, 1) }}
+                </span>
+                <div class="page-info">
+                  <p class="page-names">{{ firstName(w.partner1) }} &amp; {{ firstName(w.partner2) }}
+                    <span class="chip" [class.gold]="m.access === 'co-owner'" [class.sample-chip]="m.access === 'sample'">{{ m.access === 'owner' ? 'Owner' : m.access === 'co-owner' ? 'Co-owner' : 'Sample' }}</span>
+                  </p>
+                  <p class="muted small">{{ w.date | indianDate: 'long' }}@if (w.city) { · {{ w.city }}}</p>
+                </div>
+                <nav class="page-links" [attr.aria-label]="'Links for ' + firstName(w.partner1) + ' & ' + firstName(w.partner2)">
+                  <a [routerLink]="['/w', w.slug]">Page</a>
+                  <a [routerLink]="['/w', w.slug, 'dashboard']">Dashboard</a>
+                  <a [routerLink]="['/w', w.slug, 'invite']">Invite</a>
+                  <a [routerLink]="['/w', w.slug, 'guests']">Guests</a>
+                </nav>
+              </li>
+            }
+          </ul>
+          @if (!hasOwn()) {
+            <p class="muted small empty-pages">No wedding pages of your own yet. Make one, or look around the sample first.</p>
+          }
+          <a class="create" routerLink="/create">
+            <span class="plus" aria-hidden="true">+</span>
+            <span><strong>Create a new wedding page</strong><span class="muted small">{{ store.profile()?.upiId ? 'Your name and UPI ID are filled in for you.' : 'Takes about five minutes.' }}</span></span>
+          </a>
+        }
+      </section>
+
+      <!-- ================= Notifications ================= -->
+      <section class="card sec" id="notifications" aria-labelledby="h-notify">
+        <header class="sec-head">
+          <span class="sec-ico" aria-hidden="true"><svg viewBox="0 0 24 24"><path [attr.d]="sections[3].icon" /></svg></span>
+          <div>
+            <h2 id="h-notify">Notifications</h2>
+            <p class="muted small">Email updates to {{ user?.email }}.</p>
+          </div>
+        </header>
+        <p class="soon"><span class="chip gold">Coming soon</span> We don't send these emails yet. Your choice is saved now and used when they arrive.</p>
+        <div class="switches">
+          <label class="switch-row">
+            <span><strong>A guest gives shagun</strong><span class="muted small">A short email with the name, the dream and the blessing.</span></span>
+            <input type="checkbox" role="switch" class="switch" data-test="notify-shagun" [checked]="p?.notifyShagun ?? true"
+                   (change)="setNotify({ notifyShagun: $any($event.target).checked })" [disabled]="busy() === 'notify' || store.status() === 'unavailable'" />
+          </label>
+          <label class="switch-row">
+            <span><strong>A guest RSVPs</strong><span class="muted small">Who is coming, to which functions, and how many.</span></span>
+            <input type="checkbox" role="switch" class="switch" data-test="notify-rsvp" [checked]="p?.notifyRsvp ?? true"
+                   (change)="setNotify({ notifyRsvp: $any($event.target).checked })" [disabled]="busy() === 'notify' || store.status() === 'unavailable'" />
+          </label>
+        </div>
+        @if (saved() === 'notify') { <p class="saved" role="status"><span aria-hidden="true">✓</span> Saved</p> }
+        @if (errorFor('notify')) { <p class="alert small" role="alert">{{ errorFor('notify') }}</p> }
+      </section>
+
+      <!-- ================= Security ================= -->
+      <section class="card sec" id="security" aria-labelledby="h-security">
+        <header class="sec-head">
+          <span class="sec-ico" aria-hidden="true"><svg viewBox="0 0 24 24"><path [attr.d]="sections[4].icon" /></svg></span>
+          <div>
+            <h2 id="h-security">Security</h2>
+            <p class="muted small">You sign in with a link emailed to you; there is no password to forget.</p>
+          </div>
+        </header>
+        <div class="kv">
+          <span class="muted small">Signed in as</span>
+          <strong class="addr">{{ user?.email }}</strong>
+        </div>
+        @if (errorFor('signout') || errorFor('global')) { <p class="alert small" role="alert">{{ errorFor('signout') || errorFor('global') }}</p> }
+        <div class="row">
+          <button type="button" class="btn" (click)="signOut()" [disabled]="!!busy()">
+            @if (busy() === 'signout') { <span class="spinner" aria-hidden="true"></span> } Sign out
+          </button>
+          <button type="button" class="btn" data-test="signout-global" (click)="signOutEverywhere()" [disabled]="!!busy()">
+            @if (busy() === 'global') { <span class="spinner" aria-hidden="true"></span> } Sign out of all devices
+          </button>
+        </div>
+        <p class="hint">{{ backend ? 'Lost a phone, or signed in at a cyber café? "All devices" ends every session, including this one.' : 'In demo mode both sign out this browser.' }}</p>
+      </section>
+
+      <!-- ================= Privacy ================= -->
+      <section class="card sec" id="privacy" aria-labelledby="h-privacy">
+        <header class="sec-head">
+          <span class="sec-ico" aria-hidden="true"><svg viewBox="0 0 24 24"><path [attr.d]="sections[5].icon" /></svg></span>
+          <div>
+            <h2 id="h-privacy">Privacy</h2>
+            <p class="muted small">Your data is yours: take a copy, or delete it.</p>
+          </div>
+        </header>
+        <div class="privacy-row">
+          <span><strong>Download my data</strong><span class="muted small">Your profile and the wedding pages you own, as a JSON file.</span></span>
+          <button type="button" class="btn" data-test="download" (click)="download()" [disabled]="busy() === 'export'">
+            <svg class="btn-ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 4v11m0 0-4-4m4 4 4-4M5 19h14" /></svg> Download
+          </button>
+        </div>
+        @if (errorFor('export')) { <p class="alert small" role="alert">{{ errorFor('export') }}</p> }
+        <div class="danger-zone">
+          <app-delete-account [weddings]="weddings() ?? []" [backend]="backend" [busy]="busy() === 'delete'" [error]="errorFor('delete')"
+                              (confirmed)="deleteAccount($event)" />
+        </div>
+      </section>
+    </div>
+  </div>
+</div>

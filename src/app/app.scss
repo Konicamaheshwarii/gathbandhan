@@ -38,6 +38,7 @@ nav {
 }
 
 .provider { text-decoration: none; }
+app-account-menu { margin-left: auto; }
 .make-own { font-weight: 600; font-size: 0.9rem; color: var(--muted); text-decoration: none; &:hover { color: var(--accent); } }
 
 main { flex: 1; width: 100%; max-width: 1120px; margin: 0 auto; padding: 0.25rem 16px 3rem; }
@@ -67,7 +68,6 @@ main { flex: 1; width: 100%; max-width: 1120px; margin: 0 auto; padding: 0.25rem
   background: var(--surface-2);
   padding: calc(0.3rem + env(safe-area-inset-top)) 16px 0.3rem;
 }
-.account { text-decoration: none; background: var(--surface-2); color: var(--text); }
 .demo-banner .why { display: block; font-size: 0.76rem; }
 
 .offline-banner, .update-banner {

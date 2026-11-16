@@ -1,18 +1,20 @@
-import { ChangeDetectionStrategy, Component, computed, inject } from '@angular/core';
+import { ChangeDetectionStrategy, Component, computed, effect, inject, untracked } from '@angular/core';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { NavigationEnd, Router, RouterLink, RouterLinkActive, RouterOutlet } from '@angular/router';
 import { filter, map } from 'rxjs';
 import { AuthService } from './core/auth/auth.service';
 import { BACKEND_STATUS } from './core/backend-status';
 import { WeddingRepository } from './core/data/wedding.repository';
+import { ProfileStore, onboardingTarget } from './core/profile/profile.store';
 import { PwaService } from './core/pwa.service';
 import { PROVIDERS, SettingsStore } from './core/settings.store';
+import { AccountMenuComponent } from './shared/account-menu.component';
 import { LogoComponent } from './shared/logo.component';
 import { ToastsComponent } from './shared/toast.service';
 
 @Component({
   selector: 'app-root',
-  imports: [RouterOutlet, RouterLink, RouterLinkActive, ToastsComponent, LogoComponent],
+  imports: [RouterOutlet, RouterLink, RouterLinkActive, ToastsComponent, LogoComponent, AccountMenuComponent],
   changeDetection: ChangeDetectionStrategy.OnPush,
   host: { '[class.standalone]': 'pwa.standalone()' },
   template: `
@@ -46,9 +48,7 @@ import { ToastsComponent } from './shared/toast.service';
           <a routerLink="/settings" routerLinkActive="active">Settings</a>
         </nav>
         <a routerLink="/settings" class="chip provider" [title]="'AI provider: ' + providerLabel()">AI: {{ providerLabel() }}</a>
-        @if (auth.enabled) {
-          <a routerLink="/login" class="chip account" [title]="auth.user()?.email ?? 'Sign in'">{{ auth.user() ? 'Account' : 'Sign in' }}</a>
-        }
+        @if (auth.accounts) { <app-account-menu /> }
       }
     </header>
 
@@ -93,6 +93,7 @@ export class App {
   protected readonly pwa = inject(PwaService);
   protected readonly demoMode = inject(WeddingRepository).mode === 'local';
   protected readonly backendStatus = inject(BACKEND_STATUS);
+  private readonly profile = inject(ProfileStore);
 
   private readonly url = toSignal(
     this.router.events.pipe(filter((e) => e instanceof NavigationEnd), map((e) => e.urlAfterRedirects)),
@@ -102,6 +103,15 @@ export class App {
   protected readonly guestView = computed(() => /^\/(w\/[^/]+(\/give|\/rsvp)?|i\/.+)(\?|$)/.test(this.url()));
   /** Offer the app on the home page and the dashboard only, not on every screen. */
   protected readonly installHere = computed(() => /^\/(\?|$)|\/dashboard(\?|$)/.test(this.url()));
+
+  constructor() {
+    // First sign-in with no profile yet: the short "Tell us about you" step, then on to the page.
+    effect(() => {
+      const target = onboardingTarget(this.url(), this.profile.status(), this.profile.skipped());
+      if (target) untracked(() => void this.router.navigateByUrl(target));
+    });
+  }
+
   protected readonly providerLabel = computed(
     () => PROVIDERS.find((p) => p.id === this.settings.provider())?.label.split(' (')[0] ?? '');
 }

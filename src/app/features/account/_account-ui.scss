@@ -1,0 +1,54 @@
+// Shared by the welcome step and the account page: fields, choice chips, festive band.
+
+h1, h2, h3, p { margin: 0; }
+
+.field { display: grid; gap: 0.4rem; font-weight: 600; font-size: 0.95rem; min-width: 0; }
+fieldset.field { border: 0; padding: 0; margin: 0; }
+legend { padding: 0; margin-bottom: 0.45rem; font-weight: 600; font-size: 0.95rem; }
+.req { color: var(--accent); }
+.opt { font-weight: 500; font-size: 0.8rem; color: var(--muted); margin-left: 0.25rem; }
+
+input[type='text'], input[type='tel'], input[type='email'] {
+  min-height: 48px;
+  border-radius: 14px;
+  border-width: 1.5px;
+  transition: border-color 0.15s ease, box-shadow 0.15s ease;
+  &::placeholder { color: color-mix(in srgb, var(--muted) 70%, transparent); }
+  &:focus-visible {
+    outline: none;
+    border-color: var(--accent);
+    box-shadow: 0 0 0 4px color-mix(in srgb, var(--accent) 18%, transparent);
+  }
+  &[aria-invalid='true'] { border-color: var(--bad); }
+}
+
+.choices { display: flex; flex-wrap: wrap; gap: 0.45rem; }
+.choice {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  min-height: 44px;
+  padding: 0.45rem 0.95rem;
+  border-radius: 999px;
+  border: 1.5px solid var(--border);
+  background: var(--surface);
+  color: var(--text);
+  font: inherit;
+  font-weight: 600;
+  font-size: 0.95rem;
+  cursor: pointer;
+  transition: border-color 0.15s ease, background-color 0.15s ease, transform 0.12s ease;
+  .emoji { font-size: 1.1rem; line-height: 1; }
+  &:hover { border-color: color-mix(in srgb, var(--accent) 55%, var(--border)); }
+  &:active { transform: translateY(1px); }
+  &[aria-checked='true'] {
+    border-color: var(--accent);
+    background: var(--accent-soft);
+    color: var(--accent);
+    box-shadow: inset 0 0 0 1px var(--accent);
+  }
+  &:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+}
+
+
+@keyframes rise { from { opacity: 0; transform: translateY(12px); } }
