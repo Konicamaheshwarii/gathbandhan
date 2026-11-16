@@ -265,6 +265,7 @@
           @if (form.controls.payeeName.touched && form.controls.payeeName.invalid) { <span class="error-text">Add the account holder's name.</span> }
         </label>
       </div>
+      <app-upi-qr-reader (confirmed)="useUpiFromQr($event)" />
       <label class="check">
         <input type="checkbox" formControlName="showAmounts" />
         Show amounts on the blessing wall <span class="hint">(off by default: shagun is personal)</span>

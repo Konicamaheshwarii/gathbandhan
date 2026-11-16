@@ -12,6 +12,7 @@ import { SettingsStore } from '../../core/settings.store';
 import { expectedShagun } from '../../core/totals';
 import { resizeImage } from '../../shared/image';
 import { InrPipe } from '../../shared/pipes';
+import { UpiFromQr, UpiQrReaderComponent } from '../../shared/upi-qr-reader.component';
 import { ToastService } from '../../shared/toast.service';
 import { EventsEditorComponent } from './events-editor.component';
 import { GalleryEditorComponent } from './gallery-editor.component';
@@ -20,7 +21,7 @@ import { GOAL_EMOJIS, goalForm, toWedding, weddingForm } from './wedding-form';
 
 @Component({
   selector: 'app-editor',
-  imports: [ReactiveFormsModule, RouterLink, InrPipe, EventsEditorComponent, StoryEditorComponent, GalleryEditorComponent],
+  imports: [ReactiveFormsModule, RouterLink, InrPipe, EventsEditorComponent, StoryEditorComponent, GalleryEditorComponent, UpiQrReaderComponent],
   changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './editor.page.html',
   styleUrl: './editor.page.scss',
@@ -85,6 +86,18 @@ export class EditorPage {
       const slug = this.slug();
       if (slug) untracked(() => void this.load(slug));
     });
+  }
+
+  /** Fills the UPI ID (and the name, when the QR has one) from the couple's confirmed QR. */
+  protected useUpiFromQr(found: UpiFromQr): void {
+    const { upiId, payeeName } = this.form.controls;
+    upiId.setValue(found.vpa);
+    upiId.markAsTouched();
+    if (found.payeeName) {
+      payeeName.setValue(found.payeeName);
+      payeeName.markAsTouched();
+    }
+    this.toast.show('UPI ID filled in from your QR');
   }
 
   private async load(slug: string): Promise<void> {
