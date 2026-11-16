@@ -14,7 +14,7 @@ const dayLabel = (ms: number) => `${new Date(ms).getDate()} ${MONTHS[new Date(ms
   selector: 'app-trend-chart',
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
-    <div class="chart" (pointerleave)="hover.set(null)">
+    <div class="chart" (pointerleave)="leave($event)">
       <svg [attr.viewBox]="'0 0 ' + w + ' ' + h" preserveAspectRatio="none" role="img"
            [attr.aria-label]="'Shagun over the last ' + days() + ' days, now ' + total()" (pointermove)="move($event)" (pointerdown)="move($event)">
         @for (t of ticks(); track t.v) {
@@ -109,6 +109,14 @@ export class TrendChartComponent {
 
   y(v: number): number {
     return PAD.top + (1 - v / this.max()) * (H - PAD.top - PAD.bottom);
+  }
+
+  /**
+   * A mouse leaving hides the tooltip. A finger "leaves" as soon as it lifts, so on phones the
+   * tooltip stays on the tapped day until another tap (otherwise it would vanish at once).
+   */
+  protected leave(e: PointerEvent): void {
+    if (e.pointerType !== 'touch' && e.pointerType !== 'pen') this.hover.set(null);
   }
 
   protected move(e: PointerEvent): void {
