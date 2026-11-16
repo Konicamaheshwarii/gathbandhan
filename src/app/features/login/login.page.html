@@ -1,0 +1,170 @@
+<div class="login">
+  <!-- Art panel: a two-column hero on desktop, a compact festive band on phones. -->
+  <aside class="art" aria-label="About Gathbandhan">
+    <div class="pattern" aria-hidden="true"></div>
+    <app-toran class="toran" />
+
+    <div class="art-body">
+      <div class="art-copy">
+        <p class="brand"><span class="badge"><app-logo [size]="34" /></span><span class="brand-name">Gathbandhan</span></p>
+        <h2 class="art-title">Two families. One knot. <em>One beautiful link.</em></h2>
+        <p class="art-lead">Wedding e-invites, RSVPs and digital shagun, all on one page made by you.</p>
+      </div>
+
+      <div class="preview" aria-hidden="true">
+        <div class="invite-frame">
+          @for (d of preview(); track d.template) {
+            <app-invite-page class="mini" [wedding]="sample" [design]="d" [page]="cover" />
+          }
+        </div>
+        <span class="petal p1"></span><span class="petal p2"></span><span class="petal p3"></span>
+      </div>
+    </div>
+
+    <ul class="benefits">
+      <li>
+        <span class="ico" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M5 3h10l4 4v14H5z" /><path d="M15 3v4h4" /><path d="M8.5 12.5c1.2-1.6 2.8-1.6 3.5 0 .7-1.6 2.3-1.6 3.5 0-.6 1.7-2 2.7-3.5 3.5-1.5-.8-2.9-1.8-3.5-3.5z" /></svg></span>
+        <span>Design your kankotri in 4 languages</span>
+      </li>
+      <li>
+        <span class="ico" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M4 20l1.3-3.9A8 8 0 1 1 8 18.8z" /><path d="M9 9.5c0 3 2.5 5.5 5.5 5.5l1.2-1.4-1.9-1-1 .8a4 4 0 0 1-2.2-2.2l.8-1-1-1.9z" /></svg></span>
+        <span>Send personal invites on WhatsApp</span>
+      </li>
+      <li>
+        <span class="ico" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M7 5h10M7 9h10M7 5c5 0 5 8 0 8h-.5L14 20" /></svg></span>
+        <span>Receive shagun straight to your UPI</span>
+      </li>
+    </ul>
+  </aside>
+
+  <section class="panel">
+    <div class="card login-card" [class.is-sent]="sent()">
+      @if (!auth.enabled) {
+        <div class="stack enter">
+          <p class="eyebrow">Demo mode</p>
+          <h1>No sign-in needed</h1>
+          <p class="muted">This copy of Gathbandhan runs in demo mode: your pages stay in this browser, so there is nothing to sign in to.
+            Once the owner connects the free Supabase backend, couples sign in here with just their email.</p>
+          <a class="btn primary block big" routerLink="/">Go home</a>
+        </div>
+      } @else if (auth.user(); as u) {
+        <div class="stack enter">
+          <p class="eyebrow">Signed in</p>
+          <h1>Namaste!</h1>
+          <p>You are signed in as <strong class="addr">{{ u.email }}</strong>. Only you (and co-owners you add) can edit your page,
+            see the dashboard and guests' phone numbers.</p>
+          <div class="actions">
+            <a class="btn primary big" [routerLink]="next() || '/'">Continue</a>
+            <button class="btn ghost" type="button" (click)="signOut()">Sign out</button>
+          </div>
+        </div>
+      } @else if (!sent()) {
+        <div class="stack enter">
+          <div class="head">
+            <p class="eyebrow">For the couple</p>
+            <h1>Welcome to Gathbandhan</h1>
+            <p class="sub">Sign in to {{ purpose() }}.</p>
+          </div>
+
+          @if (linkError()) { <p class="alert small" role="alert">{{ linkError() }}. Ask for a new link below.</p> }
+
+          <form class="stack form" (submit)="$event.preventDefault(); send()" novalidate>
+            <label class="field">
+              <span>Your email</span>
+              <span class="input-wrap">
+                <svg class="input-ico" viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="5" width="18" height="14" rx="2.5" /><path d="m4 7 8 6 8-6" /></svg>
+                <input type="email" autocomplete="email" inputmode="email" [value]="email()" (input)="email.set($any($event.target).value)"
+                       placeholder="riya@example.com" [disabled]="busy()" [attr.aria-invalid]="!!error() || null" aria-describedby="login-error" />
+              </span>
+            </label>
+            <button class="btn primary block big" type="submit" [disabled]="busy()">
+              @if (busy()) { <span class="spinner" aria-hidden="true"></span> Sending… } @else { Email me a sign-in link }
+            </button>
+          </form>
+
+          @if (error()) { <p class="alert small" id="login-error" role="alert">{{ error() }}</p> }
+
+          <ul class="trust">
+            <li>
+              <svg viewBox="0 0 24 24" aria-hidden="true"><rect x="5" y="11" width="14" height="9" rx="2" /><path d="M8 11V8a4 4 0 0 1 8 0v3" /></svg>
+              No password. We email you a secure link.
+            </li>
+            <li>
+              <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="9" cy="8" r="3.2" /><path d="M3.5 19c.6-3.3 2.8-5 5.5-5s4.9 1.7 5.5 5" /><path d="m15 11 2 2 4-4" /></svg>
+              Guests never need an account.
+            </li>
+          </ul>
+        </div>
+      } @else {
+        <div class="stack enter sent" role="status" aria-live="polite">
+          <div class="envelope" aria-hidden="true">
+            <svg viewBox="0 0 160 112">
+              <ellipse class="env-shadow" cx="80" cy="106" rx="56" ry="4" />
+              <path class="env-flap" d="M24 46 80 12l56 34z" />
+              <rect class="env-inside" x="24" y="46" width="112" height="56" rx="6" />
+              <g class="env-letter">
+                <rect x="38" y="20" width="84" height="64" rx="5" />
+                <path class="env-line" d="M50 34h60M50 44h46M50 54h52" />
+              </g>
+              <path class="env-pocket" d="M24 50 80 84l56-34v46a6 6 0 0 1-6 6H30a6 6 0 0 1-6-6z" />
+              <path class="env-crease" d="M26 100 68 72M134 100 92 72" />
+              <circle class="env-seal" cx="80" cy="84" r="10" />
+              <path class="env-heart" d="M80 89c-3-2.2-5.5-4.2-5.5-6.6a2.7 2.7 0 0 1 5.5-1.2 2.7 2.7 0 0 1 5.5 1.2c0 2.4-2.5 4.4-5.5 6.6z" />
+            </svg>
+          </div>
+
+          <div class="head center">
+            <h1>Check your email</h1>
+            <p class="sub">We sent a sign-in link to <strong class="addr">{{ sentTo() }}</strong>. Tap it on this phone or computer; it works for one hour.</p>
+          </div>
+
+          <div class="mail-apps">
+            <a class="btn big" href="https://mail.google.com/mail/u/0/#inbox" target="_blank" rel="noopener">
+              Open Gmail <svg class="out-ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M14 4h6v6M20 4l-9 9M18 14v5a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1V7a1 1 0 0 1 1-1h5" /></svg>
+            </a>
+            <a class="btn big" href="https://outlook.live.com/mail/0/" target="_blank" rel="noopener">
+              Open Outlook <svg class="out-ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M14 4h6v6M20 4l-9 9M18 14v5a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1V7a1 1 0 0 1 1-1h5" /></svg>
+            </a>
+          </div>
+
+          <div class="resend-box">
+            <p class="small muted">Didn't get it? Check your <strong>spam</strong> or <strong>Promotions</strong> folder; the email comes from Supabase Auth.</p>
+            <button class="btn block resend" type="button" (click)="resend()" [disabled]="busy() || cooldown() > 0">
+              @if (busy()) {
+                <span class="spinner" aria-hidden="true"></span> Sending…
+              } @else if (cooldown() > 0) {
+                You can resend in <span class="num">{{ clock(cooldown()) }}</span>
+              } @else {
+                Resend the link
+              }
+            </button>
+          </div>
+
+          @if (error()) { <p class="alert small" [class.friendly]="rateLimited()" role="alert">{{ error() }}</p> }
+
+          @if (showCode()) {
+            <form class="code" (submit)="$event.preventDefault(); verify()">
+              <label class="field">
+                <span>6-digit code from the email</span>
+                <input class="code-input" type="text" inputmode="numeric" autocomplete="one-time-code" maxlength="6" placeholder="••••••"
+                       [value]="code()" (input)="code.set($any($event.target).value)" />
+              </label>
+              <button class="btn primary big" type="submit" [disabled]="busy() || code().trim().length < 6">Verify</button>
+            </form>
+          }
+
+          <div class="links">
+            @if (!showCode()) { <button class="link" type="button" (click)="showCode.set(true)">Have a code? Type it</button> }
+            <button class="link" type="button" (click)="differentEmail()">Use a different email</button>
+          </div>
+        </div>
+      }
+    </div>
+
+    <ul class="benefits benefits-phone" aria-label="What you can do">
+      <li><span class="dot" aria-hidden="true"></span>Kankotri in 4 languages</li>
+      <li><span class="dot" aria-hidden="true"></span>Personal invites on WhatsApp</li>
+      <li><span class="dot" aria-hidden="true"></span>Shagun straight to your UPI</li>
+    </ul>
+  </section>
+</div>
