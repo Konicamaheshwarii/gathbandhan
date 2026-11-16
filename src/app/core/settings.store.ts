@@ -70,7 +70,6 @@ export class SettingsStore {
   });
 
   constructor() {
-    effect(() => writeJson(KEY, this.state()));
     effect(() => {
       const theme = this.state().theme;
       if (theme === 'system') document.documentElement.removeAttribute('data-theme');
@@ -79,14 +78,20 @@ export class SettingsStore {
   }
 
   update(patch: Partial<Settings>): void {
-    this.state.update((s) => ({ ...s, ...patch }));
+    this.save((s) => ({ ...s, ...patch }));
   }
 
   setKey(provider: KeyProvider, key: string): void {
-    this.state.update((s) => ({ ...s, apiKeys: { ...s.apiKeys, [provider]: key } }));
+    this.save((s) => ({ ...s, apiKeys: { ...s.apiKeys, [provider]: key } }));
   }
 
   setModel(provider: KeyProvider, model: string): void {
-    this.state.update((s) => ({ ...s, models: { ...s.models, [provider]: model } }));
+    this.save((s) => ({ ...s, models: { ...s.models, [provider]: model } }));
+  }
+
+  /** Writes to storage straight away, so a change survives an immediate reload. */
+  private save(change: (s: Settings) => Settings): void {
+    this.state.update(change);
+    writeJson(KEY, this.state());
   }
 }
