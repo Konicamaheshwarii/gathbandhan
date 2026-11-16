@@ -90,6 +90,12 @@ In demo mode (and on the sample wedding), Razorpay is shown as available with a 
 
 </details>
 
+### Your account
+- **First sign-in** asks four quick things ("Tell us about you": name, role in the wedding, optional phone, language), then carries on to where you were going. It can be skipped; the header then shows a small dot and "Complete your profile".
+- **Account page** (`#/account`): profile with a photo you crop on the phone (stored as a 256 px JPEG), display name, phone (stored as E.164), city, role and language; **payment defaults** (UPI ID and payee name, with the same "Upload your UPI QR" reader) that pre-fill new wedding pages; **my wedding pages** with owner / co-owner and quick links; notification choices (saved now, emails come later); **sign out** or **sign out of all devices**; **download my data** (JSON) and **delete my account** (type DELETE to confirm, and choose whether your own pages go too).
+- The header shows your photo or initials and first name, with a small menu. Your name greets you on the dashboard, and your language is the starting language for invites, stories and thank-you notes.
+- In demo mode, "signing in" makes a local demo account in this browser (no email is sent), so all of this can be tried without the backend.
+
 ### Free AI, no key needed
 Every AI feature goes through one chain and uses the first tier that answers. A tier that errors, times out, or returns something that fails validation hands over to the next, so the couple always gets text.
 
@@ -107,7 +113,7 @@ AI writes: invite text (language, tone: traditional / modern / fun; the Ganesh s
 Gathbandhan runs in two modes, chosen at start-up from `public/config.json`:
 
 - **Demo mode** (empty keys): everything lives in the browser's localStorage, share links carry the wedding page itself (deflated into the URL), and the sample wedding is seeded. A thin strip says "Demo mode: data stays in this browser".
-- **Online mode** (Supabase keys present): weddings, shagun, RSVPs and guests live in Supabase, links are short (`#/w/:slug`), couples sign in by **email magic link or 6-digit code**, a partner can be added as **co-owner**, photos go to Supabase Storage, and the blessing wall and dashboard update **in realtime**. supabase-js is loaded only in this mode (a lazy chunk).
+- **Online mode** (Supabase keys present): weddings, shagun, RSVPs and guests live in Supabase, links are short (`#/w/:slug`), couples sign in by **email magic link or 6-digit code** and get an account page with their profile, a partner can be added as **co-owner**, photos go to Supabase Storage, and the blessing wall and dashboard update **in realtime**. supabase-js is loaded only in this mode (a lazy chunk).
 
 On start the app reads `shagun_weddings` once. If the tables are missing (schema not run yet), the key is wrong, the project is paused or the network is down, it **falls back to demo mode** and the strip explains why, instead of breaking.
 
@@ -132,6 +138,7 @@ One idempotent script to paste into the Supabase SQL editor. Every table, functi
 - **Razorpay payments**: `shagun_weddings.payment_mode` (`upi_direct` default, or `razorpay`) and `fee_bearer` are the couple's; `razorpay_active` is set only by a trigger from the payout account. Contributions gain `provider`, Razorpay order and payment IDs, `charged_amount`, `guest_fee`, `fee_amount` and `paid_at`, and the statuses `pending`, `paid` and `failed`. An insert trigger forces every guest or couple insert to *guest confirmed* / direct UPI; only the service role (the Edge Functions) can create Razorpay rows, always as *pending*. An update trigger lets couples flip only direct-UPI rows between *guest confirmed* and *verified*, never set *paid*. Pending and failed attempts are left out of totals and the wall, and `shagun_order_status()` tells the give page one order's status while it waits.
 - **`shagun_payout_accounts`** (the couple's Route linked account): readable only by owners, writable only by the service role; checks allow only the **last four** digits of the bank account and PAN, so full numbers cannot be stored.
 - The Razorpay additions were checked with 27 more PGlite assertions (run twice): anon cannot insert status or provider, owners cannot set *paid* or `razorpay_active`, service-role *pending* → *paid* is idempotent, pending rows stay hidden, the payout table is private, and full bank numbers are rejected.
+- **`shagun_profiles`** (one row per signed-in person, keyed by their auth user id): default grants are revoked, then signed-in people get only the columns they need, and RLS limits select, insert, update and delete to their own row; anon has nothing. Avatars live in `shagun-photos/avatars/<user id>/`, writable only by that person (no wedding may use `avatars` as its id). **Delete my account** goes through the `shagun-delete-account` Edge Function, which checks the caller's token and deletes only their own profile, avatar, sign-in and (if asked) the pages they own alone. Checked with 29 PGlite assertions after running the script twice.
 - The script was run twice against an in-memory Postgres (PGlite) with Supabase-style `auth`/`storage` stubs and 41 checks as anon, owner, co-owner and stranger.
 
 ## Install it as a phone app

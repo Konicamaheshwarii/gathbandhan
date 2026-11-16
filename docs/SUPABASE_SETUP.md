@@ -118,11 +118,22 @@ The sign-in email contains a link. Some phones open email links inside the Gmail
 
 The sample wedding (Riya & Arjun) keeps working for everyone; it always stays in each visitor's own browser.
 
+## Step 10 (optional but recommended). Let people delete their account
+
+The account page (**#/account**) has **Delete my account**. Removing a Supabase sign-in needs the secret service-role key, which must never be in the website, so a tiny server function does it:
+
+1. Supabase → **Edge Functions** → **Deploy a new function** → **Via Editor**. Name it exactly `shagun-delete-account`.
+2. Paste the whole file `supabase/functions-paste/shagun-delete-account.ts` and click **Deploy**. (With the Supabase CLI: `supabase functions deploy shagun-delete-account --no-verify-jwt`.)
+3. In the function's **Settings**, turn **Verify JWT** off: the function checks the person's sign-in itself and only ever deletes the caller's own data.
+
+It needs no secrets of its own (`SUPABASE_URL` and `SUPABASE_SERVICE_ROLE_KEY` are provided by Supabase) and, like the Razorpay functions, answers only the GitHub Pages site and `localhost`. Until it is deployed, the button explains that deletion is not switched on yet and deletes nothing.
+
 ---
 
 ## Good to know
 
 - **Emails:** Supabase's built-in email sender is meant for small projects and only sends a few sign-in emails per hour. That is plenty for a couple signing in. If you ever need more, Supabase lets you connect a free email service (Authentication → Emails → SMTP settings).
+- **Profiles:** each signed-in person has one row in `shagun_profiles` (name, phone, city, role, language, default UPI ID, notification choices). Row Level Security lets each person read and change only their own row; guests cannot see any. Avatars are 256 px JPEGs in `shagun-photos/avatars/<user id>/`, a folder only that person can write.
 - **Photos** are resized on the phone before upload (usually under 200 kB each) and stored in the `shagun-photos` storage bucket, in a folder per wedding.
 - **Guest lists** for e-invites are private to the couple. Each guest's personal invite link carries a random code that only lets that guest see their own name and tick off "opened", "RSVP'd" and "gave shagun".
 - **Going back to demo mode:** empty both values in `public/config.json` and commit. Nothing in Supabase is deleted.
