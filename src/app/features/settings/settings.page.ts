@@ -81,6 +81,6 @@ export class SettingsPage {
 
   protected async resetDemo(): Promise<void> {
     await this.repo.resetDemo();
-    this.toast.show('Sample wedding restored');
+    this.toast.show('Sample weddings restored');
   }
 }

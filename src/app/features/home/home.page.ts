@@ -38,6 +38,11 @@ const FAQ: { q: string; a: string }[] = [
   { q: 'Is it private?', a: 'Guests never see each other’s phone numbers, and amounts stay hidden on the blessing wall unless you choose to show them. Your guest list is visible only to you and the partner you add.' },
 ];
 
+/** The page the landing showcases: the main sample, else any sample. */
+export function showcaseSample<T extends { wedding: Wedding }>(pages: readonly T[]): T | null {
+  return pages.find((p) => p.wedding.demo && p.wedding.slug === DEMO_SLUG) ?? pages.find((p) => p.wedding.demo) ?? null;
+}
+
 @Component({
   selector: 'app-home',
   imports: [LogoComponent, RouterLink, InrPipe, IndianDatePipe, InvitePageComponent, SliderComponent, SlideDirective],
@@ -53,7 +58,8 @@ export class HomePage {
   protected readonly faq = FAQ;
   protected readonly templates = TEMPLATES;
   protected readonly pages = signal<PageSummary[]>([]);
-  protected readonly demo = computed(() => this.pages().find((p) => p.wedding.demo) ?? null);
+  /** The showcase sample (Riya & Arjun), even when other samples are newer. */
+  protected readonly demo = computed(() => showcaseSample(this.pages()));
   protected readonly mine = computed(() => this.pages().filter((p) => !p.wedding.demo && !p.wedding.imported));
   protected readonly cover: InvitePage = { kind: 'cover' };
   protected readonly showcase = signal(0);
