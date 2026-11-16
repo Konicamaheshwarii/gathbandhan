@@ -1,6 +1,6 @@
 import { Injectable, Signal, inject, signal } from '@angular/core';
 import { CanActivateFn, Router } from '@angular/router';
-import { DEMO_SLUG } from '../data/seed';
+import { isDemoSlug } from '../data/seed';
 import { readJson, writeJson } from '../storage';
 import { hashString } from '../util';
 
@@ -107,8 +107,8 @@ export function isEmail(text: string): boolean {
 /** Couple-only pages (create, edit, dashboard) ask for sign-in when the backend is on. */
 export const requireSignIn: CanActivateFn = (route, state) => {
   const auth = inject(AuthService);
-  // The bundled sample stays in this browser, so anyone may try its dashboard.
-  if (!auth.enabled || auth.user() || route.paramMap.get('slug') === DEMO_SLUG) return true;
+  // The bundled samples stay in this browser, so anyone may try its dashboard.
+  if (!auth.enabled || auth.user() || isDemoSlug(route.paramMap.get('slug'))) return true;
   return inject(Router).createUrlTree(['/login'], { queryParams: { next: state.url } });
 };
 

@@ -6,7 +6,7 @@ import {
   NewContribution, NewRsvp, PublicActivity, Rsvp, Side, Wedding, WeddingEvent,
 } from '../../models';
 import { LocalStorageWeddingRepository } from '../local-storage.repository';
-import { DEMO_ID, DEMO_SLUG } from '../seed';
+import { DEMO_SLUGS, isDemoId, isDemoSlug } from '../seed';
 import { DemoPayment, RepositoryChange, WeddingRepository } from '../wedding.repository';
 import { PHOTO_BUCKET, RPC, SUPABASE_CLIENT, T } from './supabase.token';
 
@@ -283,7 +283,7 @@ export class SupabaseWeddingRepository extends WeddingRepository implements OnDe
   }
 
   override watch(weddingId: string): () => void {
-    if (weddingId === DEMO_ID) return () => undefined;
+    if (isDemoId(weddingId)) return () => undefined;
     const emit = () => this.changes$.next({ weddingId });
     const channel = this.client
       .channel(`wedding-${weddingId}`)
@@ -308,13 +308,13 @@ export class SupabaseWeddingRepository extends WeddingRepository implements OnDe
   }
 
   async getWeddingBySlug(slug: string): Promise<Wedding | null> {
-    if (slug === DEMO_SLUG) return this.local.getWeddingBySlug(slug);
+    if (isDemoSlug(slug)) return this.local.getWeddingBySlug(slug);
     const row = await this.run(this.client.from(T.weddings).select(WEDDING_COLUMNS).eq('slug', slug).maybeSingle());
     return row ? fromWeddingRow(row as WeddingRow) : null;
   }
 
   async saveWedding(wedding: Wedding): Promise<Wedding> {
-    if (wedding.demo || wedding.id === DEMO_ID) return this.local.saveWedding(wedding);
+    if (wedding.demo || isDemoId(wedding.id)) return this.local.saveWedding(wedding);
     if (!(await this.signedIn())) throw new Error('Please sign in first, so only you can edit your page.');
 
     const w: Wedding = structuredClone(wedding);
@@ -341,7 +341,7 @@ export class SupabaseWeddingRepository extends WeddingRepository implements OnDe
   }
 
   async deleteWedding(id: string): Promise<void> {
-    if (id === DEMO_ID) return this.local.deleteWedding(id);
+    if (isDemoId(id)) return this.local.deleteWedding(id);
     const files = await this.client.storage.from(PHOTO_BUCKET).list(id);
     const paths = (files.data ?? []).map((f) => `${id}/${f.name}`);
     if (paths.length) await this.client.storage.from(PHOTO_BUCKET).remove(paths);
@@ -350,7 +350,7 @@ export class SupabaseWeddingRepository extends WeddingRepository implements OnDe
   }
 
   async isOwner(weddingId: string): Promise<boolean> {
-    if (weddingId === DEMO_ID) return true;
+    if (isDemoId(weddingId)) return true;
     if (!(await this.signedIn())) return false;
     const rows = await this.run(this.client.from(T.owners).select('email').eq('wedding_id', weddingId).limit(1));
     return (rows as unknown[]).length > 0;
@@ -359,7 +359,7 @@ export class SupabaseWeddingRepository extends WeddingRepository implements OnDe
   // ---------- contributions ----------
 
   async getPublicActivity(weddingId: string): Promise<PublicActivity> {
-    if (weddingId === DEMO_ID) return this.local.getPublicActivity(weddingId);
+    if (isDemoId(weddingId)) return this.local.getPublicActivity(weddingId);
     const data = (await this.run(this.client.rpc(RPC.publicActivity, { p_wedding_id: weddingId }))) as PublicActivity | null;
     return {
       goals: data?.goals ?? {},
@@ -370,7 +370,7 @@ export class SupabaseWeddingRepository extends WeddingRepository implements OnDe
   }
 
   async listContributions(weddingId: string): Promise<Contribution[]> {
-    if (weddingId === DEMO_ID) return this.local.listContributions(weddingId);
+    if (isDemoId(weddingId)) return this.local.listContributions(weddingId);
     const rows = await this.run(
       this.client.from(T.contributions).select('*').eq('wedding_id', weddingId).order('created_at', { ascending: false }),
     );
@@ -378,7 +378,7 @@ export class SupabaseWeddingRepository extends WeddingRepository implements OnDe
   }
 
   async addContribution(input: NewContribution): Promise<Contribution> {
-    if (input.weddingId === DEMO_ID) return this.local.addContribution(input);
+    if (isDemoId(input.weddingId)) return this.local.addContribution(input);
     const id = crypto.randomUUID();
     // Insert only: guests cannot read contributions back (RLS), so no `.select()` here.
     await this.run(
@@ -398,7 +398,7 @@ export class SupabaseWeddingRepository extends WeddingRepository implements OnDe
   }
 
   async recordDemoPayment(input: NewContribution, payment: DemoPayment): Promise<Contribution> {
-    if (input.weddingId === DEMO_ID) return this.local.recordDemoPayment(input, payment);
+    if (isDemoId(input.weddingId)) return this.local.recordDemoPayment(input, payment);
     throw new Error('Simulated payments only exist on the sample wedding.');
   }
 
@@ -422,13 +422,13 @@ export class SupabaseWeddingRepository extends WeddingRepository implements OnDe
   // ---------- RSVPs ----------
 
   async listRsvps(weddingId: string): Promise<Rsvp[]> {
-    if (weddingId === DEMO_ID) return this.local.listRsvps(weddingId);
+    if (isDemoId(weddingId)) return this.local.listRsvps(weddingId);
     const rows = await this.run(this.client.from(T.rsvps).select('*').eq('wedding_id', weddingId).order('created_at', { ascending: false }));
     return (rows as RsvpRow[]).map(fromRsvpRow);
   }
 
   async addRsvp(input: NewRsvp): Promise<Rsvp> {
-    if (input.weddingId === DEMO_ID) return this.local.addRsvp(input);
+    if (isDemoId(input.weddingId)) return this.local.addRsvp(input);
     const id = crypto.randomUUID();
     await this.run(
       this.client.from(T.rsvps).insert({
@@ -455,14 +455,14 @@ export class SupabaseWeddingRepository extends WeddingRepository implements OnDe
   // ---------- guests (invites) ----------
 
   async listGuests(weddingId: string): Promise<Guest[]> {
-    if (weddingId === DEMO_ID) return this.local.listGuests(weddingId);
+    if (isDemoId(weddingId)) return this.local.listGuests(weddingId);
     const rows = await this.run(this.client.from(T.guests).select('*').eq('wedding_id', weddingId).order('created_at'));
     return (rows as GuestRow[]).map(fromGuestRow);
   }
 
   async saveGuests(guests: Guest[]): Promise<void> {
     if (!guests.length) return;
-    if (guests[0].weddingId === DEMO_ID) return this.local.saveGuests(guests);
+    if (isDemoId(guests[0].weddingId)) return this.local.saveGuests(guests);
     // Backend rows need uuid ids; demo-style ids are replaced on first save.
     const rows = guests.map((g) => toGuestRow(isUuid(g.id) ? g : { ...g, id: crypto.randomUUID() }));
     for (let i = 0; i < rows.length; i += 500) {
@@ -478,31 +478,31 @@ export class SupabaseWeddingRepository extends WeddingRepository implements OnDe
   }
 
   async getGuestInvite(weddingId: string, token: string): Promise<GuestInvite | null> {
-    if (weddingId === DEMO_ID) return this.local.getGuestInvite(weddingId, token);
+    if (isDemoId(weddingId)) return this.local.getGuestInvite(weddingId, token);
     const data = (await this.run(this.client.rpc(RPC.guestInvite, { p_wedding_id: weddingId, p_token: token }))) as GuestInvite | null;
     return data?.name ? { name: data.name, greeting: data.greeting || data.name } : null;
   }
 
   async markGuest(weddingId: string, token: string, mark: GuestMark): Promise<void> {
-    if (weddingId === DEMO_ID) return this.local.markGuest(weddingId, token, mark);
+    if (isDemoId(weddingId)) return this.local.markGuest(weddingId, token, mark);
     await this.run(this.client.rpc(RPC.guestMark, { p_wedding_id: weddingId, p_token: token, p_mark: mark }));
   }
 
   // ---------- co-owners ----------
 
   async listOwners(weddingId: string): Promise<string[]> {
-    if (weddingId === DEMO_ID) return [];
+    if (isDemoId(weddingId)) return [];
     const rows = await this.run(this.client.from(T.owners).select('email').eq('wedding_id', weddingId).order('added_at'));
     return (rows as { email: string }[]).map((r) => r.email);
   }
 
   async addOwner(weddingId: string, email: string): Promise<void> {
-    if (weddingId === DEMO_ID) return this.local.addOwner();
+    if (isDemoId(weddingId)) return this.local.addOwner();
     await this.run(this.client.from(T.owners).insert({ wedding_id: weddingId, email: email.trim().toLowerCase() }));
   }
 
   async removeOwner(weddingId: string, email: string): Promise<void> {
-    if (weddingId === DEMO_ID) return this.local.removeOwner();
+    if (isDemoId(weddingId)) return this.local.removeOwner();
     await this.run(this.client.from(T.owners).delete().eq('wedding_id', weddingId).eq('email', email.trim().toLowerCase()));
   }
 
@@ -531,7 +531,7 @@ export class SupabaseWeddingRepository extends WeddingRepository implements OnDe
 
   private async freeSlug(base: string, id: string): Promise<string> {
     const rows = (await this.run(this.client.from(T.weddings).select('id,slug').like('slug', `${base}%`))) as { id: string; slug: string }[];
-    const taken = new Set([DEMO_SLUG, ...rows.filter((r) => r.id !== id).map((r) => r.slug)]);
+    const taken = new Set([...DEMO_SLUGS, ...rows.filter((r) => r.id !== id).map((r) => r.slug)]);
     let slug = base;
     for (let n = 2; taken.has(slug); n++) slug = `${base}-${n}`;
     return slug;

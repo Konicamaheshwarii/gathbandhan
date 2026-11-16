@@ -3,7 +3,7 @@ import { TestBed } from '@angular/core/testing';
 import { take } from 'rxjs';
 import { wedding } from '../../testing';
 import { KEYS } from '../local-storage.repository';
-import { DEMO_SLUG } from '../seed';
+import { DEMO_SLUG, DEMO_SLUGS, demoContributions } from '../seed';
 import { SupabaseWeddingRepository, WEDDING_COLUMNS, dataUrlToBlob, friendlyError, fromContributionRow, fromWeddingRow, toWeddingRow } from './supabase.repository';
 import { SUPABASE_CLIENT, T } from './supabase.token';
 
@@ -140,7 +140,8 @@ describe('SupabaseWeddingRepository (mocked client)', () => {
   it('serves the bundled sample from this browser without touching the backend', async () => {
     const demo = await repo.getWeddingBySlug(DEMO_SLUG);
     expect(demo?.demo).toBeTrue();
-    expect((await repo.listContributions(demo!.id)).length).toBe(16);
+    expect((await repo.listContributions(demo!.id)).length).toBe(demoContributions(demo!).length);
+    for (const slug of DEMO_SLUGS) expect((await repo.getWeddingBySlug(slug))?.demo).withContext(slug).toBeTrue();
     expect(fake.queries.length).toBe(0);
   });
 
@@ -169,14 +170,15 @@ describe('SupabaseWeddingRepository (mocked client)', () => {
   });
 
   it('lists only the sample when signed out, and owned weddings when signed in', async () => {
-    expect((await repo.listWeddings()).map((w) => w.slug)).toEqual([DEMO_SLUG]);
+    expect((await repo.listWeddings()).map((w) => w.slug)).toEqual(jasmine.arrayWithExactContents([...DEMO_SLUGS]));
     expect(fake.queries.length).toBe(0);
 
     fake.session = { user: { id: 'u1', email: 'asha@example.com' } };
     fake.handler = (t) =>
       t === T.owners ? { data: [{ wedding_id: 'w1' }], error: null } : t === T.weddings ? { data: [row()], error: null } : undefined;
     const list = await repo.listWeddings();
-    expect(list.map((w) => w.slug)).toEqual(['asha-weds-dev', DEMO_SLUG]);
+    expect(list[0].slug).toBe('asha-weds-dev');
+    expect(list.slice(1).map((w) => w.slug)).toEqual(jasmine.arrayWithExactContents([...DEMO_SLUGS]));
     expect(fake.last(T.weddings).has('in')![1]).toEqual(['id', ['w1']]);
   });
 
@@ -261,6 +263,8 @@ describe('SupabaseWeddingRepository (mocked client)', () => {
     stop();
     expect(fake.removedChannels).toBe(1);
     repo.watch('w-demo')();
+    repo.watch('w-demo-ahd')();
+    repo.watch('w-demo-blr')();
     expect(fake.channels.length).toBe(1);
   });
 

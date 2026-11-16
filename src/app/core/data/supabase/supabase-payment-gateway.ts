@@ -7,7 +7,7 @@ import {
   CheckoutResponse, CreatedOrder, OrderRequest, PaymentGateway, PaymentState, PaymentsUnavailable, PayoutAccount, PayoutForm,
   RazorpayAvailability,
 } from '../../payments/payments.models';
-import { DEMO_ID } from '../seed';
+import { isDemoId } from '../seed';
 import { SUPABASE_CLIENT } from './supabase.token';
 
 export const FN = {
@@ -64,7 +64,7 @@ export class SupabasePaymentGateway implements PaymentGateway {
   private readonly demo = new DemoPaymentGateway();
 
   private simulated(w: Wedding): boolean {
-    return !!w.demo || w.id === DEMO_ID;
+    return !!w.demo || isDemoId(w.id);
   }
 
   availability(w: Wedding): RazorpayAvailability {

@@ -5,7 +5,7 @@ import { guestGreeting } from '../guests';
 import { readJson, writeJson } from '../storage';
 import { publicActivity } from '../totals';
 import { uid } from '../util';
-import { DEMO_SEED_VERSION, demoContributions, demoGuests, demoRsvps, demoWedding } from './seed';
+import { DEMO_SEED_VERSION, demoContributions, demoGuests, demoRsvps, demoWeddings, isDemoId, isDemoSlug } from './seed';
 import { DemoPayment, RepositoryChange, WeddingRepository } from './wedding.repository';
 
 export const KEYS = {
@@ -187,13 +187,14 @@ export class LocalStorageWeddingRepository extends WeddingRepository implements 
     throw new Error(NO_ACCOUNTS);
   }
 
+  /** Restores every bundled sample (and its guests, blessings and RSVPs); the couple's own pages stay. */
   async resetDemo(): Promise<void> {
-    const demo = demoWedding();
-    const isDemo = (id: string) => id === demo.id || this.isDemoWedding(id);
-    writeJson(KEYS.contributions, [...this.contributions().filter((c) => !isDemo(c.weddingId)), ...demoContributions(demo)]);
-    writeJson(KEYS.rsvps, [...this.rsvps().filter((r) => !isDemo(r.weddingId)), ...demoRsvps(demo)]);
-    writeJson(KEYS.guests, [...this.guests().filter((g) => !isDemo(g.weddingId)), ...demoGuests(demo)]);
-    this.write(KEYS.weddings, [...this.weddings().filter((w) => !w.demo && w.slug !== demo.slug), demo], null);
+    const samples = demoWeddings();
+    const isDemo = (id: string) => isDemoId(id) || this.isDemoWedding(id);
+    writeJson(KEYS.contributions, [...this.contributions().filter((c) => !isDemo(c.weddingId)), ...samples.flatMap((w) => demoContributions(w))]);
+    writeJson(KEYS.rsvps, [...this.rsvps().filter((r) => !isDemo(r.weddingId)), ...samples.flatMap((w) => demoRsvps(w))]);
+    writeJson(KEYS.guests, [...this.guests().filter((g) => !isDemo(g.weddingId)), ...samples.flatMap((w) => demoGuests(w))]);
+    this.write(KEYS.weddings, [...this.weddings().filter((w) => !w.demo && !isDemoId(w.id) && !isDemoSlug(w.slug)), ...samples], null);
     writeJson(KEYS.seed, DEMO_SEED_VERSION);
   }
 

@@ -1,6 +1,6 @@
 import { contribution, wedding } from '../testing';
 import { KEYS, LocalStorageWeddingRepository } from './local-storage.repository';
-import { DEMO_SLUG } from './seed';
+import { DEMO_SAMPLES, DEMO_SLUG, demoContributions, demoRsvps } from './seed';
 import { RepositoryChange } from './wedding.repository';
 
 describe('LocalStorageWeddingRepository', () => {
@@ -16,13 +16,21 @@ describe('LocalStorageWeddingRepository', () => {
     Object.values(KEYS).forEach((k) => localStorage.removeItem(k));
   });
 
-  it('seeds the sample wedding with contributions on first run', async () => {
+  it('seeds every sample wedding with contributions on first run', async () => {
     const demo = await repo.getWeddingBySlug(DEMO_SLUG);
     expect(demo?.demo).toBeTrue();
     expect(demo!.goals.length).toBe(4);
     const list = await repo.listContributions(demo!.id);
-    expect(list.length).toBe(16);
+    expect(list.length).toBe(demoContributions(demo!).length);
+    expect(list.length).toBeGreaterThanOrEqual(20);
     expect(list[0].createdAt).toBeGreaterThan(list[list.length - 1].createdAt);
+    for (const s of DEMO_SAMPLES) {
+      const w = await repo.getWeddingBySlug(s.slug);
+      expect(w?.id).withContext(s.slug).toBe(s.id);
+      expect(w?.demo).withContext(s.slug).toBeTrue();
+      expect((await repo.listGuests(s.id)).length).withContext(s.slug).toBeGreaterThanOrEqual(40);
+    }
+    expect((await repo.listWeddings()).filter((w) => w.demo).length).toBe(DEMO_SAMPLES.length);
   });
 
   it('does not re-seed over the user’s edits', async () => {
@@ -76,8 +84,10 @@ describe('LocalStorageWeddingRepository', () => {
     const demo = (await repo.getWeddingBySlug(DEMO_SLUG))!;
     await repo.addContribution({ weddingId: demo.id, goalId: 'g-trees', guestName: 'Test', amount: 1, message: '' });
     await repo.resetDemo();
-    expect((await repo.listContributions(demo.id)).length).toBe(16);
+    expect((await repo.listContributions(demo.id)).length).toBe(demoContributions(demo).length);
+    expect((await repo.listContributions(demo.id)).some((c) => c.guestName === 'Test')).toBeFalse();
     expect(await repo.getWeddingBySlug('asha-weds-dev')).not.toBeNull();
+    expect((await repo.listWeddings()).filter((w) => w.demo).length).toBe(DEMO_SAMPLES.length);
   });
 
   it('seeds a sample with functions, families, story, photos, goal updates and RSVPs', async () => {
@@ -87,7 +97,9 @@ describe('LocalStorageWeddingRepository', () => {
     expect(demo.milestones!.length).toBe(4);
     expect(demo.gallery!.length).toBe(4);
     expect(demo.goals[0].updates![0].text).toContain('Flights booked');
-    expect((await repo.listRsvps(demo.id)).length).toBe(10);
+    const rsvps = await repo.listRsvps(demo.id);
+    expect(rsvps.length).toBe(demoRsvps(demo).length);
+    expect(rsvps.length).toBeGreaterThan(10);
   });
 
   it('records RSVPs and shows guests only the public view of contributions', async () => {
@@ -109,7 +121,8 @@ describe('LocalStorageWeddingRepository', () => {
   it('keeps a private guest list; a personal link reveals only that guest and ticks off their progress', async () => {
     const demo = (await repo.getWeddingBySlug(DEMO_SLUG))!;
     const guests = await repo.listGuests(demo.id);
-    expect(guests.length).toBe(25);
+    expect(guests.length).toBeGreaterThanOrEqual(40);
+    expect(guests.length).toBeLessThanOrEqual(80);
     expect(demo.invite?.template).toBe('rajasthani');
     const fresh = guests.find((g) => !g.sentAt)!;
     expect(await repo.getGuestInvite(demo.id, fresh.token)).toEqual({ name: fresh.name, greeting: fresh.greeting ?? fresh.name });
@@ -121,7 +134,7 @@ describe('LocalStorageWeddingRepository', () => {
     await repo.saveGuests([{ ...after, sentAt: 5 }]);
     expect((await repo.listGuests(demo.id)).find((g) => g.id === fresh.id)!.sentAt).toBe(5);
     await repo.deleteGuest(fresh.id);
-    expect((await repo.listGuests(demo.id)).length).toBe(24);
+    expect((await repo.listGuests(demo.id)).length).toBe(guests.length - 1);
   });
 
   it('has no co-owners in demo mode', async () => {
