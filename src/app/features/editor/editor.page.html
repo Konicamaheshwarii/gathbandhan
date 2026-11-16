@@ -269,6 +269,10 @@
         <input type="checkbox" formControlName="showAmounts" />
         Show amounts on the blessing wall <span class="hint">(off by default: shagun is personal)</span>
       </label>
+      @if (original(); as o) {
+        <p class="small muted">Guests pay by {{ o.paymentMode === 'razorpay' ? 'Razorpay (instant confirmation)' : 'UPI directly' }}.
+          <a [routerLink]="['/w', o.slug, 'payments']">Change how guests pay</a></p>
+      }
     </section>
 
     @if (saveError()) { <p class="alert">{{ saveError() }}</p> }

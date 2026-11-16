@@ -37,10 +37,17 @@
     <a [routerLink]="['/w', w.slug]"><span aria-hidden="true">👀</span>View page</a>
     <a [routerLink]="['/w', w.slug, 'edit']"><span aria-hidden="true">✏️</span>Edit</a>
     <a [routerLink]="['/w', w.slug, 'card']"><span aria-hidden="true">🖨️</span>QR card</a>
+    <a [routerLink]="['/w', w.slug, 'payments']"><span aria-hidden="true">💳</span>Payments</a>
   </nav>
 
   @if (w.demo) {
     <p class="note" role="note">This is the sample wedding. Try verifying shagun, sending invites and drafting thank-you notes. <strong>Settings → Reset sample data</strong> restores it.</p>
+  }
+  @if (razorpayMode() && testMode()) {
+    <p class="note test-note" role="note"><strong>Razorpay test mode:</strong> payments use test keys, so no real money moves. <a [routerLink]="['/w', w.slug, 'payments']">Payment settings</a></p>
+  }
+  @if (payments().incomplete) {
+    <p class="note small" role="note">{{ payments().incomplete }} Razorpay {{ payments().incomplete === 1 ? 'payment was' : 'payments were' }} started but not completed. They are not counted.</p>
   }
   @if (w.imported) {
     <p class="note" role="note">You opened this page from a share link, so this dashboard only shows contributions made in this browser.</p>
@@ -53,7 +60,12 @@
       <div class="progress"><span [style.width.%]="t.percent"></span></div>
       <span class="hint">{{ t.percent }}% of {{ t.target | inr }}</span>
     </div>
-    <div class="card stat"><span class="label">Verified in bank</span><strong class="num good">{{ t.verified | inr }}</strong><span class="hint">{{ counts().unverified }} to check</span></div>
+    <div class="card stat"><span class="label">Verified in bank</span><strong class="num good">{{ payments().verified | inr }}</strong><span class="hint">{{ payments().guestConfirmed | inr }} guest-confirmed · {{ counts().unverified }} to check</span></div>
+    @if (razorpayMode() || payments().paidCount) {
+      <div class="card stat"><span class="label">Paid via Razorpay @if (testMode()) { <span class="test-chip">Test mode</span> }</span>
+        <strong class="num good">{{ payments().paid | inr }}</strong>
+        <span class="hint">{{ payments().paidCount }} payments · fees {{ rupees(payments().fees) }}@if (payments().guestFees) { (guests paid {{ rupees(payments().guestFees) }})}</span></div>
+    }
     <div class="card stat"><span class="label">Guests invited</span><strong class="num">{{ inv.sent }}<small>/{{ inv.total }}</small></strong><span class="hint">{{ inv.total - inv.sent }} not sent yet</span></div>
     <div class="card stat"><span class="label">Invites opened</span><strong class="num">{{ inv.opened }}</strong><span class="hint">{{ inv.sent ? pct(inv.opened, inv.sent) : 0 }}% of sent</span></div>
     <div class="card stat"><span class="label">Coming</span><strong class="num">{{ people() }}</strong><span class="hint">{{ store.rsvps().length }} RSVPs</span></div>
@@ -177,12 +189,17 @@
               </div>
               <strong class="c-amount num">{{ c.amount | inr }}</strong>
               <div class="c-actions">
+                @if (c.status === 'paid') {
+                  <span class="paid-badge" [attr.title]="'Razorpay payment ' + (c.razorpayPaymentId ?? '')">✓ Paid · Razorpay</span>
+                  <code class="pay-id">{{ c.razorpayPaymentId }}</code>
+                } @else {
                 <label class="switch" [class.on]="c.status === 'verified'">
                   <input type="checkbox" [checked]="c.status === 'verified'" (change)="toggleVerified(c)"
                          [attr.aria-label]="'Verified ' + c.guestName + ' in bank app'" />
                   <span class="track" aria-hidden="true"><span class="knob"></span></span>
                   <span class="switch-label">{{ c.status === 'verified' ? 'Verified' : 'Guest confirmed' }}</span>
                 </label>
+                }
                 <button class="btn small" type="button" (click)="toggleNote(c)" [attr.aria-expanded]="openNote() === c.id">
                   {{ c.thankedAt ? 'Thanked ✓' : 'Thank-you note' }}
                 </button>

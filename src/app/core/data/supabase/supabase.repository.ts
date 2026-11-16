@@ -2,17 +2,17 @@ import { Injectable, OnDestroy, inject } from '@angular/core';
 import type { SupabaseClient } from '@supabase/supabase-js';
 import { Observable, Subject, merge } from 'rxjs';
 import {
-  Contribution, ContributionStatus, CoverPreset, Families, GalleryPhoto, Goal, Guest, GuestInvite, GuestMark, InviteDesign, Milestone,
+  Contribution, ContributionStatus, CoverPreset, FeeBearer, PaymentMode, PaymentProvider, Families, GalleryPhoto, Goal, Guest, GuestInvite, GuestMark, InviteDesign, Milestone,
   NewContribution, NewRsvp, PublicActivity, Rsvp, Side, Wedding, WeddingEvent,
 } from '../../models';
 import { LocalStorageWeddingRepository } from '../local-storage.repository';
 import { DEMO_ID, DEMO_SLUG } from '../seed';
-import { RepositoryChange, WeddingRepository } from '../wedding.repository';
+import { DemoPayment, RepositoryChange, WeddingRepository } from '../wedding.repository';
 import { PHOTO_BUCKET, RPC, SUPABASE_CLIENT, T } from './supabase.token';
 
 /** Columns guests may read (the schema grants exactly these, not created_by). */
 export const WEDDING_COLUMNS =
-  'id,slug,partner1,partner2,wedding_date,venue,city,upi_id,payee_name,show_amounts,details,created_at';
+  'id,slug,partner1,partner2,wedding_date,venue,city,upi_id,payee_name,show_amounts,details,created_at,payment_mode,fee_bearer,razorpay_active';
 
 export interface WeddingRow {
   id: string;
@@ -27,6 +27,10 @@ export interface WeddingRow {
   show_amounts: boolean;
   details: WeddingDetails;
   created_at?: string;
+  payment_mode?: PaymentMode;
+  fee_bearer?: FeeBearer;
+  /** Read-only: the database sets it from the payout account. */
+  razorpay_active?: boolean;
 }
 
 interface WeddingDetails {
@@ -102,6 +106,13 @@ export interface ContributionRow {
   status: ContributionStatus;
   thanked_at: string | null;
   created_at: string;
+  provider?: PaymentProvider;
+  razorpay_order_id?: string | null;
+  razorpay_payment_id?: string | null;
+  charged_amount?: number | string | null;
+  guest_fee?: number | string | null;
+  fee_amount?: number | string | null;
+  paid_at?: string | null;
 }
 
 export interface RsvpRow {
@@ -128,6 +139,8 @@ export function toWeddingRow(w: Wedding): WeddingRow {
     upi_id: w.upiId,
     payee_name: w.payeeName,
     show_amounts: w.showAmounts,
+    payment_mode: w.paymentMode ?? 'upi_direct',
+    fee_bearer: w.feeBearer ?? 'couple',
     details: {
       cover: w.cover,
       story: w.story,
@@ -162,6 +175,9 @@ export function fromWeddingRow(r: WeddingRow): Wedding {
     upiId: r.upi_id,
     payeeName: r.payee_name,
     showAmounts: !!r.show_amounts,
+    paymentMode: r.payment_mode === 'razorpay' ? 'razorpay' : 'upi_direct',
+    feeBearer: r.fee_bearer === 'guest' ? 'guest' : 'couple',
+    razorpayActive: !!r.razorpay_active,
     createdAt: r.created_at ? Date.parse(r.created_at) : Date.now(),
   };
 }
@@ -179,6 +195,13 @@ export function fromContributionRow(r: ContributionRow): Contribution {
     createdAt: Date.parse(r.created_at),
     status: r.status,
     ...(r.thanked_at ? { thankedAt: Date.parse(r.thanked_at) } : {}),
+    ...(r.provider === 'razorpay' ? { provider: 'razorpay' as const } : {}),
+    ...(r.razorpay_order_id ? { razorpayOrderId: r.razorpay_order_id } : {}),
+    ...(r.razorpay_payment_id ? { razorpayPaymentId: r.razorpay_payment_id } : {}),
+    ...(r.charged_amount != null ? { chargedAmount: Number(r.charged_amount) } : {}),
+    ...(Number(r.guest_fee ?? 0) ? { guestFee: Number(r.guest_fee) } : {}),
+    ...(Number(r.fee_amount ?? 0) ? { fee: Number(r.fee_amount) } : {}),
+    ...(r.paid_at ? { paidAt: Date.parse(r.paid_at) } : {}),
   };
 }
 
@@ -368,6 +391,11 @@ export class SupabaseWeddingRepository extends WeddingRepository implements OnDe
     );
     this.changes$.next({ weddingId: input.weddingId });
     return { ...input, id, createdAt: Date.now(), status: 'guest-confirmed' };
+  }
+
+  async recordDemoPayment(input: NewContribution, payment: DemoPayment): Promise<Contribution> {
+    if (input.weddingId === DEMO_ID) return this.local.recordDemoPayment(input, payment);
+    throw new Error('Simulated payments only exist on the sample wedding.');
   }
 
   async updateContribution(id: string, patch: Partial<Pick<Contribution, 'status' | 'thankedAt'>>): Promise<Contribution> {

@@ -1,5 +1,13 @@
 import { formatDateNumeric } from './format';
-import { Contribution, EVENT_META, Rsvp, SIDES, Side, Wedding } from './models';
+import { Contribution, ContributionStatus, EVENT_META, Rsvp, SIDES, Side, Wedding } from './models';
+
+export const STATUS_LABEL: Record<ContributionStatus, string> = {
+  'guest-confirmed': 'Guest confirmed',
+  verified: 'Verified',
+  pending: 'Payment pending',
+  paid: 'Paid (Razorpay)',
+  failed: 'Payment failed',
+};
 
 /** RFC 4180 quoting, plus a guard against spreadsheet formula injection from guest-typed text. */
 export function csvCell(value: unknown): string {
@@ -14,7 +22,7 @@ export function sideLabel(side: Side | undefined): string {
 
 export function contributionsCsv(wedding: Wedding, contributions: readonly Contribution[]): string {
   const goalTitle = new Map(wedding.goals.map((g) => [g.id, g.title]));
-  const header = ['Date', 'Guest', 'Side', 'Goal', 'Amount (INR)', 'Status', 'Message', 'Phone', 'Thanked'];
+  const header = ['Date', 'Guest', 'Side', 'Goal', 'Amount (INR)', 'Status', 'Paid via', 'Payment ID', 'Order ID', 'Guest paid (INR)', 'Fees (INR)', 'Message', 'Phone', 'Thanked'];
   const rows = [...contributions]
     .sort((a, b) => a.createdAt - b.createdAt)
     .map((c) => [
@@ -23,7 +31,12 @@ export function contributionsCsv(wedding: Wedding, contributions: readonly Contr
       sideLabel(c.side),
       goalTitle.get(c.goalId) ?? '(removed goal)',
       c.amount,
-      c.status === 'verified' ? 'Verified' : 'Guest confirmed',
+      STATUS_LABEL[c.status],
+      c.provider === 'razorpay' ? 'Razorpay' : 'UPI direct',
+      c.razorpayPaymentId ?? '',
+      c.razorpayOrderId ?? '',
+      c.chargedAmount !== undefined ? c.chargedAmount.toFixed(2) : c.amount,
+      (c.fee ?? 0).toFixed(2),
       c.message,
       c.phone ?? '',
       c.thankedAt ? 'Yes' : 'No',

@@ -1,16 +1,17 @@
-import { Contribution, GoalProgress, PublicActivity, Wedding, WeddingTotals } from './models';
+import { Contribution, GoalProgress, PublicActivity, Wedding, WeddingTotals, isConfirmed, isCounted } from './models';
 
 const pct = (raised: number, target: number) => (target > 0 ? Math.min(100, Math.round((raised / target) * 100)) : 0);
 
 /** Contributions to goals that no longer exist are still counted in the wedding total. */
-export function computeTotals(wedding: Wedding, contributions: readonly Contribution[]): WeddingTotals {
+export function computeTotals(wedding: Wedding, all: readonly Contribution[]): WeddingTotals {
+  const contributions = all.filter(isCounted);
   const goals: GoalProgress[] = wedding.goals.map((goal) => {
     const mine = contributions.filter((c) => c.goalId === goal.id);
     const raised = sum(mine);
     return {
       goal,
       raised,
-      verified: sum(mine.filter((c) => c.status === 'verified')),
+      verified: sum(mine.filter(isConfirmed)),
       count: mine.length,
       percent: pct(raised, goal.target),
       funded: goal.target > 0 && raised >= goal.target,
@@ -20,7 +21,7 @@ export function computeTotals(wedding: Wedding, contributions: readonly Contribu
   const target = wedding.goals.reduce((t, g) => t + g.target, 0);
   return {
     raised,
-    verified: sum(contributions.filter((c) => c.status === 'verified')),
+    verified: sum(contributions.filter(isConfirmed)),
     target,
     contributors: new Set(contributions.map((c) => c.guestName.trim().toLowerCase())).size,
     percent: pct(raised, target),
@@ -37,7 +38,8 @@ function sum(list: readonly Contribution[]): number {
  * function returns: totals per goal, and blessings without phone numbers and without amounts
  * unless the couple chose to show them.
  */
-export function publicActivity(wedding: Wedding, contributions: readonly Contribution[]): PublicActivity {
+export function publicActivity(wedding: Wedding, all: readonly Contribution[]): PublicActivity {
+  const contributions = all.filter(isCounted);
   const goals: PublicActivity['goals'] = {};
   for (const c of contributions) {
     const g = (goals[c.goalId] ??= { raised: 0, count: 0 });
@@ -59,6 +61,7 @@ export function publicActivity(wedding: Wedding, contributions: readonly Contrib
         createdAt: c.createdAt,
         ...(c.side ? { side: c.side } : {}),
         ...(wedding.showAmounts ? { amount: c.amount } : {}),
+        ...(c.status === 'paid' ? { paid: true } : {}),
       })),
   };
 }

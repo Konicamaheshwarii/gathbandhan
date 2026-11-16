@@ -4,7 +4,7 @@ import { take } from 'rxjs';
 import { wedding } from '../../testing';
 import { KEYS } from '../local-storage.repository';
 import { DEMO_SLUG } from '../seed';
-import { SupabaseWeddingRepository, WEDDING_COLUMNS, dataUrlToBlob, friendlyError, fromWeddingRow, toWeddingRow } from './supabase.repository';
+import { SupabaseWeddingRepository, WEDDING_COLUMNS, dataUrlToBlob, friendlyError, fromContributionRow, fromWeddingRow, toWeddingRow } from './supabase.repository';
 import { SUPABASE_CLIENT, T } from './supabase.token';
 
 type Step = [string, unknown[]];
@@ -109,9 +109,22 @@ describe('SupabaseWeddingRepository (mocked client)', () => {
   });
 
   it('maps rows to weddings and back', () => {
-    const w = wedding({ events: [], families: { bride: 'Raos' }, gallery: [], milestones: [] });
+    const w = wedding({ events: [], families: { bride: 'Raos' }, gallery: [], milestones: [], paymentMode: 'razorpay', feeBearer: 'guest', razorpayActive: false });
     expect(fromWeddingRow({ ...toWeddingRow(w), created_at: new Date(1).toISOString() })).toEqual({ ...w, createdAt: 1 });
     expect(toWeddingRow(w).wedding_date).toBe('2026-12-12');
+    // The server owns razorpay_active: the app never writes it.
+    expect('razorpay_active' in toWeddingRow({ ...w, razorpayActive: true })).toBeFalse();
+    expect(fromWeddingRow({ ...toWeddingRow(w), razorpay_active: true }).razorpayActive).toBeTrue();
+  });
+
+  it('maps Razorpay payment columns on contributions', () => {
+    const c = fromContributionRow({
+      id: 'x', wedding_id: 'w1', goal_id: 'g1', guest_name: 'Meera', amount: 2100, message: '', phone: null, side: null,
+      status: 'paid', thanked_at: null, created_at: '2026-11-01T10:00:00Z', provider: 'razorpay',
+      razorpay_order_id: 'order_Test12345', razorpay_payment_id: 'pay_Test67890', charged_amount: '2150.75', guest_fee: '50.75', fee_amount: '50.75',
+      paid_at: '2026-11-01T10:01:00Z',
+    });
+    expect(c).toEqual(jasmine.objectContaining({ provider: 'razorpay', razorpayPaymentId: 'pay_Test67890', chargedAmount: 2150.75, fee: 50.75, guestFee: 50.75, status: 'paid' }));
   });
 
   it('looks a wedding up by slug, reading only the public columns', async () => {

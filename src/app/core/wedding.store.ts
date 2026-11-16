@@ -2,7 +2,7 @@ import { DestroyRef, Injectable, computed, inject, signal } from '@angular/core'
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { WeddingRepository } from './data/wedding.repository';
 import { recalledGuestToken } from './guests';
-import { Contribution, Guest, GuestMark, NewContribution, NewRsvp, PublicActivity, Rsvp, WallEntry, Wedding } from './models';
+import { Contribution, Guest, GuestMark, NewContribution, NewRsvp, PublicActivity, Rsvp, WallEntry, Wedding, isCounted } from './models';
 import { readJson, writeJson } from './storage';
 import { computeTotals, totalsFromActivity } from './totals';
 import { decodeWedding, encodeWedding, weddingUrl } from './wedding-link';
@@ -44,7 +44,10 @@ export class WeddingStore {
   readonly wedding = signal<Wedding | null>(null);
   /** The visitor may manage this wedding (always true in demo mode). */
   readonly owner = signal(false);
+  /** Shagun that counts: direct UPI rows and paid Razorpay rows (owner view). */
   readonly contributions = signal<Contribution[]>([]);
+  /** Razorpay attempts that are still pending or failed (owner view; never counted). */
+  readonly incomplete = signal<Contribution[]>([]);
   readonly rsvps = signal<Rsvp[]>([]);
   readonly guests = signal<Guest[]>([]);
   readonly activity = signal<PublicActivity>(EMPTY_ACTIVITY);
@@ -61,7 +64,9 @@ export class WeddingStore {
     return this.manageMode && this.owner() ? computeTotals(w, this.contributions()) : totalsFromActivity(w, this.activity());
   });
   readonly blessings = computed<WallEntry[]>(() =>
-    this.manageMode && this.owner() ? this.contributions().filter((c) => c.message.trim()) : this.activity().wall,
+    this.manageMode && this.owner()
+      ? this.contributions().filter((c) => c.message.trim()).map((c) => ({ ...c, paid: c.status === 'paid' }))
+      : this.activity().wall,
   );
 
   constructor() {
@@ -136,6 +141,12 @@ export class WeddingStore {
     return saved;
   }
 
+  /** After Razorpay confirmed a payment: tick off the guest and refresh the wall. */
+  async paymentConfirmed(): Promise<void> {
+    await this.markGuest('gave');
+    await this.refresh();
+  }
+
   async rsvp(input: Omit<NewRsvp, 'weddingId'>): Promise<Rsvp> {
     const w = this.wedding();
     if (!w) throw new Error('Wedding not loaded.');
@@ -193,7 +204,8 @@ export class WeddingStore {
       const [contributions, rsvps, guests] = await Promise.all([
         this.repo.listContributions(w.id), this.repo.listRsvps(w.id), this.repo.listGuests(w.id),
       ]);
-      this.contributions.set(contributions);
+      this.contributions.set(contributions.filter(isCounted));
+      this.incomplete.set(contributions.filter((c) => !isCounted(c)));
       this.rsvps.set(rsvps);
       this.guests.set(guests);
     } else {

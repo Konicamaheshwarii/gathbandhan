@@ -1,4 +1,5 @@
 {
   "supabaseUrl": "https://ktajpcjnkiyvfjmihspq.supabase.co",
-  "supabaseAnonKey": "sb_publishable_wByMsrsRchrom7YquxxxpA_2yQT2BW7"
+  "supabaseAnonKey": "sb_publishable_wByMsrsRchrom7YquxxxpA_2yQT2BW7",
+  "razorpayKeyId": "rzp_test_U0ji8fNKqRx1PE"
 }

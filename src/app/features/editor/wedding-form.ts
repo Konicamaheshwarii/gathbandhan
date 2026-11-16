@@ -171,6 +171,10 @@ export function toWedding(form: WeddingForm, original?: Wedding | null): Wedding
     upiId: normalizeVpa(v.upiId),
     payeeName: v.payeeName.trim(),
     showAmounts: v.showAmounts,
+    // Set on the "How guests pay" page; the editor keeps them as they are.
+    ...(original?.paymentMode ? { paymentMode: original.paymentMode } : {}),
+    ...(original?.feeBearer ? { feeBearer: original.feeBearer } : {}),
+    ...(original?.razorpayActive ? { razorpayActive: original.razorpayActive } : {}),
     goals: v.goals.map((g) => ({
       id: g.id,
       title: g.title.trim(),

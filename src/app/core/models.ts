@@ -103,6 +103,12 @@ export interface Wedding {
   payeeName: string;
   /** Show contribution amounts on the public blessing wall. Off by default: shagun is personal. */
   showAmounts: boolean;
+  /** How guests pay. Direct UPI (the default) or Razorpay Checkout with instant confirmation. */
+  paymentMode?: PaymentMode;
+  /** Who bears Razorpay's fee: the couple (deducted) or the guest (added as a convenience fee). */
+  feeBearer?: FeeBearer;
+  /** The couple's payout account is active (set by the server, read-only for the app). */
+  razorpayActive?: boolean;
   events?: WeddingEvent[];
   families?: Families;
   gallery?: GalleryPhoto[];
@@ -115,7 +121,25 @@ export interface Wedding {
   imported?: boolean;
 }
 
-export type ContributionStatus = 'guest-confirmed' | 'verified';
+export type PaymentMode = 'upi_direct' | 'razorpay';
+export type FeeBearer = 'couple' | 'guest';
+
+/**
+ * Direct UPI: 'guest-confirmed' until the couple marks it 'verified' against their bank app.
+ * Razorpay: 'pending' while checkout is open, then 'paid' (verified by the server) or 'failed'.
+ */
+export type ContributionStatus = 'guest-confirmed' | 'verified' | 'pending' | 'paid' | 'failed';
+export type PaymentProvider = 'upi_direct' | 'razorpay';
+
+/** Pending and failed Razorpay attempts are not shagun yet: they never count or show. */
+export function isCounted(c: Pick<Contribution, 'status'>): boolean {
+  return c.status !== 'pending' && c.status !== 'failed';
+}
+
+/** Money the couple can rely on: verified by them in the bank app, or confirmed by Razorpay. */
+export function isConfirmed(c: Pick<Contribution, 'status'>): boolean {
+  return c.status === 'verified' || c.status === 'paid';
+}
 
 export interface Contribution {
   id: string;
@@ -131,6 +155,17 @@ export interface Contribution {
   /** The guest tapped "I've paid"; the couple marks it verified after checking their bank app. */
   status: ContributionStatus;
   thankedAt?: number;
+  /** Absent means direct UPI (older rows). */
+  provider?: PaymentProvider;
+  razorpayOrderId?: string;
+  razorpayPaymentId?: string;
+  /** Rupees the guest was charged, including any convenience fee. */
+  chargedAmount?: number;
+  /** Convenience fee the guest paid on top of the shagun. */
+  guestFee?: number;
+  /** Gateway (and platform) fees for this payment, in rupees. */
+  fee?: number;
+  paidAt?: number;
 }
 
 export type NewContribution = Omit<Contribution, 'id' | 'createdAt' | 'status' | 'thankedAt'>;
@@ -144,6 +179,8 @@ export interface WallEntry {
   amount?: number;
   side?: Side;
   createdAt: number;
+  /** Paid through Razorpay and verified by the server ("✓ Paid" badge). */
+  paid?: boolean;
 }
 
 /** Public, non-sensitive view of a wedding's shagun: totals per goal and the blessing wall. */

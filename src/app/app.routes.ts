@@ -10,6 +10,7 @@ export const routes: Routes = [
   { path: 'w/:slug/rsvp', title: 'RSVP · Gathbandhan', loadComponent: () => import('./features/rsvp/rsvp.page').then((m) => m.RsvpPage) },
   { path: 'w/:slug/card', title: 'Venue QR card · Gathbandhan', loadComponent: () => import('./features/card/card.page').then((m) => m.CardPage) },
   { path: 'w/:slug/dashboard', title: 'Dashboard · Gathbandhan', canActivate: [requireSignIn], loadComponent: () => import('./features/dashboard/dashboard.page').then((m) => m.DashboardPage) },
+  { path: 'w/:slug/payments', title: 'How guests pay · Gathbandhan', canActivate: [requireSignIn], loadComponent: () => import('./features/payments/payments.page').then((m) => m.PaymentsPage) },
   { path: 'w/:slug/edit', title: 'Edit your page · Gathbandhan', canActivate: [requireSignIn], loadComponent: () => import('./features/editor/editor.page').then((m) => m.EditorPage) },
   { path: 'w/:slug/invite', title: 'Design your invite · Gathbandhan', canActivate: [requireSignIn], loadComponent: () => import('./features/invite/invite-designer.page').then((m) => m.InviteDesignerPage) },
   { path: 'w/:slug/guests', title: 'Guests and invites · Gathbandhan', canActivate: [requireSignIn], loadComponent: () => import('./features/guests/guests.page').then((m) => m.GuestsPage) },

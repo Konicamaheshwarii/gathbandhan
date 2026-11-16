@@ -6,7 +6,7 @@ import { readJson, writeJson } from '../storage';
 import { publicActivity } from '../totals';
 import { uid } from '../util';
 import { DEMO_SEED_VERSION, demoContributions, demoGuests, demoRsvps, demoWedding } from './seed';
-import { RepositoryChange, WeddingRepository } from './wedding.repository';
+import { DemoPayment, RepositoryChange, WeddingRepository } from './wedding.repository';
 
 export const KEYS = {
   weddings: 'sg.weddings',
@@ -96,6 +96,13 @@ export class LocalStorageWeddingRepository extends WeddingRepository implements 
 
   async addContribution(input: NewContribution): Promise<Contribution> {
     const contribution: Contribution = { ...input, id: uid('c'), createdAt: Date.now(), status: 'guest-confirmed' };
+    this.write(KEYS.contributions, [...this.contributions(), contribution], input.weddingId);
+    return contribution;
+  }
+
+  async recordDemoPayment(input: NewContribution, payment: DemoPayment): Promise<Contribution> {
+    const now = Date.now();
+    const contribution: Contribution = { ...input, ...payment, id: uid('c'), createdAt: now, paidAt: now, status: 'paid', provider: 'razorpay' };
     this.write(KEYS.contributions, [...this.contributions(), contribution], input.weddingId);
     return contribution;
   }

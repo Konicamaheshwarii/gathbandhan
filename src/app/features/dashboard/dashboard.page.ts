@@ -2,7 +2,11 @@ import { ChangeDetectionStrategy, Component, computed, effect, inject, input, si
 import { RouterLink } from '@angular/router';
 import { AiService } from '../../core/ai/ai.service';
 import { contributionsCsv, downloadText } from '../../core/csv';
-import { Contribution, GoalUpdate, NOTE_LANGUAGES, NoteLanguage, SIDES, Side } from '../../core/models';
+import { Contribution, GoalUpdate, NOTE_LANGUAGES, NoteLanguage, SIDES, Side, isConfirmed } from '../../core/models';
+import { RUNTIME_CONFIG } from '../../core/config';
+import { isTestKey } from '../../../../supabase/functions/_shared/razorpay-core';
+import { PAYMENT_GATEWAY } from '../../core/payments/payment-gateway.token';
+import { formatRupees } from '../../core/payments/payments.models';
 import { SettingsStore } from '../../core/settings.store';
 import { inviteMessage, whatsappUrl } from '../../core/share';
 import { firstName } from '../../core/util';
@@ -43,6 +47,9 @@ export class DashboardPage {
   protected readonly settings = inject(SettingsStore);
   private readonly ai = inject(AiService);
   private readonly toast = inject(ToastService);
+  private readonly gateway = inject(PAYMENT_GATEWAY);
+  private readonly config = inject(RUNTIME_CONFIG);
+  protected readonly rupees = formatRupees;
 
   readonly slug = input.required<string>();
 
@@ -73,8 +80,8 @@ export class DashboardPage {
     const list = this.store.contributions();
     return {
       all: list.length,
-      unverified: list.filter((c) => c.status !== 'verified').length,
-      verified: list.filter((c) => c.status === 'verified').length,
+      unverified: list.filter((c) => !isConfirmed(c)).length,
+      verified: list.filter(isConfirmed).length,
       unthanked: list.filter((c) => !c.thankedAt).length,
     };
   });
@@ -84,8 +91,8 @@ export class DashboardPage {
     return this.store.contributions().filter((c) => {
       if (side !== 'all' && c.side !== side) return false;
       const f = this.filter();
-      if (f === 'unverified' && c.status === 'verified') return false;
-      if (f === 'verified' && c.status !== 'verified') return false;
+      if (f === 'unverified' && isConfirmed(c)) return false;
+      if (f === 'verified' && !isConfirmed(c)) return false;
       if (f === 'unthanked' && c.thankedAt) return false;
       return !q || c.guestName.toLowerCase().includes(q) || c.message.toLowerCase().includes(q);
     });
@@ -94,6 +101,26 @@ export class DashboardPage {
     const list = this.store.contributions();
     const total = (side: Side) => list.filter((c) => c.side === side).reduce((t, c) => t + c.amount, 0);
     return { bride: total('bride'), groom: total('groom') };
+  });
+  /** Paid through Razorpay vs. guest-confirmed UPI, and the fees on Razorpay payments. */
+  protected readonly payments = computed(() => {
+    const list = this.store.contributions();
+    const paid = list.filter((c) => c.status === 'paid');
+    const sum = (l: Contribution[]) => l.reduce((t, c) => t + c.amount, 0);
+    return {
+      paid: sum(paid),
+      paidCount: paid.length,
+      fees: Math.round(paid.reduce((t, c) => t + (c.fee ?? 0), 0) * 100) / 100,
+      guestFees: Math.round(paid.reduce((t, c) => t + (c.guestFee ?? 0), 0) * 100) / 100,
+      guestConfirmed: sum(list.filter((c) => c.status === 'guest-confirmed')),
+      verified: sum(list.filter((c) => c.status === 'verified')),
+      incomplete: this.store.incomplete().length,
+    };
+  });
+  protected readonly razorpayMode = computed(() => this.store.wedding()?.paymentMode === 'razorpay');
+  protected readonly testMode = computed(() => {
+    const w = this.store.wedding();
+    return !!w && (this.gateway.availability(w) === 'simulated' || isTestKey(this.config.razorpayKeyId));
   });
   protected readonly invites = computed(() => inviteStats(this.store.guests()));
   protected readonly people = computed(() => this.store.rsvps().filter((r) => r.eventIds.length).reduce((t, r) => t + r.partySize, 0));

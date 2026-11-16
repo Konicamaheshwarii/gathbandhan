@@ -130,3 +130,46 @@ legend + * { clear: both; }
 
 .side { display: grid; gap: 0.35rem; }
 .side-label { font-weight: 600; font-size: 0.92rem; }
+
+// ---------- Razorpay ----------
+.test-badge {
+  display: inline-block;
+  margin: 0.25rem 0;
+  font-size: 0.75rem;
+  font-weight: 700;
+  letter-spacing: 0.03em;
+  color: #7a4b00;
+  background: #fff4d6;
+  border: 1px dashed #c98a00;
+  border-radius: 999px;
+  padding: 0.2rem 0.65rem;
+}
+.fee-lines {
+  margin: 0.5rem auto 0.25rem;
+  max-width: 18rem;
+  display: grid;
+  gap: 0.2rem;
+  font-size: 0.9rem;
+  div { display: flex; justify-content: space-between; gap: 1rem; }
+  dt, dd { margin: 0; }
+  .total { border-top: 1px solid var(--border); padding-top: 0.25rem; font-weight: 700; }
+}
+.test-details {
+  border: 1px dashed #c98a00;
+  background: #fffaf0;
+  color: #4a3200;
+  text-align: left;
+  ul { margin: 0.35rem 0 0; padding-left: 1.1rem; }
+  code { font-size: 0.95em; word-break: break-all; }
+}
+.status-line { margin: 0; display: flex; gap: 0.5rem; align-items: center; font-weight: 600; &.slow { display: block; font-weight: 400; } }
+.paid-badge {
+  margin: 0.25rem auto;
+  display: inline-block;
+  font-weight: 700;
+  color: var(--good);
+  background: color-mix(in srgb, var(--good) 12%, transparent);
+  border-radius: 999px;
+  padding: 0.3rem 0.9rem;
+}
+.fee-hint { margin: 0; }

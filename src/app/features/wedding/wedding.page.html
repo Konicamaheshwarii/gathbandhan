@@ -143,6 +143,7 @@
                     <p class="msg">“{{ b.message }}”</p>
                     <p class="who small">
                       <strong>{{ b.guestName }}</strong>
+                      @if (b.paid) { <span class="paid-chip" title="Paid through Razorpay and confirmed">✓ Paid</span> }
                       <span class="muted"> · {{ goalTitles().get(b.goalId) ?? 'Shagun' }}@if (b.amount !== undefined && w.showAmounts) { · {{ b.amount | inr }}}@if (b.side) { · {{ sideLabel(b.side) }}} · {{ b.createdAt | timeAgo }}</span>
                     </p>
                   </li>

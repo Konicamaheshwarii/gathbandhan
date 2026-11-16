@@ -1,6 +1,6 @@
 import { daysUntil, formatInr } from './format';
 import { guestStatus } from './guests';
-import { Contribution, Guest, Rsvp, Side, Wedding } from './models';
+import { Contribution, Guest, Rsvp, Side, Wedding, isConfirmed } from './models';
 
 const DAY = 86_400_000;
 
@@ -112,7 +112,7 @@ export const CARD_PRINTED_KEY = (weddingId: string) => `sg.cardPrinted.${wedding
 export function weddingChecklist(w: Wedding, contributions: readonly Contribution[], rsvps: readonly Rsvp[], guests: readonly Guest[], cardPrinted: boolean): ChecklistItem[] {
   const s = inviteStats(guests);
   const thanked = contributions.filter((c) => c.thankedAt).length;
-  const verified = contributions.filter((c) => c.status === 'verified').length;
+  const verified = contributions.filter(isConfirmed).length;
   const base = ['/w', w.slug];
   return [
     { id: 'page', label: 'Wedding page with your dreams', done: w.goals.length >= 2, detail: `${w.goals.length} dreams`, link: [...base, 'edit'] },

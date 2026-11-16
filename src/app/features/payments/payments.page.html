@@ -1,0 +1,133 @@
+@if (store.state() === 'missing') {
+  <div class="card empty">
+    <app-logo class="big" [size]="52" />
+    <h1>No wedding page here</h1>
+    <a class="btn primary" routerLink="/create">Create your page</a>
+  </div>
+} @else if (store.state() === 'ready' && !store.owner()) {
+  <div class="card empty">
+    <span class="big" aria-hidden="true">🔒</span>
+    <h1>Only the couple can change how guests pay</h1>
+    <a class="btn primary" routerLink="/login" [queryParams]="{ next: '/w/' + slug() + '/payments' }">Sign in</a>
+  </div>
+} @else if (store.wedding(); as w) {
+  <div class="wrap stack">
+    <a class="back small" [routerLink]="['/w', w.slug, 'dashboard']">← Dashboard</a>
+    <h1>How guests pay</h1>
+    <p class="muted">Right now guests see: <strong class="now">{{ guestsSee() }}</strong></p>
+
+    <section class="card stack" aria-labelledby="mode-h">
+      <h2 id="mode-h">Payment mode</h2>
+      <div class="modes" role="radiogroup" aria-labelledby="mode-h">
+        <button type="button" role="radio" class="mode" [attr.aria-checked]="mode() === 'upi_direct'" (click)="mode.set('upi_direct')">
+          <strong>Direct UPI <span class="chip">Default · free</span></strong>
+          <span class="muted small">Guests pay your UPI ID ({{ w.upiId }}) from their own app. No fees. You confirm each blessing against your bank app.</span>
+        </button>
+        <button type="button" role="radio" class="mode" [attr.aria-checked]="mode() === 'razorpay'" [disabled]="availability() === 'unconfigured'"
+                (click)="mode.set('razorpay')">
+          <strong>Razorpay (instant confirmation)
+            @if (testMode() && availability() !== 'unconfigured') { <span class="chip test">Test mode</span> }
+          </strong>
+          <span class="muted small">Guests pay by UPI, card or netbanking. Each payment is confirmed automatically and marked “✓ Paid”, and Razorpay settles it to your bank account.</span>
+          @if (availability() === 'unconfigured') { <span class="hint">Available after setup: the site owner has not connected Razorpay yet.</span> }
+          @if (simulated()) { <span class="hint">Demo: the checkout is simulated, so you can try the whole flow safely.</span> }
+        </button>
+      </div>
+
+      @if (mode() === 'razorpay') {
+        <div class="fees stack">
+          <h3>Who pays Razorpay's fee?</h3>
+          <p class="small muted">Razorpay charges about 2% + GST on each payment (see razorpay.com/pricing).
+            @if (testMode()) { <strong>In test mode nothing is charged and no real money moves.</strong> }</p>
+          <div class="modes two" role="radiogroup" aria-label="Who pays the fee">
+            <button type="button" role="radio" class="mode" [attr.aria-checked]="bearer() === 'couple'" (click)="bearer.set('couple')">
+              <strong>We do</strong>
+              <span class="small">Guest pays {{ rupees(examples().couple.guestPays) }}, you receive about {{ rupees(examples().couple.coupleGets) }}</span>
+            </button>
+            <button type="button" role="radio" class="mode" [attr.aria-checked]="bearer() === 'guest'" (click)="bearer.set('guest')">
+              <strong>The guest does</strong>
+              <span class="small">Guest pays {{ rupees(examples().guest.guestPays) }} (with a convenience fee line), you receive {{ rupees(examples().guest.coupleGets) }}</span>
+            </button>
+          </div>
+          <p class="hint">Example for a {{ rupees(example) }} shagun.</p>
+        </div>
+      }
+
+      <div class="row">
+        <span class="spacer"></span>
+        <button type="button" class="btn primary" (click)="saveMode()" [disabled]="!dirty() || savingMode()">
+          @if (savingMode()) { <span class="spinner" aria-hidden="true"></span> } Save
+        </button>
+      </div>
+    </section>
+
+    @if (mode() === 'razorpay' && availability() !== 'unconfigured') {
+      @let p = payout();
+      <section class="card stack" aria-labelledby="payout-h">
+        <div class="row">
+          <h2 id="payout-h">Where your shagun settles</h2>
+          <span class="spacer"></span>
+          @if (p) { <span class="chip status" [class]="'chip status ' + p.status">{{ statusLabel[p.status] }}</span> }
+        </div>
+
+        <details class="explain" [open]="!p || p.status === 'not_set_up'">
+          <summary>How this works</summary>
+          <ul class="small">
+            <li><strong>Razorpay Route:</strong> each guest's payment goes to Razorpay, which transfers your share to your own bank account. Gathbandhan never holds the money.</li>
+            <li><strong>KYC:</strong> Razorpay checks your PAN and bank account. Review usually takes a few hours to a few days.</li>
+            <li><strong>Settlement:</strong> money reaches your bank about 2 working days after each payment.</li>
+            <li><strong>Privacy:</strong> your bank account number and PAN are sent to Razorpay only. This app keeps just the last 4 characters.</li>
+            @if (testMode()) { <li><strong>Test mode:</strong> no KYC is checked and no real money moves.</li> }
+          </ul>
+        </details>
+
+        @if (!serverReady()) { <p class="note" role="note">{{ serverNote() }}</p> }
+        @if (p?.detail) { <p class="note small" role="note">{{ p!.detail }}</p> }
+        @if (p && !p.routeEnabled) { <p class="note small" role="note">Test-only setup: payments work, but they are not transferred to a bank account.</p> }
+
+        @if (p && p.status !== 'not_set_up' && !editing()) {
+          <dl class="summary small">
+            <div><dt>Name</dt><dd>{{ p.legalName }}</dd></div>
+            <div><dt>Bank account</dt><dd>•••• {{ p.bankLast4 }} · {{ p.ifsc }}</dd></div>
+            <div><dt>PAN</dt><dd>••••••{{ p.panLast4 }}</dd></div>
+          </dl>
+          <div class="row">
+            @if (simulated() && p.status === 'under_review') {
+              <button type="button" class="btn" (click)="simulateApproval()">Demo: simulate Razorpay approval</button>
+            }
+            <span class="spacer"></span>
+            <button type="button" class="btn ghost" (click)="editing.set(true)">Update details</button>
+          </div>
+        } @else {
+          <form class="stack" (submit)="$event.preventDefault(); savePayout()" novalidate>
+            <div class="grid-form">
+              @for (k of fields; track k) {
+                @let meta = labels[k];
+                <label [class.wide]="k === 'street'">
+                  {{ meta.label }}
+                  <input [attr.type]="meta.type ?? 'text'" [attr.inputmode]="meta.mode ?? null" [attr.autocomplete]="meta.auto ?? 'off'"
+                         [attr.name]="k" [value]="form()[k]" (input)="setField(k, $any($event.target).value)"
+                         [attr.aria-invalid]="formSubmitted() && !!errors()[k]" />
+                  @if (formSubmitted() && errors()[k]) { <span class="error-text">{{ errors()[k] }}</span> }
+                  @else if (meta.hint) { <span class="hint">{{ meta.hint }}</span> }
+                </label>
+              }
+            </div>
+            @if (payoutError()) { <p class="alert small" role="alert">{{ payoutError() }}</p> }
+            <div class="row">
+              @if (editing()) { <button type="button" class="btn ghost" (click)="editing.set(false)">Cancel</button> }
+              <span class="spacer"></span>
+              <button type="submit" class="btn primary" [disabled]="savingPayout()">
+                @if (savingPayout()) { <span class="spinner" aria-hidden="true"></span> } Send to Razorpay
+              </button>
+            </div>
+          </form>
+        }
+      </section>
+    }
+
+    <p class="hint">This is not legal or tax advice. Shagun is a personal gift; ask a tax professional if you are unsure about large amounts.</p>
+  </div>
+} @else {
+  <div class="empty"><span class="spinner" aria-hidden="true"></span></div>
+}

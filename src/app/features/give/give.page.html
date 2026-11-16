@@ -10,7 +10,7 @@
 
     <ol class="steps" aria-label="Progress">
       <li [class.on]="step() === 'details'" [class.done]="step() !== 'details'">Your shagun</li>
-      <li [class.on]="step() === 'pay'" [class.done]="step() === 'done'">Pay by UPI</li>
+      <li [class.on]="step() === 'pay'" [class.done]="step() === 'done'">{{ useRazorpay() ? 'Pay securely' : 'Pay by UPI' }}</li>
       <li [class.on]="step() === 'done'">Blessed</li>
     </ol>
 
@@ -83,14 +83,75 @@
             </label>
           </fieldset>
 
+          @if (useRazorpay() && fees(); as f) {
+            @if (f.guestPays) {
+              <p class="hint center fee-hint">A convenience fee of {{ rupees(f.convenienceFee) }} is added, so the couple receives your full shagun.</p>
+            }
+          }
           <button class="btn primary block big-btn" type="submit">
-            Continue to pay @if (amount() > 0 && !errors().amount) { {{ amount() | inr }} }
+            Continue to pay @if (amount() > 0 && !errors().amount) { {{ useRazorpay() && fees() ? rupees(fees()!.total) : (amount() | inr) }} }
           </button>
         </form>
       }
 
       @case ('pay') {
+        @if (useRazorpay()) {
+        <section class="stack razorpay">
+          <div class="card pay-summary">
+            <p class="eyebrow">Shagun for {{ couple() }}</p>
+            @if (testMode()) {
+              <p class="test-badge" role="note">{{ simulated() ? 'Demo · test mode, no real money' : 'Test mode, no real money' }}</p>
+            }
+            @if (fees(); as f) {
+              <p class="pay-amount num">{{ rupees(f.total) }}</p>
+              <dl class="fee-lines">
+                <div><dt>Shagun</dt><dd class="num">{{ amount() | inr }}</dd></div>
+                @if (f.guestPays) {
+                  <div><dt>Convenience fee <span class="hint">(Razorpay's charge)</span></dt><dd class="num">{{ rupees(f.convenienceFee) }}</dd></div>
+                  <div class="total"><dt>Total</dt><dd class="num">{{ rupees(f.total) }}</dd></div>
+                }
+              </dl>
+            }
+            <p class="muted">{{ selectedGoal()?.emoji }} {{ selectedGoal()?.title }}</p>
+          </div>
+
+          @if (testMode()) {
+            <div class="card test-details small" role="note">
+              <strong>Test details you can use</strong>
+              <ul>
+                <li>UPI: <code>success&#64;razorpay</code> (or <code>failure&#64;razorpay</code> to see a failure)</li>
+                <li>Card: <code>4100 2800 0000 1007</code>, any future expiry, any CVV, any OTP of 4+ digits</li>
+              </ul>
+            </div>
+          }
+
+          <div class="card stack confirm" aria-live="polite">
+            @switch (payState()) {
+              @case ('starting') { <p class="status-line"><span class="spinner" aria-hidden="true"></span> Starting a secure payment…</p> }
+              @case ('checkout') { <p class="status-line"><span class="spinner" aria-hidden="true"></span> Complete the payment in the Razorpay window.</p> }
+              @case ('verifying') { <p class="status-line"><span class="spinner" aria-hidden="true"></span> Confirming your payment…</p> }
+              @case ('slow') {
+                <p class="status-line slow" role="status"><strong>Your payment is being confirmed.</strong> Razorpay is taking a little longer than usual. It will show on the wall within a few minutes and you can safely close this page. Please do not pay again.</p>
+              }
+              @case ('failed') { <p class="alert small" role="alert">{{ failure() }}</p> }
+            }
+            @if (payState() !== 'slow') {
+              <button class="btn primary block big-btn" type="button" (click)="payWithRazorpay()"
+                      [disabled]="payState() === 'starting' || payState() === 'checkout' || payState() === 'verifying'">
+                @if (payState() === 'starting' || payState() === 'verifying') { <span class="spinner" aria-hidden="true"></span> }
+                {{ payState() === 'failed' ? 'Try again' : 'Pay ' + rupees(fees()?.total ?? amount()) + ' securely' }}
+              </button>
+              <p class="hint center">UPI, cards and netbanking through Razorpay. Gathbandhan never sees your card or bank details.</p>
+              <button class="btn ghost block" type="button" (click)="payDirectly()">Pay by UPI directly instead</button>
+              <button class="btn ghost block" type="button" (click)="backToDetails()">← Change amount or message</button>
+            } @else {
+              <a class="btn block" [routerLink]="['/w', w.slug]">Back to the wedding page</a>
+            }
+          </div>
+        </section>
+        } @else {
         <section class="stack">
+          @if (fallbackNote()) { <p class="note" role="note">{{ fallbackNote() }}</p> }
           <div class="card pay-summary">
             <p class="eyebrow">Paying {{ w.payeeName }} directly</p>
             <p class="pay-amount num">{{ amount() | inr }}</p>
@@ -130,6 +191,7 @@
             <button class="btn ghost block" type="button" (click)="step.set('details')">← Change amount or message</button>
           </div>
         </section>
+        }
       }
 
       @case ('done') {
@@ -138,9 +200,24 @@
             @for (p of [1, 2, 3, 4, 5, 6, 7, 8, 9, 10]; track p) { <span [style.--i]="p"></span> }
           </div>
           <span class="done-icon" aria-hidden="true">🙏</span>
+          @if (paidViaRazorpay()) {
+            <p class="paid-badge" role="status">✓ Payment confirmed</p>
+          }
           <h1>Dhanyavaad, {{ guestName().split(' ')[0] }}!</h1>
           <p>Your shagun of <strong>{{ amount() | inr }}</strong> towards <strong>{{ selectedGoal()?.title }}</strong> is on its way to {{ couple() }}.
             @if (message().trim()) { Your blessing is now on their wall. }</p>
+          @if (paidViaRazorpay()) {
+            <p class="small muted">Razorpay payment ID <code>{{ paymentId() }}</code>@if (testMode()) { · test mode, no real money}</p>
+            @if (testMode()) {
+              <div class="test-details small" role="note">
+                <strong>Trying it out? Razorpay's test details</strong>
+                <ul>
+                  <li>UPI: <code>success&#64;razorpay</code> succeeds, <code>failure&#64;razorpay</code> fails</li>
+                  <li>Card: <code>4100 2800 0000 1007</code>, any future expiry, any CVV</li>
+                </ul>
+              </div>
+            }
+          }
           <div class="stack">
             <a class="btn primary block" [routerLink]="['/w', w.slug]">See the blessing wall</a>
             <a class="btn whatsapp block" [href]="shareWhatsapp()" target="_blank" rel="noopener">Tell the family on WhatsApp</a>
@@ -151,4 +228,8 @@
   </div>
 } @else {
   <div class="empty"><span class="spinner" aria-hidden="true"></span></div>
+}
+
+@if (demoCheckout(); as d) {
+  <app-demo-checkout [orderId]="d.orderId" [total]="d.total" [couple]="couple()" (done)="demoDone($event)" />
 }

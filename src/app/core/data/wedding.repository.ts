@@ -1,6 +1,9 @@
 import { Observable } from 'rxjs';
 import { Contribution, Guest, GuestInvite, GuestMark, NewContribution, NewRsvp, PublicActivity, Rsvp, Wedding } from '../models';
 
+/** A simulated Razorpay payment in demo mode: no server, no real money. */
+export type DemoPayment = Required<Pick<Contribution, 'razorpayOrderId' | 'razorpayPaymentId' | 'chargedAmount' | 'guestFee' | 'fee'>>;
+
 export interface RepositoryChange {
   /** The wedding whose data changed, or null when everything may have changed (reset). */
   weddingId: string | null;
@@ -36,6 +39,11 @@ export abstract class WeddingRepository {
   abstract addContribution(input: NewContribution): Promise<Contribution>;
   abstract updateContribution(id: string, patch: Partial<Pick<Contribution, 'status' | 'thankedAt'>>): Promise<Contribution>;
   abstract deleteContribution(id: string): Promise<void>;
+  /**
+   * Demo mode only (and the sample wedding with the backend): records a simulated Razorpay
+   * payment as paid. Real payments are only ever marked paid by the Edge Functions.
+   */
+  abstract recordDemoPayment(input: NewContribution, payment: DemoPayment): Promise<Contribution>;
 
   /** Owner only. */
   abstract listRsvps(weddingId: string): Promise<Rsvp[]>;
