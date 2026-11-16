@@ -140,7 +140,7 @@
 
           @if (error()) { <p class="alert small" [class.friendly]="rateLimited()" role="alert">{{ error() }}</p> }
 
-          @if (showCode()) {
+          @if (codeEnabled && showCode()) {
             <form class="code" (submit)="$event.preventDefault(); verify()">
               <label class="field">
                 <span>6-digit code from the email</span>
@@ -152,7 +152,7 @@
           }
 
           <div class="links">
-            @if (!showCode()) { <button class="link" type="button" (click)="showCode.set(true)">Have a code? Type it</button> }
+            @if (codeEnabled && !showCode()) { <button class="link" type="button" (click)="showCode.set(true)">Have a code? Type it</button> }
             <button class="link" type="button" (click)="differentEmail()">Use a different email</button>
           </div>
         </div>

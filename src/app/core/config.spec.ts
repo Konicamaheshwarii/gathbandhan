@@ -14,6 +14,12 @@ describe('runtime config', () => {
     expect(hasBackend(c)).toBeTrue();
   });
 
+  it('offers the sign-in code only when the owner says the email carries one', () => {
+    expect(parseConfig({}).signInCode).toBeFalse();
+    expect(parseConfig({ signInCode: 'yes' }).signInCode).toBeFalse();
+    expect(parseConfig({ signInCode: true }).signInCode).toBeTrue();
+  });
+
   it('treats a missing or broken config.json as demo mode', async () => {
     const missing = (async () => new Response('nope', { status: 404 })) as unknown as typeof fetch;
     const broken = (async () => new Response('{oops', { status: 200 })) as unknown as typeof fetch;

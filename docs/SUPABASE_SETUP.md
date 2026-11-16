@@ -81,6 +81,9 @@ The sign-in email contains a link. Some phones open email links inside the Gmail
    ```
 
 3. Click **Save**. Do the same in the **Confirm signup** template (first-time sign-ins use that one).
+4. In `public/config.json`, add `"signInCode": true`. Only then does the sign-in page offer "Have a code? Type it".
+
+> On the **free plan** with Supabase's built-in email, the templates cannot be edited, so the email has only the link. Leave `signInCode` out (or `false`) and the page will never offer a code the email does not contain.
 
 ## Step 7. Copy your two keys
 

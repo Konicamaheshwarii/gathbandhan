@@ -34,7 +34,7 @@ export class SupabaseAuthService extends AuthService {
     });
     if (error) {
       throw /rate limit|security purposes/i.test(error.message)
-        ? new Error('Too many sign-in emails just now. Wait a minute, then try again (or use the code from the last email).')
+        ? new Error('Too many sign-in emails just now. Wait a minute, then try again.')
         : friendlyError(error);
     }
   }

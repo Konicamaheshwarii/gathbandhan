@@ -1,6 +1,7 @@
 import { ChangeDetectionStrategy, Component, DestroyRef, computed, effect, inject, input, signal, untracked } from '@angular/core';
 import { Router, RouterLink } from '@angular/router';
 import { AUTH_ERROR_KEY, AuthService, isEmail } from '../../core/auth/auth.service';
+import { RUNTIME_CONFIG } from '../../core/config';
 import { demoWedding } from '../../core/data/seed';
 import { InvitePage, defaultInvite } from '../../core/invite';
 import { InviteDesign, InviteLanguage, InviteTemplate } from '../../core/models';
@@ -74,6 +75,8 @@ export class LoginPage {
   protected readonly cooldown = signal(0);
   protected readonly showCode = signal(false);
   protected readonly rateLimited = signal(false);
+  /** Only when the owner added the code to the email template (see RuntimeConfig.signInCode). */
+  protected readonly codeEnabled = inject(RUNTIME_CONFIG).signInCode;
 
   protected readonly purpose = computed(() => purposeFor(this.next()));
   protected readonly clock = clock;
@@ -169,10 +172,11 @@ export class LoginPage {
       const message = (e as Error).message;
       if (isRateLimit(message)) {
         this.rateLimited.set(true);
+        const earlier = this.codeEnabled ? 'The link and code in the email we already sent still work.' : 'The link in the email we already sent still works.';
         this.error.set(
           this.sent()
-            ? 'Our free email service sends only a couple of sign-in emails an hour, so please wait a little before asking again. The link and code in the email we already sent still work.'
-            : 'Our free email service sends only a couple of sign-in emails an hour. Please wait a few minutes and try again, or use the code from an earlier email.',
+            ? `Our free email service sends only a couple of sign-in emails an hour, so please wait a little before asking again. ${earlier}`
+            : `Our free email service sends only a couple of sign-in emails an hour. Please wait a few minutes and try again${this.codeEnabled ? ', or use the code from an earlier email' : ''}.`,
         );
       } else {
         this.error.set(message);

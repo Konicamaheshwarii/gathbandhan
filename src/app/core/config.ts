@@ -13,9 +13,15 @@ export interface RuntimeConfig {
    * lives only in Supabase Edge Function secrets and never in this file or the app.
    */
   razorpayKeyId: string;
+  /**
+   * The sign-in email also carries a 6-digit code (Step 6 of docs/SUPABASE_SETUP.md). Off by
+   * default: Supabase's built-in email on the free plan sends the link only, so the sign-in page
+   * must not offer a code the email does not have.
+   */
+  signInCode: boolean;
 }
 
-export const EMPTY_CONFIG: RuntimeConfig = { supabaseUrl: '', supabaseAnonKey: '', razorpayKeyId: '' };
+export const EMPTY_CONFIG: RuntimeConfig = { supabaseUrl: '', supabaseAnonKey: '', razorpayKeyId: '', signInCode: false };
 
 /** The config main.ts loaded (empty in tests unless a test provides one). */
 export const RUNTIME_CONFIG = new InjectionToken<RuntimeConfig>('RUNTIME_CONFIG', { providedIn: 'root', factory: () => EMPTY_CONFIG });
@@ -33,6 +39,7 @@ export function parseConfig(raw: unknown): RuntimeConfig {
     supabaseAnonKey: str(o['supabaseAnonKey']),
     // Only a key id is accepted here; anything else (say, a pasted secret) is ignored.
     razorpayKeyId: /^rzp_(test|live)_[A-Za-z0-9]{6,40}$/.test(key) ? key : '',
+    signInCode: o['signInCode'] === true,
   };
 }
 

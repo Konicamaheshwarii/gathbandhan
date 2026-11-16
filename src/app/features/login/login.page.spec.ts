@@ -2,6 +2,7 @@ import { provideZonelessChangeDetection, signal } from '@angular/core';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { Router, provideRouter } from '@angular/router';
 import { AuthService, AuthUser } from '../../core/auth/auth.service';
+import { EMPTY_CONFIG, RUNTIME_CONFIG } from '../../core/config';
 import { LoginPage, RESEND_SECONDS, clock, purposeFor, safeNext } from './login.page';
 
 class FakeAuth extends AuthService {
@@ -25,8 +26,13 @@ describe('LoginPage', () => {
       imports: [LoginPage],
       providers: [provideZonelessChangeDetection(), provideRouter([]), { provide: AuthService, useValue: auth }],
     });
-    spyOn(TestBed.inject(Router), 'navigateByUrl').and.resolveTo(true);
   });
+
+  /** Spies on navigation; called by render(), so a test can still override providers first. */
+  function spyNavigation(): void {
+    const router = TestBed.inject(Router);
+    if (!jasmine.isSpy(router.navigateByUrl)) spyOn(router, 'navigateByUrl').and.resolveTo(true);
+  }
 
   afterEach(() => {
     fixture?.destroy();
@@ -38,6 +44,7 @@ describe('LoginPage', () => {
   }
 
   function render(next?: string): void {
+    spyNavigation();
     fixture = TestBed.createComponent(LoginPage);
     if (next !== undefined) fixture.componentRef.setInput('next', next);
     fixture.detectChanges();
@@ -125,7 +132,27 @@ describe('LoginPage', () => {
     expect(el.querySelector('.sent')).not.toBeNull();
   });
 
-  it('verifies the 6-digit code and goes on to next', async () => {
+  it('offers no code on the free plan, where the email carries only the link', async () => {
+    render('/create');
+    sendTo('riya@example.com');
+    await settle();
+    fixture.detectChanges();
+    expect(el.querySelector('.sent')).not.toBeNull();
+    expect(el.textContent).not.toContain('Have a code');
+    expect(el.querySelector('.code-input')).toBeNull();
+
+    jasmine.clock().tick(RESEND_SECONDS * 1000);
+    auth.sendMagicLink.and.rejectWith(new Error('Too many sign-in emails just now. Wait a minute, then try again.'));
+    fixture.detectChanges();
+    resendButton().click();
+    await settle();
+    fixture.detectChanges();
+    expect(el.querySelector('.alert.friendly')!.textContent).toContain('The link in the email we already sent still works.');
+    expect(el.querySelector('.alert.friendly')!.textContent).not.toContain('code');
+  });
+
+  it('verifies the 6-digit code when the owner added it to the email', async () => {
+    TestBed.overrideProvider(RUNTIME_CONFIG, { useValue: { ...EMPTY_CONFIG, signInCode: true } });
     render('/create');
     sendTo('riya@example.com');
     await settle();
